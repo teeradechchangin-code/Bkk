@@ -1062,7 +1062,8 @@ let lamp = merge(cylinder_at(radius: 4, height: 120, segments: 6, bottom_center:
     sphere_center(radius: 13, segments: 8, center: (0, 0, 128), material: "ICS_WarmLight"));
 var dining = empty();
 // pergola slats (white, 10 per cage) and posts (dark, 6 per cage) are baked as small box cages (ENG: an array() of 169
-// slats per roof counted as 169 sub-parts, one cage over both roofs made every umbrella / lamp test its 4000 triangles)
+// slats per roof counted as 169 sub-parts, one cage over both roofs made every umbrella / lamp test its 4000 triangles;
+// cages merged straight into an empty accumulator fuse into one part, so each roof starts with its swept warm strip)
 for r in 0..2 {
     let wa = pick(r, at(Z3_FP, 2), at(Z3_FP, 0));
     let wb = pick(r, at(Z3_FP, 3), at(Z3_FP, 4));
@@ -1558,7 +1559,7 @@ out.geo = merge(part(RIV_Z1Mass, iters: 2, h: 2010, band: 1, lit: 470),
 
 #mesh ICS_MallRiverfront collider
 // walk collider built from the same outlines as the visuals: Z1 krathong prism (Chaikin x1, grown 100 cm: covers every
-// ground-level front, pilaster and GUCCI post of the x3 visual; top 20.10 m = roof paving), Z2 / Z3 prisms, the 36.5 m
+// ground-level front, bay post and GUCCI post of the x3 visual; top 20.10 m = roof paving), Z2 / Z3 prisms, the 36.5 m
 // and 42 m dining-roof decks (coarse plates, top = deck paving), the drum prism (+95 cm, top 20.10 m), the NE pavilion
 // volume (+150 cm, same stations as the visual) and the four gold posts of the tower-plaza entrance
 let n0 = at(Z3_FP, 4);

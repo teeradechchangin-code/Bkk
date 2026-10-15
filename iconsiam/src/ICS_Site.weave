@@ -1,28 +1,41 @@
 // ===== ICS_Site : ICONSIAM site works (Site crew) =====
 // World cm, Z up, +X east, +Y north, origin = Google pin. Placed by Management at (0,0,0).
 // Ground slab + river embankment/railing, River Park paving, fountain basin, ground-level beds/groves/trees,
-// 4 floating piers + gangways + shelters (+ OSM footbridge Pier 4 <-> Pier 2), Charoen Nakhon Road, south service lane.
+// 4 floating piers + Pontoon 1B + gangways + shelters (+ OSM footbridge Pier 4 <-> Pier 2), Charoen Nakhon Road,
+// south service lane, overgrown south lot and the D11 context ground apron (west bank only, inside the sim_box).
 // All footprints come from the shared #meshdefs (src/ICS_defs.weave).
 // Rev B (Management directives D1/D2): nothing on or inside a building footprint (the Z1 roof planter row is
 // Riverfront's); ground hardscape is ICS_Paving, lawns ICS_Foliage, ICS_Concrete only for embankment, kerbs, hulls.
+// Scene QC r1 (D11): the land runs to the sim_box limits (x = -24000, y = -/+24000) along the OSM riverbank;
+// ICS_Paving only inside SITE_A_FP + TOWER_PLOT_FP, ICS_Foliage ground everywhere else; nothing east of the river edge.
+// OSM riverbank_west_line (r14038959, footprints_local_m.json) beyond the #meshdefs BANK_LINE is mirrored locally as
+// BANK_S (y -240.0 .. -173.8 m) and BANK_N (y 240.0 m, on the 195.5 -> 247.4 m edge) until Management promotes it to defs.
 
-// ---------------------------------------------------------------- tree (trunk + layered canopy)
+// ---------------------------------------------------------------- tree (trunk + 3-5 overlapping rounded crown lobes)
 #meshpart SITE_Tree
-param trunk = 380;
-param r = 400;
+param trunk = 380;     // clear trunk height = canopy base (cm)
+param r = 400;         // crown radius; lobes reach ~1.1 r, crown top ~ trunk + 1.17 r
 param seed = 1;
-let jx = (hash(seed, seed: 3) - 0.5) * r * 0.35;
-let jy = (hash(seed, seed: 5) - 0.5) * r * 0.35;
-let stem = cylinder_at(r_bot: 15 + r * 0.025, r_top: 10, height: trunk + 30, segments: 8, bottom_center: (0, 0, -6), material: "ICS_Deck");
-var limbs = empty();
-for k 0..3 {
-    let ang = k * 120 + hash(seed, seed: 7) * 90;
-    limbs = merge(limbs, cylinder_between(start: (0, 0, trunk - 90), end: (cos(ang) * r * 0.42, sin(ang) * r * 0.42, trunk + r * 0.2), radius: 7, segments: 6, material: "ICS_Deck"));
+let nside = 2 + floor(hash(seed, seed: 17) * 2.999);   // 2..4 side lobes -> 3..5 lobes in all
+let R0 = r * 0.7;
+let zs0 = 0.84 + 0.08 * hash(seed, seed: 19);
+let z0 = trunk + R0 * zs0 * 0.9;
+let rot = hash(seed, seed: 11) * 360;
+var g = cylinder_at(r_bot: 15 + r * 0.025, r_top: 10, height: z0 + 6, segments: 8, bottom_center: (0, 0, -6), material: "ICS_Deck");
+g = merge(g, translate(scale(sphere_center(radius: R0, segments: 12, center: (0, 0, 0), material: "ICS_Foliage"), (1, 1, zs0)), (0, 0, z0)));
+for k 0..nside {
+    let h1 = hash(seed * 7 + k, seed: 23);
+    let h2 = hash(seed * 7 + k, seed: 29);
+    let ang = rot + k * 360 / nside + h1 * 50;
+    let d = r * (0.36 + 0.14 * h2);
+    let Rk = r * (0.47 + 0.15 * h1);
+    let zk = trunk + Rk * 0.72 + r * 0.22 * h2;
+    let cx = cos(ang) * d;
+    let cy = sin(ang) * d;
+    g = merge(g, translate(scale(sphere_center(radius: Rk, segments: 10, center: (0, 0, 0), material: "ICS_Foliage"), (1, 1, 0.78 + 0.12 * h2)), (cx, cy, zk)));
+    g = merge(g, cylinder_between(start: (0, 0, trunk - 80), end: (cx * 0.7, cy * 0.7, zk - Rk * 0.3), radius: 6 + r * 0.008, segments: 6, material: "ICS_Deck"));
 }
-let c1 = translate(scale(sphere(radius: r, segments: 12, material: "ICS_Foliage"), (1, 1, 0.34)), (0, 0, trunk - 25));
-let c2 = translate(scale(sphere(radius: r * 0.74, segments: 12, material: "ICS_Foliage"), (1, 1, 0.42)), (jx, jy, trunk + r * 0.24));
-let c3 = translate(scale(sphere(radius: r * 0.46, segments: 10, material: "ICS_Foliage"), (1, 1, 0.5)), (0 - jx * 0.6, jy * 0.5, trunk + r * 0.55));
-out.geo = rotate_z(merge(stem, limbs, c1, c2, c3), degrees: hash(seed, seed: 11) * 360);
+out.geo = g;
 #end
 
 // ---------------------------------------------------------------- promenade lamp post
@@ -64,10 +77,13 @@ out.geo = g;
 
 // ---------------------------------------------------------------- floating pontoon (clipped OSM pier outline)
 #meshpart SITE_Pier
-param which = 0;       // 0 = PIER1_FP, 1 = PIER2_FP, 2 = PIER4_FP, 3 = PIER_SMALL_FP
+param which = 0;       // 0 = PIER1_FP, 1 = PIER2_FP, 2 = PIER4_FP, 3 = PIER_SMALL_FP, 4 = Pontoon 1B
 param clip_x = 15050;  // pontoon starts here; the strip between bank and clip_x is open water under the gangway
 param mode = 0;        // 0 = full detail, 1 = LOD1 (hull + deck), 2 = collider prism
-let P = pick(which, PIER1_FP, PIER2_FP, PIER4_FP, PIER_SMALL_FP);
+// Icon Siam Pontoon 1B (OSM n6174365548 at (165.4, -67.4) m, footway w659467497 lands at y -67.8 m):
+// 20 x 7.2 m pontoon centred near (16500, -6740), 1.2 m clear of PIER1_FP's north edge
+let P1B = [(15500, -7100), (17500, -7100), (17500, -6380), (15500, -6380)];
+let P = pick(which, PIER1_FP, PIER2_FP, PIER4_FP, PIER_SMALL_FP, P1B);
 var C = [];
 let n = len(P);
 for i 0..n {
@@ -135,7 +151,7 @@ out.geo = g;
 // ---------------------------------------------------------------- pier shelter (white roof on slim posts)
 #meshpart SITE_Shelter
 param which = 0;       // 0 = PIER_SHELTER1_FP (Pier 4), 1 = PIER_SHELTER2_FP (Pier 1)
-param bench_dy = 0;    // shifts the two waiting benches along y (Pier 1: out of the gangway landing corridor)
+param bench_dy = 0;    // shifts the two waiting benches along y
 let S0 = pick(which, PIER_SHELTER1_FP, PIER_SHELTER2_FP);
 // drop near-collinear OSM vertices (a 1.3 m stub edge collapses under the roof insets)
 var S = [];
@@ -177,13 +193,14 @@ param z0 = 5;
 param w = 400;
 param mid = 0;
 param mode = 0;        // 0 = detail, 1 = plate only (LOD1 / collider)
+// BANK_LINE is strictly increasing in y: the segment with a.y <= gy < b.y owns gy (also when gy hits a vertex)
 var xb = 0;
 let nbl = len(BANK_LINE) - 1;
 for i 0..nbl {
     let a = at(BANK_LINE, i);
     let b = at(BANK_LINE, i + 1);
-    if (gy - a.y) * (gy - b.y) < 0 {
-        xb = a.x + (gy - a.y) / (b.y - a.y) * (b.x - a.x);
+    if gy >= a.y {
+        if gy < b.y { xb = a.x + (gy - a.y) / (b.y - a.y) * (b.x - a.x); }
     }
 }
 // the walking plate starts 35 cm inland (laps the paving edge: the bank is skewed up to 3.9 deg to the gangway axis)
@@ -201,7 +218,9 @@ if mode == 0 {
         for i 0..nbl {
             let a = at(BANK_LINE, i);
             let b = at(BANK_LINE, i + 1);
-            if (ys - a.y) * (ys - b.y) < 0 { xs = a.x + (ys - a.y) / (b.y - a.y) * (b.x - a.x); }
+            if ys >= a.y {
+                if ys < b.y { xs = a.x + (ys - a.y) / (b.y - a.y) * (b.x - a.x); }
+            }
         }
         g = merge(g, beam_between(start: (x0, ys, zs - 10), end: (x_end, ys, zt - 10), cross_width: 12, cross_height: 40, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
         g = merge(g, beam_between(start: (xs + 5, ys, zs + 52 - (xs + 5 - x0) * slope), end: (x_end - 20, ys, zt + 52 + 20 * slope), cross_width: 2, cross_height: 90, height_direction: (0, 0, 1), material: "ICS_Balustrade"));
@@ -229,21 +248,42 @@ out.geo = g;
 // ================================================================ LOD0
 #mesh ICS_Site
 budget(verts: 250000, indices: 750000);
-sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 1300));
+sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 1400));
 anchor(mode: "origin");
 
-// ---------- land slab: x = -20000 .. BANK_LINE, y = -16190 .. 19550, top z = 0, bottom = RIVER_BED_Z
-// BANK_LINE[0] is skipped: the south edge runs straight to (BANK_LINE[1].x, -16190), so no 0-70 cm sliver spike.
+// ---------- land slab: x = -24000 .. river edge, y = -24000 .. 24000 (sim_box limits, D11), top z = 0, bottom = RIVER_BED_Z
+// river edge = OSM riverbank: BANK_S (south) + BANK_LINE (all 21 vertices) + BANK_N (north)
+let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
+let BNX = 12153;                                   // OSM bank x at y = 24000 (edge 195.5 -> 247.4 m)
 let B1 = at(BANK_LINE, 1);
+let BLAST = at(BANK_LINE, len(BANK_LINE) - 1);
 var BL = [];
 for i 1..len(BANK_LINE) { BL = append(BL, at(BANK_LINE, i)); }
-var land = [(-20000, -16190)];
-land = append(land, (B1.x, -16190));
-for p in BL { land = append(land, (p.x, p.y)); }
-land = append(land, (-20000, 19550));
-// concrete core -600..-60 (its top is the fountain floor); paved top layer -60..0 (D2: hardscape = ICS_Paving)
+var land = [(-24000, -24000)];
+for p in BANK_S { land = append(land, p); }
+for p in BANK_LINE { land = append(land, (p.x, p.y)); }
+land = append(land, (BNX, 24000));
+land = append(land, (-24000, 24000));
+// the two plots (ICS_Paving top) = SITE_A_FP v2..v16 + TOWER_PLOT_FP v12..v20 (their shared edge dropped)
+var PLOTS = [];
+for i 2..17 { PLOTS = append(PLOTS, at(SITE_A_FP, i)); }
+for i 12..21 { PLOTS = append(PLOTS, at(TOWER_PLOT_FP, i)); }
+// everything else on the west bank (ICS_Foliage top): one C-shaped polygon wrapping the plots on the S, W and N
+var GREEN = [(-24000, -24000)];
+for p in BANK_S { GREEN = append(GREEN, p); }
+for i 0..6 { let p = at(BANK_LINE, i); GREEN = append(GREEN, (p.x, p.y)); }
+for i 0..5 { GREEN = append(GREEN, at(SITE_A_FP, 6 - i)); }
+for i 0..6 { GREEN = append(GREEN, at(TOWER_PLOT_FP, 20 - i)); }
+for i 17..21 { let p = at(BANK_LINE, i); GREEN = append(GREEN, (p.x, p.y)); }
+GREEN = append(GREEN, (BNX, 24000));
+GREEN = append(GREEN, (-24000, 24000));
+// concrete core -600..-60 (its top is the fountain floor); top layer -60..0: ICS_Paving on the plots (D2),
+// ICS_Foliage ground cover on the rest of the land (SiteOps: no paved apron outside the plots)
 let slab_lo = translate(extrude(points: land, height: 0 - 60 - RIVER_BED_Z, material: "ICS_Concrete"), (0, 0, RIVER_BED_Z));
-let slab_hi = translate(extrude_shape(outer: land, holes: [offset_polygon(points: BASIN_FP, delta: 30)], height: 60, material: "ICS_Paving"), (0, 0, -60));
+let slab_hi = merge(
+    translate(extrude_shape(outer: PLOTS, holes: [offset_polygon(points: BASIN_FP, delta: 30)], height: 60, material: "ICS_Paving"), (0, 0, -60)),
+    translate(extrude(points: GREEN, height: 60, material: "ICS_Foliage"), (0, 0, -60))
+);
 
 // ---------- River Park paving over PLAZA_FP (5 cm proud of the slab; its basin hole is hidden under the coping)
 // curved River Park promenade: OSM footway w722854228 centre-line (dossier river_park.footways), 4 m band with white edges
@@ -270,12 +310,16 @@ for i 0..npc {
 prom = merge(prom, sweep_box_path(points: pl3, width: 22, height: 10, up: (0, 0, 1), material: "ICS_White"));
 prom = merge(prom, sweep_box_path(points: pr3, width: 22, height: 10, up: (0, 0, 1), material: "ICS_White"));
 
-// plaza tree pits (TREES_PLAZA i = 2..5 stand 4.8 m off the Z1 face: smaller, uplit crowns)
-let TREES_PLAZA = [(13350, 2300, 5), (12900, 5600, 5), (10300, -4400, 5), (9950, -3100, 5), (9900, -1800, 5), (10550, -6250, 5), (11300, -10450, 5)];
+// plaza tree pits (round planters) away from the mall front
+let TREES_PLAZA = [(13350, 2300, 5), (12900, 5600, 5), (11300, -10450, 5)];
+// Z1 river-front tree row (Photo B: continuous uplit row along the Z1 front): 13 trees on flush tree grates,
+// 6.0-7.2 m off the Z1 front between the SE drum (y -79 m) and the NE lobe (y +8 m), >= 1.6 m off the promenade band,
+// all outside MALL_FP (D1); two ICS_WarmLight uplight discs at each trunk base
+let TREES_ROW = [(10698, -7926, 0), (10693, -7134, 0), (10662, -6262, 0), (10568, -5475, 0), (10454, -4691, 0), (10227, -3888, 0), (10090, -3108, 0), (9972, -2473, 0), (10015, -1682, 0), (10148, -897, 0), (10238, -403, 0), (10526, 125, 0), (10961, 798, 0)];
 
 // ---------- wave inlays (Photo B: light curved lines in the grey River Park paving)
 // 14 cm white strips at z 4..7 following the promenade spline offset +-6 / 12 / 18 m, clipped to the plaza,
-// kept 1.5 m off the basin coping, 3 m off the tree pits and 2.5 m off the river edge
+// kept 1.5 m off the basin coping, 3 m off the planters, 1.3 m off the row trees and 2.5 m off the river edge
 let BAS_OUT = offset_polygon(points: BASIN_FP, delta: 150);
 let nPL = len(PLAZA_FP);
 let nBO = len(BAS_OUT);
@@ -308,6 +352,9 @@ for s 0..6 {
         for tp in TREES_PLAZA {
             if length((q.x - tp.x, q.y - tp.y, 0)) < 300 { clear = 0; }
         }
+        for tp in TREES_ROW {
+            if length((q.x - tp.x, q.y - tp.y, 0)) < 130 { clear = 0; }
+        }
         for k 0..nBK {
             let a = at(BANK_LINE, k);
             let ab = at(BANK_LINE, k + 1) - a;
@@ -337,10 +384,11 @@ for s 0..6 {
     }
 }
 
-// ---------- riverside fountain basin: floor -60 (slab_lo top), wall ring -61..+2, white coping +1..+22 with 4 cm lip, water -30
+// ---------- riverside fountain basin: floor -60 (slab_lo top), wall ring -61..+2, white coping +1..+22 with 4 cm lip,
+// water surface at -40: 41 cm below the coping (QC: dark recessed channel), 62 cm below its top
 let basin_wall = translate(extrude_shape(outer: offset_polygon(points: BASIN_FP, delta: 30), holes: [BASIN_FP], height: 63, material: "ICS_Concrete"), (0, 0, -61));
 let basin_rim = translate(extrude_shape(outer: offset_polygon(points: BASIN_FP, delta: 55), holes: [offset_polygon(points: BASIN_FP, delta: -4)], height: 21, material: "ICS_White"), (0, 0, 1));
-let basin_water = translate(extrude(points: offset_polygon(points: BASIN_FP, delta: -2), height: 2, material: "ICS_Water"), (0, 0, -32));
+let basin_water = translate(extrude(points: offset_polygon(points: BASIN_FP, delta: -2), height: 2, material: "ICS_Water"), (0, 0, -42));
 // lit jet grid (Photo B: dotted lights over the whole basin): rows 2.6 / 5.2 / 7.8 m in from the east edge and
 // 2.6 m in from the west edge; a nozzle is kept only inside the basin (1.1 m off the wall), clear of the
 // fountain node ring and at least 1.8 m from nozzles already placed
@@ -389,11 +437,14 @@ for k 0..10 {
 jets = merge(jets, cylinder_at(radius: 16, height: 40, segments: 10, bottom_center: (FOUNTAIN_NODE.x, FOUNTAIN_NODE.y, -61), material: "ICS_DarkMetal"));
 
 // ---------- river embankment: concrete cap beam on BANK_LINE (-40..+30) + teal glass railing to +110
-// gangway openings (centre y, half width) for Pier 1, Pier 2, Pier 4, small pier
-let GAP_Y = [-9000, -2100, 8140, 11510];
+// gangway openings (centre y, half width in y) for Pontoon 1B (OSM footway w659467497, y -67.8 m), Pier 2, Pier 4,
+// small pier. BANK_LINE is strictly increasing in y, so each opening is the y-interval [gy - hw, gy + hw] and may
+// span a vertex (the Pontoon 1B opening is centred on BANK_LINE[9] = (14660, -6780)).
+let GAP_Y = [-6780, -2100, 8140, 11510];
 let GAP_HW = [212, 462, 212, 97];
 var subs = [];
 var cur = [B1];
+var run_open = 1;
 var posts = empty();
 var lamps = empty();
 let nb = len(BANK_LINE);
@@ -405,22 +456,40 @@ for i 1..nseg {
     let L = length(sv);
     let dir = sv * (1 / L);
     let inl = (0 - dir.y, dir.x, 0);
+    // opening interval on this segment as t0..t1 (2 = none)
     var t0 = 2;
     var t1 = 2;
     for gi 0..len(GAP_Y) {
-        let gy = at(GAP_Y, gi);
-        if (gy - a.y) * (gy - b.y) < 0 {
-            let tc = (gy - a.y) / (b.y - a.y);
-            t0 = max(0.001, tc - at(GAP_HW, gi) / L);
-            t1 = min(1, tc + at(GAP_HW, gi) / L);
+        let ya = at(GAP_Y, gi) - at(GAP_HW, gi);
+        let yb = at(GAP_Y, gi) + at(GAP_HW, gi);
+        if ya < b.y {
+            if yb > a.y {
+                t0 = max(0, (ya - a.y) / (b.y - a.y));
+                t1 = min(1, (yb - a.y) / (b.y - a.y));
+            }
         }
     }
-    if t0 < 1 {
-        cur = append(cur, a + sv * t0);
-        subs = append(subs, cur);
-        cur = [a + sv * t1];
+    if t0 < 1.5 {
+        if t0 > 0.0005 {
+            if run_open < 0.5 { cur = [a]; }
+            cur = append(cur, a + sv * t0);
+            subs = append(subs, cur);
+        } else {
+            if run_open > 0.5 { subs = append(subs, cur); }
+        }
+        run_open = 0;
+        if t1 < 0.9995 {
+            cur = [a + sv * t1, b];
+            run_open = 1;
+        }
+    } else {
+        if run_open > 0.5 {
+            cur = append(cur, b);
+        } else {
+            cur = [a, b];
+            run_open = 1;
+        }
     }
-    if abs(t1 - 1) > 0.0005 { cur = append(cur, b); }
     // railing posts (~1.6 m) and promenade lamps (~18 m), skipping the openings
     for k 0..2 {
         let s0 = select(0, t1, k);
@@ -445,7 +514,7 @@ for i 1..nseg {
         }
     }
 }
-subs = append(subs, cur);
+if run_open > 0.5 { subs = append(subs, cur); }
 // continuous concrete facing under the cap (-63..-3, 2 cm inside the cap faces) so the paved slab edge never shows
 // at the gangway openings; dark rubbing / tide band at the waterline (-222..-168), 6 cm proud of the wall
 var bank = sweep_box_path(points: move_points(BL, by: (0, 0, -33)), width: 66, height: 60, up: (0, 0, 1), material: "ICS_Concrete");
@@ -457,21 +526,34 @@ for k 0..len(subs) {
     bank = merge(bank, sweep_box_path(points: move_points(sp, by: (0, 0, 70)), width: 2, height: 70, up: (0, 0, 1), material: "ICS_Balustrade"));
     bank = merge(bank, sweep_box_path(points: move_points(sp, by: (0, 0, 106)), width: 9, height: 8, up: (0, 0, 1), material: "ICS_DarkMetal"));
 }
+// context bank beyond the ICONSIAM frontage (D11): plain concrete embankment face + 30 cm kerb (-63..+30) and the
+// tide band, continuing the river edge along the OSM bank south (BANK_S -> BANK_LINE[0] -> B1) and north (-> y 24000)
+var BSX = [];
+for p in BANK_S { BSX = append(BSX, (p.x, p.y, 0)); }
+BSX = append(BSX, at(BANK_LINE, 0));
+BSX = append(BSX, B1);
+let BNXP = [BLAST, (BNX, 24000, 0)];
+bank = merge(bank, sweep_box_path(points: move_points(BSX, by: (0, 0, -16.5)), width: 66, height: 93, up: (0, 0, 1), material: "ICS_Concrete"));
+bank = merge(bank, sweep_box_path(points: move_points(BSX, by: (0, 0, -195)), width: 12, height: 54, up: (0, 0, 1), material: "ICS_DarkMetal"));
+bank = merge(bank, sweep_box_path(points: move_points(BNXP, by: (0, 0, -16.5)), width: 66, height: 93, up: (0, 0, 1), material: "ICS_Concrete"));
+bank = merge(bank, sweep_box_path(points: move_points(BNXP, by: (0, 0, -195)), width: 12, height: 54, up: (0, 0, 1), material: "ICS_DarkMetal"));
 
-// ---------- floating piers (deck top -150, 80 cm hull), gangways, shelters, Pier4-Pier2 footbridge
+// ---------- floating piers (deck top -150, 80 cm hull), Pontoon 1B, gangways, shelters, Pier4-Pier2 footbridge
 let piers = merge(
     part(SITE_Pier, which: 0, clip_x: 15050),
     part(SITE_Pier, which: 1, clip_x: 14800),
     part(SITE_Pier, which: 2, clip_x: 14050),
-    part(SITE_Pier, which: 3, clip_x: 13750)
+    part(SITE_Pier, which: 3, clip_x: 13750),
+    part(SITE_Pier, which: 4, clip_x: 15400)
 );
+// Pier 1 access per the site plan / OSM footway w659467497: bank (14660, -6780) -> Pontoon 1B, landing 5 m onto its deck
 let gangways = merge(
-    part(SITE_Gangway, gy: -9000, x_end: 15700, z0: 5, w: 400),
+    part(SITE_Gangway, gy: -6780, x_end: 16000, z0: 5, w: 400),
     part(SITE_Gangway, gy: -2100, x_end: 15450, z0: 5, w: 900, mid: 1),
     part(SITE_Gangway, gy: 8140, x_end: 14700, z0: 5, w: 400),
     part(SITE_Gangway, gy: 11510, x_end: 14150, z0: 0, w: 170)
 );
-// Pier 1 benches shifted 4.5 m south: they span y -10095..-9395, 1.8 m clear of the gangway corridor (y -9212..-8788)
+// Pier 1 benches keep their 4.5 m south offset (y -10095..-9395, clear of the shelter posts and deck lamps)
 let shelters = merge(part(SITE_Shelter, which: 0), part(SITE_Shelter, which: 1, bench_dy: -450));
 // footbridge (OSM w1125558211): laps ~30 cm into the Pier 4 hull (south edge y 5361..5380) and 20 cm onto Pier 2
 let fb_a = (15210, 5400, 0);
@@ -515,9 +597,12 @@ for k 0..3 {
     }
 }
 
-// ---------- trees
+// ---------- trees (crowns: 3-5 overlapping rounded lobes, 8-14 m tall)
 // grove trees (x, y, crown radius): jittered ~10 m grid, crowns overlap into one canopy
 let TREES_GROVE = [(7540, 6000, 450), (8530, 5910, 500), (9280, 6140, 550), (6760, 6880, 500), (7920, 6870, 450), (9030, 6900, 600), (10110, 6810, 550), (11020, 7060, 550), (7610, 7520, 550), (7520, 9120, 550), (8420, 8860, 600), (9560, 8910, 450), (10760, 8920, 700), (11340, 9050, 550), (7880, 9760, 700), (8930, 10040, 550), (9860, 9630, 450), (10910, 9710, 700), (11940, 9760, 600), (8680, 10590, 600), (9760, 10800, 600), (10770, 10530, 500), (11390, 10780, 450), (10130, 11600, 650), (11130, 11710, 600), (10320, 12230, 500), (11580, 12700, 650), (10200, 13610, 600), (11040, 13270, 500), (10720, 14350, 550), (11570, 14460, 550)];
+// riverside canopy band (Photo B: unbroken canopy on the tower plot by the river): large trees ~7.8 m apart,
+// 2.2-3.8 m inside the grove kerbs along their river edges, >= 3 m from the grove trunks; crowns overhang the promenade
+let TREES_BAND = [(10555, 6921, 620), (11219, 7331, 600), (11754, 7661, 660), (11985, 8646, 660), (11931, 9420, 620), (11874, 10198, 680), (11816, 10976, 640), (11759, 11752, 680), (11820, 12380, 620), (11654, 13348, 680), (11676, 14127, 640), (11640, 14760, 600)];
 // Magnolias base ring (x, y, crown radius): >= r + 1.5 m off MAG_FP, >= r + 4 m off the mall
 let TREES_MAG = [(-150, 3300, 450), (950, 3350, 500), (2050, 3250, 450), (3700, 4300, 500), (4950, 5350, 550), (5400, 6600, 500), (5250, 7600, 450), (1050, 12900, 450)];
 // north strip bed (BED_D) trees
@@ -526,30 +611,40 @@ let TREES_D = [(-13300, 11400, 22), (-11000, 11450, 22), (-8600, 11650, 22), (-6
 let TREES_LANE = [(-9000, -11450, 550), (-6000, -11300, 600), (-3000, -11150, 550), (500, -11050, 600), (3500, -11150, 600), (5500, -11200, 550), (7500, -11250, 650), (9400, -11300, 550)];
 var trees = empty();
 for i, q in TREES_GROVE {
-    trees = merge(trees, translate(part(SITE_Tree, trunk: 420 + 230 * hash(i, seed: 31), r: q.z, seed: i + 101), (q.x, q.y, 22)));
+    trees = merge(trees, translate(part(SITE_Tree, trunk: 380 + 200 * hash(i, seed: 31), r: q.z, seed: i + 101), (q.x, q.y, 22)));
+}
+for i, q in TREES_BAND {
+    trees = merge(trees, translate(part(SITE_Tree, trunk: 420 + 120 * hash(i, seed: 33), r: q.z, seed: i + 301), (q.x, q.y, 22)));
 }
 for i, q in TREES_MAG {
     trees = merge(trees, translate(part(SITE_RoundPlanter, r: 140, h: 45, lit: 1, seed: 140 + i, tree_trunk: 400 + 150 * hash(i, seed: 47), tree_r: q.z), (q.x, q.y, 0)));
 }
 for i, q in TREES_D {
-    trees = merge(trees, translate(part(SITE_Tree, trunk: 330 + 120 * hash(i, seed: 31), r: 360 + 140 * hash(i, seed: 37), seed: i + 14), q));
+    trees = merge(trees, translate(part(SITE_Tree, trunk: 380 + 120 * hash(i, seed: 31), r: 360 + 140 * hash(i, seed: 37), seed: i + 14), q));
 }
 for i, q in TREES_PLAZA {
-    let near_mall = select(0, 1, (i >= 2) * (i <= 5));
-    trees = merge(trees, translate(part(SITE_RoundPlanter, r: 120, h: 45, lit: near_mall, seed: 50 + i, tree_trunk: 300 + 80 * hash(i, seed: 41), tree_r: 330 + 90 * hash(i, seed: 43) - 120 * near_mall), (q.x, q.y, 3)));
+    trees = merge(trees, translate(part(SITE_RoundPlanter, r: 120, h: 45, lit: 0, seed: 50 + i, tree_trunk: 360 + 80 * hash(i, seed: 41), tree_r: 330 + 90 * hash(i, seed: 43)), (q.x, q.y, 3)));
+}
+for i, q in TREES_ROW {
+    // flush 1.5 m tree grate on the paving (top +6) + two warm uplight discs at the trunk base
+    trees = merge(trees, cylinder_at(radius: 75, height: 2, segments: 16, bottom_center: (q.x, q.y, 4), material: "ICS_DarkMetal"));
+    trees = merge(trees, cylinder_at(radius: 12, height: 2, segments: 10, bottom_center: (q.x + 48, q.y + 14, 5.5), material: "ICS_WarmLight"));
+    trees = merge(trees, cylinder_at(radius: 12, height: 2, segments: 10, bottom_center: (q.x - 48, q.y - 14, 5.5), material: "ICS_WarmLight"));
+    trees = merge(trees, translate(part(SITE_Tree, trunk: 430 + 60 * hash(i, seed: 57), r: 290 + 30 * hash(i, seed: 59), seed: i + 201), (q.x, q.y, 5)));
 }
 for i, q in TREES_LANE {
     trees = merge(trees, translate(part(SITE_RoundPlanter, r: 150, h: 45, lit: 0, seed: 170 + i, tree_trunk: 450 + 150 * hash(i, seed: 53), tree_r: q.z), (q.x, q.y, select(0, 3, q.x > 2000))));
 }
 
-// ---------- Charoen Nakhon Road: 4 lanes + median + 3 m sidewalks, parallel to the mall west edge
+// ---------- Charoen Nakhon Road: 4 lanes + median + 3 m sidewalks, parallel to the mall west edge,
+// run to the sim_box limits (y -24000 .. 24000) over the context ground
 let w0 = at(MALL_FP, 2);
 let w1 = at(MALL_FP, 5);
 let kx = (w1.x - w0.x) / (w1.y - w0.y);
 let cth = 1 / sqrt(1 + kx * kx);
 let ROAD_OFF = 3440;                       // axis 34.4 m west of the mall west edge (OSM carriageway centrelines)
-let RY0 = -16190;
-let RY1 = 19550;
+let RY0 = -24000;
+let RY1 = 24000;
 let ax0 = w0.x + (RY0 - w0.y) * kx - ROAD_OFF / cth;
 let ax1 = w0.x + (RY1 - w0.y) * kx - ROAD_OFF / cth;
 // strips (perpendicular offset from..to, z bottom..top): sidewalk W, one asphalt sheet for both carriageways,
@@ -589,7 +684,7 @@ for j 0..12 {
 // ---------- south service lane + boundary wall + overgrown lot (Photo B foreground-left)
 // north edge = the ICONSIAM plot's south boundary (SITE_A_FP v5 -> v6 -> v7), from the road's east sidewalk to x = 119 m;
 // 7.5 m asphalt (0..3, under the plaza paving at the shared edge) with a concrete kerb on the plot side, 1.5 m sidewalk,
-// 25 cm x 2 m boundary wall, then an ICS_Foliage lot (0..10) with scrub mounds down to the model's south edge
+// 25 cm x 2 m boundary wall, then an ICS_Foliage lot (0..10) with scrub mounds down to the sim_box south edge
 let SA0 = at(SITE_A_FP, 5);
 let SA1 = at(SITE_A_FP, 6);
 let SA2 = at(SITE_A_FP, 7);
@@ -604,38 +699,87 @@ for i 0..3 {
     lane = merge(lane, extrude(points: quad, height: pick(i, 3, 12, 200), material: pick(i, "ICS_Asphalt", "ICS_Paving", "ICS_Concrete")));
 }
 lane = merge(lane, sweep_box_path(points: [(REX + (SA0.y - w0.y) * kx, SA0.y, 7), (SA1.x, SA1.y, 7), (LXE, LYE, 7)], width: 30, height: 14, up: (0, 0, 1), material: "ICS_Concrete"));
-let B2 = at(BANK_LINE, 2);
-let B3 = at(BANK_LINE, 3);
-let LOT = [(REX + (-16190 - w0.y) * kx, -16190), (B1.x - 200, -16190), (B2.x - 200, B2.y + 200), (B3.x - 200, B3.y + 200), (LXE, LYE - 912), (SA1.x, SA1.y - 912), (REX + (SA0.y - 912 - w0.y) * kx, SA0.y - 912)];
+// lot = (road sidewalk, south sim_box edge, river bank, boundary wall) inset 2 m: drawn 2 m out on the road/edge/wall
+// sides so only the river side ends up 2 m inside the bank
+var LOT_RAW = [(REX + (-24200 - w0.y) * kx - 200 / cth, -24200), (15550, -24200)];
+for i 1..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
+for i 0..4 { let p = at(BANK_LINE, i); LOT_RAW = append(LOT_RAW, (p.x, p.y)); }
+LOT_RAW = append(LOT_RAW, (LXE + 200, LYE - 712));
+LOT_RAW = append(LOT_RAW, (SA1.x, SA1.y - 712));
+LOT_RAW = append(LOT_RAW, (REX + (SA0.y - 712 - w0.y) * kx - 200 / cth, SA0.y - 712));
+let LOT = offset_polygon(points: LOT_RAW, delta: -200);
 lane = merge(lane, extrude(points: LOT, height: 10, material: "ICS_Foliage"));
-// scrub canopy mounds (x, y, radius): low domes 3-6.6 m high, kept >= r + 0.6 m inside the lot (wall, bank, road, model edge)
+// scrub canopy mounds (x, y, radius): low domes 3-6.6 m high, kept >= r + 0.6 m inside the lot (wall, bank, road)
 let MOUNDS = [(-10920, -14730, 800), (-9710, -15450, 600), (-9290, -14170, 600), (-8760, -15010, 900), (-7410, -14110, 700), (-6430, -13900, 800), (-6190, -14960, 600), (-4950, -14860, 700), (-4530, -13860, 700), (-3700, -15090, 800), (-2860, -13800, 700), (-1990, -15040, 700), (-240, -14090, 1000), (-190, -15110, 600), (710, -14680, 600), (1720, -14540, 1000), (2830, -15460, 600), (3530, -14100, 700), (4420, -14800, 700), (4540, -13350, 600), (5600, -14510, 600), (6330, -13600, 700), (6550, -14990, 700), (7570, -14060, 900), (8290, -15120, 700), (8790, -14040, 900), (9650, -15280, 700), (10460, -14850, 700)];
 for i, q in MOUNDS {
     lane = merge(lane, translate(scale(sphere(radius: q.z, segments: 8, material: "ICS_Foliage"), (1, 1, 0.3 + 0.1 * hash(i, seed: 61))), (q.x, q.y, 10 - q.z * 0.15)));
+}
+// the same scrub continues over the lot's extension (y -233 .. -170 m): jittered 12.5 x 11.5 m grid, ~80 % kept,
+// each mound inside the lot and >= r + 0.6 m from its edges
+let nLOT = len(LOT);
+for gy2 0..6 {
+    for gx 0..22 {
+        let id = gx * 31 + gy2;
+        let rr = 600 + 350 * hash(id, seed: 73);
+        let qx = -11200 + gx * 1250 + (hash(id, seed: 71) - 0.5) * 700;
+        let qy = -23300 + gy2 * 1150 + (hash(id, seed: 79) - 0.5) * 500;
+        var ins = 0;
+        var dmin = 1000000;
+        for k 0..nLOT {
+            let a = at(LOT, k);
+            let b = at(LOT, mod(k + 1, nLOT));
+            if (a.y > qy) != (b.y > qy) {
+                if qx < a.x + (qy - a.y) / (b.y - a.y) * (b.x - a.x) { ins = 1 - ins; }
+            }
+            let ab = b - a;
+            let tt = clamp(((qx - a.x) * ab.x + (qy - a.y) * ab.y) / (ab.x * ab.x + ab.y * ab.y), 0, 1);
+            dmin = min(dmin, length((qx - a.x - ab.x * tt, qy - a.y - ab.y * tt, 0)));
+        }
+        if ins * (dmin > rr + 60) * (hash(id, seed: 83) > 0.2) > 0.5 {
+            lane = merge(lane, translate(scale(sphere(radius: rr, segments: 8, material: "ICS_Foliage"), (1, 1, 0.3 + 0.1 * hash(id, seed: 61))), (qx, qy, 10 - rr * 0.15)));
+        }
+    }
 }
 
 out.geo = merge(slab_lo, slab_hi, paving, prom, inlays, basin_wall, basin_rim, basin_water, jets, bank, posts, lamps, piers, gangways, shelters, fbridge, beds, trees, road, lane);
 #end
 
-// ================================================================ LOD1: slab (+ paving / road / lane / lot / lawn surfaces), basin, piers
+// ================================================================ LOD1: slab (paving / foliage top), basin, piers, road, lane, lot, lawns
 #mesh ICS_Site lod: 1
-let B1 = at(BANK_LINE, 1);
-var land = [(-20000, -16190)];
-land = append(land, (B1.x, -16190));
-for i 1..len(BANK_LINE) { let p = at(BANK_LINE, i); land = append(land, (p.x, p.y)); }
-land = append(land, (-20000, 19550));
+let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
+let BNX = 12153;
+var land = [(-24000, -24000)];
+for p in BANK_S { land = append(land, p); }
+for p in BANK_LINE { land = append(land, (p.x, p.y)); }
+land = append(land, (BNX, 24000));
+land = append(land, (-24000, 24000));
+var PLOTS = [];
+for i 2..17 { PLOTS = append(PLOTS, at(SITE_A_FP, i)); }
+for i 12..21 { PLOTS = append(PLOTS, at(TOWER_PLOT_FP, i)); }
+var GREEN = [(-24000, -24000)];
+for p in BANK_S { GREEN = append(GREEN, p); }
+for i 0..6 { let p = at(BANK_LINE, i); GREEN = append(GREEN, (p.x, p.y)); }
+for i 0..5 { GREEN = append(GREEN, at(SITE_A_FP, 6 - i)); }
+for i 0..6 { GREEN = append(GREEN, at(TOWER_PLOT_FP, 20 - i)); }
+for i 17..21 { let p = at(BANK_LINE, i); GREEN = append(GREEN, (p.x, p.y)); }
+GREEN = append(GREEN, (BNX, 24000));
+GREEN = append(GREEN, (-24000, 24000));
 let slab_lo = translate(extrude(points: land, height: 0 - 60 - RIVER_BED_Z, material: "ICS_Concrete"), (0, 0, RIVER_BED_Z));
-let slab_hi = translate(extrude_shape(outer: land, holes: [offset_polygon(points: BASIN_FP, delta: 30)], height: 60, material: "ICS_Paving"), (0, 0, -60));
+let slab_hi = merge(
+    translate(extrude_shape(outer: PLOTS, holes: [offset_polygon(points: BASIN_FP, delta: 30)], height: 60, material: "ICS_Paving"), (0, 0, -60)),
+    translate(extrude(points: GREEN, height: 60, material: "ICS_Foliage"), (0, 0, -60))
+);
 let paving = extrude_shape(outer: PLAZA_FP, holes: [offset_polygon(points: BASIN_FP, delta: 30)], height: 5, material: "ICS_Paving");
 let basin_wall = translate(extrude_shape(outer: offset_polygon(points: BASIN_FP, delta: 30), holes: [BASIN_FP], height: 63, material: "ICS_Concrete"), (0, 0, -61));
 let basin_rim = translate(extrude_shape(outer: offset_polygon(points: BASIN_FP, delta: 55), holes: [offset_polygon(points: BASIN_FP, delta: -4)], height: 21, material: "ICS_White"), (0, 0, 1));
-let basin_water = translate(extrude(points: offset_polygon(points: BASIN_FP, delta: -2), height: 2, material: "ICS_Water"), (0, 0, -32));
+let basin_water = translate(extrude(points: offset_polygon(points: BASIN_FP, delta: -2), height: 2, material: "ICS_Water"), (0, 0, -42));
 let piers = merge(
     part(SITE_Pier, which: 0, clip_x: 15050, mode: 1),
     part(SITE_Pier, which: 1, clip_x: 14800, mode: 1),
     part(SITE_Pier, which: 2, clip_x: 14050, mode: 1),
     part(SITE_Pier, which: 3, clip_x: 13750, mode: 1),
-    part(SITE_Gangway, gy: -9000, x_end: 15700, z0: 5, w: 400, mode: 1),
+    part(SITE_Pier, which: 4, clip_x: 15400, mode: 1),
+    part(SITE_Gangway, gy: -6780, x_end: 16000, z0: 5, w: 400, mode: 1),
     part(SITE_Gangway, gy: -2100, x_end: 15450, z0: 5, w: 900, mode: 1),
     part(SITE_Gangway, gy: 8140, x_end: 14700, z0: 5, w: 400, mode: 1),
     part(SITE_Gangway, gy: 11510, x_end: 14150, z0: 0, w: 170, mode: 1),
@@ -645,9 +789,9 @@ let w0 = at(MALL_FP, 2);
 let w1 = at(MALL_FP, 5);
 let kx = (w1.x - w0.x) / (w1.y - w0.y);
 let cth = 1 / sqrt(1 + kx * kx);
-let ax0 = w0.x + (-16190 - w0.y) * kx - 3440 / cth;
-let ax1 = w0.x + (19550 - w0.y) * kx - 3440 / cth;
-let road = extrude(points: [(ax0 - 1000 / cth, -16190), (ax0 + 1000 / cth, -16190), (ax1 + 1000 / cth, 19550), (ax1 - 1000 / cth, 19550)], height: 5, material: "ICS_Asphalt");
+let ax0 = w0.x + (-24000 - w0.y) * kx - 3440 / cth;
+let ax1 = w0.x + (24000 - w0.y) * kx - 3440 / cth;
+let road = extrude(points: [(ax0 - 1000 / cth, -24000), (ax0 + 1000 / cth, -24000), (ax1 + 1000 / cth, 24000), (ax1 - 1000 / cth, 24000)], height: 5, material: "ICS_Asphalt");
 // lawns (grove + north strip) and the south lane / lot as flat colour patches
 let GROVE_S = [(6450, 4700), (7100, 4560), (10500, 6440), (12020, 7380), (12380, 7880), (6450, 7880)];
 let GROVE_N = [(5950, 8420), (12380, 8420), (12350, 8900), (12150, 11620), (12030, 13190), (12080, 15000), (9250, 15000), (9020, 14700), (9420, 14560), (9600, 14120), (9260, 12230)];
@@ -656,12 +800,17 @@ let lawns = merge(extrude(points: GROVE_S, height: 22, material: "ICS_Foliage"),
 let SA0 = at(SITE_A_FP, 5);
 let SA1 = at(SITE_A_FP, 6);
 let SA2 = at(SITE_A_FP, 7);
-let LYE = SA1.y + (11900 - SA1.x) / (SA2.x - SA1.x) * (SA2.y - SA1.y);
+let LXE = 11900;
+let LYE = SA1.y + (LXE - SA1.x) / (SA2.x - SA1.x) * (SA2.y - SA1.y);
 let REX = w0.x - 3440 / cth + 1270 / cth;
-let lane = extrude(points: [(REX + (SA0.y - w0.y) * kx, SA0.y), (SA1.x, SA1.y), (11900, LYE), (11900, LYE - 750), (SA1.x, SA1.y - 750), (REX + (SA0.y - 750 - w0.y) * kx, SA0.y - 750)], height: 3, material: "ICS_Asphalt");
-let B2 = at(BANK_LINE, 2);
-let B3 = at(BANK_LINE, 3);
-let lot = extrude(points: [(REX + (-16190 - w0.y) * kx, -16190), (B1.x - 200, -16190), (B2.x - 200, B2.y + 200), (B3.x - 200, B3.y + 200), (11900, LYE - 912), (SA1.x, SA1.y - 912), (REX + (SA0.y - 912 - w0.y) * kx, SA0.y - 912)], height: 10, material: "ICS_Foliage");
+let lane = extrude(points: [(REX + (SA0.y - w0.y) * kx, SA0.y), (SA1.x, SA1.y), (LXE, LYE), (LXE, LYE - 750), (SA1.x, SA1.y - 750), (REX + (SA0.y - 750 - w0.y) * kx, SA0.y - 750)], height: 3, material: "ICS_Asphalt");
+var LOT_RAW = [(REX + (-24200 - w0.y) * kx - 200 / cth, -24200), (15550, -24200)];
+for i 1..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
+for i 0..4 { let p = at(BANK_LINE, i); LOT_RAW = append(LOT_RAW, (p.x, p.y)); }
+LOT_RAW = append(LOT_RAW, (LXE + 200, LYE - 712));
+LOT_RAW = append(LOT_RAW, (SA1.x, SA1.y - 712));
+LOT_RAW = append(LOT_RAW, (REX + (SA0.y - 712 - w0.y) * kx - 200 / cth, SA0.y - 712));
+let lot = extrude(points: offset_polygon(points: LOT_RAW, delta: -200), height: 10, material: "ICS_Foliage");
 out.geo = merge(slab_lo, slab_hi, paving, basin_wall, basin_rim, basin_water, piers, road, lawns, lane, lot);
 #end
 
@@ -669,56 +818,78 @@ out.geo = merge(slab_lo, slab_hi, paving, basin_wall, basin_rim, basin_water, pi
 // bank parapet along the whole frontage, fountain kerb ring (<= 1000 verts)
 // The bank uses a Douglas-Peucker subset of BANK_LINE (max deviation 19 cm) and the parapet is one mitred
 // 30 cm band prism per run (12 verts / point), so the full 19-segment frontage plus the basin kerb fit the budget.
+// The land prism follows the same context outline as LOD0/LOD1 (BANK_S, BANK_LINE[0], subset, BANK_N; sim_box limits).
 #mesh ICS_Site collider
-let B1 = at(BANK_LINE, 1);
+let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
 let BK = [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 20];
 var BS = [];
 for i in BK { BS = append(BS, at(BANK_LINE, i)); }
-var land = [(-20000, -16190)];
-land = append(land, (B1.x, -16190));
+var land = [(-24000, -24000)];
+for p in BANK_S { land = append(land, p); }
+let B0 = at(BANK_LINE, 0);
+land = append(land, (B0.x, B0.y));
 for p in BS { land = append(land, (p.x, p.y)); }
-land = append(land, (-20000, 19550));
+land = append(land, (12153, 24000));
+land = append(land, (-24000, 24000));
 let slab = translate(extrude(points: land, height: 200, material: "ICS_Concrete"), (0, 0, -200));
 let piers = merge(
     part(SITE_Pier, which: 0, clip_x: 15050, mode: 2),
     part(SITE_Pier, which: 1, clip_x: 14800, mode: 2),
     part(SITE_Pier, which: 2, clip_x: 14050, mode: 2),
     part(SITE_Pier, which: 3, clip_x: 13750, mode: 2),
-    part(SITE_Gangway, gy: -9000, x_end: 15700, z0: 5, w: 400, mode: 1),
+    part(SITE_Pier, which: 4, clip_x: 15400, mode: 2),
+    part(SITE_Gangway, gy: -6780, x_end: 16000, z0: 5, w: 400, mode: 1),
     part(SITE_Gangway, gy: -2100, x_end: 15450, z0: 5, w: 900, mode: 1),
     part(SITE_Gangway, gy: 8140, x_end: 14700, z0: 5, w: 400, mode: 1),
     part(SITE_Gangway, gy: 11510, x_end: 14150, z0: 0, w: 170, mode: 1),
     beam_between(start: (15210, 5400, -190), end: (15490, 440, -190), cross_width: 300, cross_height: 80, height_direction: (0, 0, 1), material: "ICS_Concrete")
 );
-let GAP_Y = [-9000, -2100, 8140, 11510];
+let GAP_Y = [-6780, -2100, 8140, 11510];
 let GAP_HW = [212, 462, 212, 97];
-// parapet runs along the simplified bank, split only at the four gangway openings
+// parapet runs along the simplified bank, split only at the four gangway openings (y-intervals; BS is increasing in y)
 var subs = [];
 var cur = [at(BS, 0)];
+var run_open = 1;
 let nbs = len(BS);
 for i 0..nbs - 1 {
     let a = at(BS, i);
     let b = at(BS, i + 1);
     let sv = b - a;
-    let L = length(sv);
     var t0 = 2;
     var t1 = 2;
     for gi 0..len(GAP_Y) {
-        let gy = at(GAP_Y, gi);
-        if (gy - a.y) * (gy - b.y) < 0 {
-            let tc = (gy - a.y) / (b.y - a.y);
-            t0 = max(0.001, tc - at(GAP_HW, gi) / L);
-            t1 = min(1, tc + at(GAP_HW, gi) / L);
+        let ya = at(GAP_Y, gi) - at(GAP_HW, gi);
+        let yb = at(GAP_Y, gi) + at(GAP_HW, gi);
+        if ya < b.y {
+            if yb > a.y {
+                t0 = max(0, (ya - a.y) / (b.y - a.y));
+                t1 = min(1, (yb - a.y) / (b.y - a.y));
+            }
         }
     }
-    if t0 < 1 {
-        cur = append(cur, a + sv * t0);
-        subs = append(subs, cur);
-        cur = [a + sv * t1];
+    if t0 < 1.5 {
+        if t0 > 0.0005 {
+            if run_open < 0.5 { cur = [a]; }
+            cur = append(cur, a + sv * t0);
+            subs = append(subs, cur);
+        } else {
+            if run_open > 0.5 { subs = append(subs, cur); }
+        }
+        run_open = 0;
+        if t1 < 0.9995 {
+            cur = [a + sv * t1, b];
+            run_open = 1;
+        }
+    } else {
+        if run_open > 0.5 {
+            cur = append(cur, b);
+        } else {
+            cur = [a, b];
+            run_open = 1;
+        }
     }
-    if abs(t1 - 1) > 0.0005 { cur = append(cur, b); }
 }
-subs = append(subs, cur);
+if run_open > 0.5 { subs = append(subs, cur); }
 var rail = empty();
 for k 0..len(subs) {
     let sp = at(subs, k);

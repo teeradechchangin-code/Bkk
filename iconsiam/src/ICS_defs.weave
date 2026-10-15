@@ -15,7 +15,7 @@ let Z3_ROOF = 4200;
 let Z4_ROOF = 5800;
 let WHITE_PARAPET_TOP = 6200;
 let CROWN_BASE = 5800;
-let CROWN_TOP = 7500;
+let CROWN_TOP = 7700;   // rev C (Management D12): +2 m allowance so the whole crown rim clears the white parapet from the river (photos read taller than 75 m)
 let MALL_FLOOR_G = 650;
 let MALL_FLOOR_UP = 550;
 // Magnolias Waterfront Residences (south tower, taller)
