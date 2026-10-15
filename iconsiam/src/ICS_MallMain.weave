@@ -1,11 +1,17 @@
-// ICS_MallMain - Z4 main block of ICONSIAM (Main-block crew), scene QC rework round 1
+// ICS_MallMain - Z4 main block of ICONSIAM (Main-block crew), scene QC rework round 2
 // World cm, Z up, +X east, +Y north, placed at (0,0,0). Everything is derived from the shared #meshdefs.
+// Scene QC r2: (QC-A/QC-B) S-face pleats rebuilt for facet contrast - a new station S1 10 m past the sign zone; from S1
+// to the SE tip every fold projects 3.0 m beyond its recessed bottom (valley) edge, the upper facet is set at 25 deg
+// up/out (top-edge recess = upper facet height * tan 25) and the lower facet stays >= 31 deg below horizontal (single
+// fold direction, D12b). (ENG major, D9) no ICS_WarmLight paint on the N/W-run fold facets; only the 20 cm crease
+// beads and 35 cm reveal lines glow. (ENG minor) only members above the crown stem bottom (56.0 m fascia/strip,
+// coping) break at STEM_Y; the 45.0/50.5 m fascias and strips run through.
 // White pleated skin on the S/W/N + notch faces (Z4_FP edges 2->3 ... 0->1, rounded SW corner); glass curtain wall
 // on the river face (edge 1->2 = the u=40 line) above the riverfront crew's Z3 terrace; roof plant clear of the
 // crown crew's outline.
 // Scene QC r1 (D3): the S face (SW arc end -> SE tip) is rebuilt as crisp two-facet pleats. Per tier: the upper facet
 // leans out from the recessed top edge to a sharp crease, the lower facet folds back in to the recessed bottom edge.
-// The fold amplitude grows linearly along the face (0 over the 26 m sign zone, 2.8 m at the SE tip); the crease runs
+// The fold is flat over the 26 m sign zone and (r2) fully developed (3.0 m) from S1, 10 m further on; the crease runs
 // diagonally from the top of the tier (sign-zone end) down to the bottom of the tier at the river end, and over the
 // last 52 m the tier boundaries also drop (up to 4.5 m at mid height, parapet and canopy fixed), so each crease falls
 // ~one tier height and the bands sweep down to the river (Photo B). The SE tips fan out along the u=40 plane (+0.5 m
@@ -39,13 +45,17 @@ let BAND_H = TIER_H - GAP;
 let R_SW = 1200;                   // rounded SW corner radius
 let ARC_N = select(8, 4, lod == 1);    // LOD1 rounds the corner with 4 segments (vertex budget)
 let L1_PLEATS = 1;                 // LOD1 keeps the pleated tiers (far-view identity)
-// ---- S-face pleats (scene QC r1): s = distance along the S face from the SW arc end ----
-let PL_A = 280;                    // fold amplitude at the SE tip (crease vs. recessed tier edges; QC-A 2.5-3 m)
+// ---- S-face pleats (scene QC r1/r2): s = distance along the S face from the SW arc end ----
+let PL_A = 300;                    // r2 (QC-B): crease projection beyond the recessed bottom (valley) edge, S1 .. SE tip
+let PL_UP = 25;                    // r2 (QC-A): upper facet normal tilted 25 deg up/out (top-edge recess derived from it)
+let PL_TMAX = 320;                 // top-edge recess cap (band >= 55 cm deep at its top edge, BACK = -375)
 let PL_S0 = 2600;                  // sign zone: flat tilted facets under the ICONSIAM / Takashimaya signs
+let PL_S1 = 1000;                  // r2: the full fold develops over 10 m past the sign zone (station S1)
 let PL_SWEEP = 5200;               // final sweep to the SE tip (QC-B: last 40-60 m, Z4_FP v10 -> v0 -> v1)
 let PL_C0 = 0.985;                 // crease height (fraction of the tier) at the sign-zone end: tier top
-let PL_CD = 0.45;                  // ... at the start of the sweep
-let PL_C1 = 0.08;                  // ... at the SE tip: tier bottom
+let PL_CS = 0.66;                  // ... at S1 (with the 3 m projection the lower facet sits >= 31 deg below horizontal)
+let PL_CD = 0.42;                  // ... at the start of the sweep
+let PL_C1 = 0.10;                  // ... at the SE tip: tier bottom
 let PL_DROP = 450;                 // tier-boundary drop at mid height at the SE tip (parapet and canopy stay fixed):
                                    // with the in-tier fall the mid-height creases drop ~7.3 m over the sweep
 let PL_FAN = 50;                   // SE tip fan: +0.5 m per tier going down (QC-B) ...
@@ -74,14 +84,15 @@ let NG = (TG.y, 0 - TG.x, 0);      // its outward normal (east)
 // mode -3 = end on the glass line, -1 = mitred vertex, -2 = rounded corner, 0..1 = point along edge.
 // N/W run (NE end -> SW arc end): RMID > 0 keeps the NE wing's vertical upper strip + uplit wedge (mirror of the
 // old SE end). West run: one monotone FOLD_MIN fold, so the SW corner and west face read as continuous white bands.
-// S run (SW arc end KA -> SE tip): extra stations at the sign-zone end (S0) and the sweep start (SD); its pleats are
-// built from the PL_* controls below, not from the fold fraction.
+// S run (SW arc end KA -> SE tip): extra stations at the sign-zone end (S0), the full-fold start (S1, r2) and the
+// sweep start (SD); its pleats are built from the PL_* controls below, not from the fold fraction.
 let TL_SW = R_SW / tan(acos(clamp(dot(at(ET, 8) * -1, at(ET, 9)), -1, 1)) / 2);
 let E9 = length(at(P3, 10) - at(P3, 9));
 let F_S0 = (TL_SW + PL_S0) / E9;
+let F_S1 = (TL_SW + PL_S0 + PL_S1) / E9;
 let F_SD = 1 - (PL_SWEEP - length(at(P3, 0) - at(P3, 10)) - length(at(P3, 1) - at(P3, 0))) / E9;
-let ROWS = [(2, -3, 1), (3, -1, 0), (4, -1, 1), (5, -1, 1), (6, -1, 0), (7, -1, FOLD_MIN), (8, -1, FOLD_MIN), (9, -2, FOLD_MIN), (9, F_S0, 1), (9, F_SD, 1), (10, -1, 1), (0, -1, 1), (1, -3, 1)];
-let RMID = [0.40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+let ROWS = [(2, -3, 1), (3, -1, 0), (4, -1, 1), (5, -1, 1), (6, -1, 0), (7, -1, FOLD_MIN), (8, -1, FOLD_MIN), (9, -2, FOLD_MIN), (9, F_S0, 1), (9, F_S1, 1), (9, F_SD, 1), (10, -1, 1), (0, -1, 1), (1, -3, 1)];
+let RMID = [0.40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 var SP = [];
 var SN = [];
 var SR = [];
@@ -134,7 +145,7 @@ for ri, row in ROWS {
     }
 }
 let NS = len(SR);
-let MB = NS - KA;                  // S-run stations: KA, S0, SD, v10, v0, v1
+let MB = NS - KA;                  // S-run stations: KA, S0, S1, SD, v10, v0, v1
 // first cage point of each N/W-run station (4 points, +1 when it carries a mid crease)
 var IX = [];
 var acc = 0;
@@ -151,8 +162,9 @@ for k in 0..NS {
 }
 let SL_END = at(SS, NS - 1);
 let S_SD = SL_END - PL_SWEEP;
-let S_V10 = at(SS, KA + 3);
-var SU = [];                       // amplitude ramp 0..1 (0 in the sign zone)
+let S_S1 = PL_S0 + PL_S1;
+let S_V10 = at(SS, KA + 4);
+var SU = [];                       // fold switch: 0 = flat tilted sign facet (KA, S0), 1 = full fold (S1 .. SE tip)
 var SCF = [];                      // crease height fraction
 var SWD = [];                      // tier-boundary drop weight (sweep)
 var SWF = [];                      // SE tip fan weight (v10 -> v1)
@@ -162,10 +174,10 @@ for k in 0..NS {
     var cf = PL_C0;
     if s > S_SD {
         cf = PL_CD + (PL_C1 - PL_CD) * (s - S_SD) / PL_SWEEP;
-    } else if s > PL_S0 {
-        cf = PL_C0 + (PL_CD - PL_C0) * (s - PL_S0) / (S_SD - PL_S0);
+    } else if s > PL_S0 + 1 {
+        cf = PL_CS + (PL_CD - PL_CS) * (s - S_S1) / (S_SD - S_S1);
     }
-    SU = append(SU, clamp((s - PL_S0) / (SL_END - PL_S0), 0, 1) * ins);
+    SU = append(SU, (s > PL_S0 + 1) * ins);
     SCF = append(SCF, cf);
     SWD = append(SWD, smoothstep(0, 1, (s - S_SD) / PL_SWEEP) * ins);
     SWF = append(SWF, clamp((s - S_V10) / (SL_END - S_V10), 0, 1) * ins);
@@ -200,21 +212,29 @@ let glass = merge(
     beam_between(start: GA + (0, 0, (ZL0 + ZL1) / 2), end: GB + (0, 0, (ZL0 + ZL1) / 2), cross_width: 50, cross_height: ZL1 - ZL0, height_direction: (0, 0, 1), material: "ICS_ShopLit"),
     beam_between(start: GA + (0, 0, (ZL1 + ZG1) / 2), end: GB + (0, 0, (ZL1 + ZG1) / 2), cross_width: 50, cross_height: ZG1 - ZL1, height_direction: (0, 0, 1), material: "ICS_MallGlass"));
 // crown stem interface hook (D5): STEM_Y = the crown stem axis y (cm) where it crosses the u=40 face. The river-face
-// mullions within +-110 cm of the stem are skipped and the 45.0/50.5/56.0 m fascias, their light strips and the
-// coping break there, so they never cut into or coincide with the 2 m stem post.
+// mullions within +-110 cm of the stem are skipped; of the horizontal members only those above the stem post's
+// bottom (STEM_Z0 = 52.0 m: the 56.0 m fascia, its light strip and the coping) break there, so they never cut into or
+// coincide with the 2 m stem post. Scene QC r2 (ENG minor): the 45.0/50.5 m fascias and their warm strips run through
+// under the post (it clears the 50.5 m fascia by 1.5 m), so the lit floor lines have no gaps above/below the logo.
 let STEM_Y = -1906;                // Management D8: crown frozen at CROWN_C rev B (-750,-2250); stem axis y -19.06 m
+let STEM_Z0 = 5200;                // crown stem post bottom (z)
 let ELEN = length(E2 - E1);
 let TS = (STEM_Y - E1.y) / TG.y;   // stem station along the glass line, measured from E1
-var SEGS = [(0, ELEN)];
+let SEG1 = [(0, ELEN)];            // continuous members (below STEM_Z0)
+var SEGS = [(0, ELEN)];            // members above STEM_Z0, split +-110 cm at the stem
 if (TS > 110) * (TS < ELEN - 110) { SEGS = [(0, TS - 110), (TS + 110, ELEN)]; }
 var coping = empty();
-var floorlit = empty();
 for s in SEGS {
     coping = merge(coping, beam_between(start: E1 + TG * s.x + NG * -7.5 + (0, 0, Z4_ROOF + 30), end: E1 + TG * s.y + NG * -7.5 + (0, 0, Z4_ROOF + 30), cross_width: 105, cross_height: 100, height_direction: (0, 0, 1), material: "ICS_White"));
-    // QC-A: warm floor-edge lines at the 5.5 m floor pitch, 24 cm strips set on the 45.0/50.5/56.0 m slab fascias
-    // (u +12..+34 cm: 11 cm behind the fascia face, 6 cm behind the mullion fronts; 1 cm into the fascia top)
-    for f in 7..10 {
-        let zf = MALL_FLOOR_G + f * MALL_FLOOR_UP;
+}
+// QC-A: warm floor-edge lines at the 5.5 m floor pitch, 24 cm strips set on the 45.0/50.5/56.0 m slab fascias
+// (u +12..+34 cm: 11 cm behind the fascia face, 6 cm behind the mullion fronts; 1 cm into the fascia top)
+var floorlit = empty();
+for f in 7..10 {
+    let zf = MALL_FLOOR_G + f * MALL_FLOOR_UP;
+    var SG = SEG1;
+    if zf >= STEM_Z0 { SG = SEGS; }
+    for s in SG {
         floorlit = merge(floorlit, beam_between(start: E1 + TG * s.x + NG * 23 + (0, 0, zf + 46), end: E1 + TG * s.y + NG * 23 + (0, 0, zf + 46), cross_width: 22, cross_height: 24, height_direction: (0, 0, 1), material: "ICS_WarmLight"));
     }
 }
@@ -223,8 +243,9 @@ var skin = empty();
 if (lod == 0) + (lod == 1) * L1_PLEATS {
     for i in 0..N_TIER {
         // ---- N/W run (stations 0..KA): one closed cage per tier. Per station: +0 bottom-out (recessed RECESS*f),
-        // +1 top-out (on the outline), +2 bottom-back, +3 top-back, [+4 mid crease on the outline]. Down-facing
-        // facets/undersides are uplit ICS_WarmLight (accepted r3 look of the west/north faces). ----
+        // +1 top-out (on the outline), +2 bottom-back, +3 top-back, [+4 mid crease on the outline]. Scene QC r2 (ENG
+        // major, D9): every fold facet and underside stays ICS_White (no emissive surfaces); the warm light is only the
+        // 20 cm crease bead along each fold (incl. the NE-wing wedge crease, SM > 0) and the 35 cm reveal lines. ----
         let zb = Z_BAND0 + i * TIER_H + GAP;
         let zt = Z_BAND0 + (i + 1) * TIER_H;
         var pts = [];
@@ -249,7 +270,7 @@ if (lod == 0) + (lod == 1) * L1_PLEATS {
             var zs0 = 1;               // crease start / end lies on the tier bottom or top plane
             var zs1 = 1;
             if at(SM, k) > 0 {
-                // NE wing north face: vertical upper strip + uplit wedge tapering west
+                // NE wing north face: vertical upper strip + white wedge tapering west (warm bead on its crease below)
                 fcs = append(fcs, [b1, b1 + 1, b0 + 1]);
                 fcs = append(fcs, [b1, b0 + 1, b0 + 4]);
                 fcs = append(fcs, [b1, b0 + 4, b0]);
@@ -286,8 +307,7 @@ if (lod == 0) + (lod == 1) * L1_PLEATS {
         if at(SM, 0) > 0 { fcs = append(fcs, [0, 4, 1, 3, 2]); } else { fcs = append(fcs, [0, 1, 3, 2]); }
         fcs = append(fcs, [LL, LL + 2, LL + 3, LL + 1]);
         let tq = mesh_cage(points: pts, faces: fcs, material: "ICS_White");
-        let tw = paint(tq, material: "ICS_WarmLight", selection: select_faces(tq, normal: (0, 0, -1), angle: 72));
-        let tc = paint(tw, material: "ICS_Gold", selection: select_faces(tw, normal: NG, angle: 4));
+        let tc = paint(tq, material: "ICS_Gold", selection: select_faces(tq, normal: NG, angle: 4));
         skin = merge(skin, smooth_shade(tc, angle: 14));
         if lod == 0 {
             // 25 cm warm bead on the NE gold cap's outer edge (top -> mid crease -> bottom), only above ZG0: below
@@ -316,21 +336,25 @@ if (lod == 0) + (lod == 1) * L1_PLEATS {
         // ---- S run (stations KA..NS-1): crisp two-facet pleat per tier. Per station: +0 bottom edge (valley),
         // +1 crease (outermost), +2 top edge (valley), +3 bottom-back, +4 top-back. Upper facet (top edge -> crease)
         // leans out and faces up, lower facet (crease -> bottom edge) folds in and faces down; facets are explicit
-        // triangles, flat shaded (sharp creases, no pillow rounding). ----
+        // triangles, flat shaded (sharp creases, no pillow rounding).
+        // KA, S0: flat tilted sign facet (bottom -1.51 m, top on the outline, crease at the top).
+        // S1 .. SE tip (r2): crease on the outline (+ the SE tip fan), bottom edge PL_A = 3.0 m behind it, top edge
+        // recessed by the upper facet height * tan(PL_UP), so the upper facet faces 25 deg up/out (bright) and the lower
+        // facet 31-84 deg down (the dark undercut); the crease still falls diagonally along the face (PL_C*). ----
         var qb = [];
         var qf = [];
         for j in 0..MB {
             let k = KA + j;
             let p = at(SP, k);
             let n = at(SN, k);
-            let su = at(SU, k);
+            let fo = at(SU, k);
             let wd = at(SWD, k);
             let cf = at(SCF, k);
-            let ob = 0 - RECESS * FOLD_MIN + (RECESS * FOLD_MIN - PL_A) * su;
-            let ot = 0 - PL_A * su;
             let zb2 = Z_BAND0 + i * TIER_H + GAP - PL_DROP * at(DROP_H, i) * wd;
             let zt2 = Z_BAND0 + (i + 1) * TIER_H - PL_DROP * at(DROP_H, i + 1) * wd;
-            let oc = ob + (ot - ob) * cf + PL_A * su + (PL_FAN * (N_TIER - 1 - i) - PL_FAN0) * at(SWF, k);
+            let ob = select(0 - RECESS * FOLD_MIN, 0 - PL_A, fo);
+            let ot = select(0, 0 - min(PL_TMAX, (1 - cf) * (zt2 - zb2) * tan(PL_UP)), fo);
+            let oc = select(ob + (ot - ob) * cf, (PL_FAN * (N_TIER - 1 - i) - PL_FAN0) * at(SWF, k), fo);
             qb = append(qb, p + n * ob + (0, 0, zb2));
             qb = append(qb, p + n * oc + (0, 0, zb2 + (zt2 - zb2) * cf));
             qb = append(qb, p + n * ot + (0, 0, zt2));
@@ -346,7 +370,8 @@ if (lod == 0) + (lod == 1) * L1_PLEATS {
             qf = append(qf, [a, b + 1, a + 1]);
             qf = append(qf, [a + 2, b + 2, b + 4, a + 4]);
             qf = append(qf, [a, a + 3, b + 3, b]);
-            qf = append(qf, [a + 3, a + 4, b + 4, b + 3]);
+            // band back face (25 cm inside the core, never visible): LOD1 leaves it open to stay inside its 10 % cap
+            if lod == 0 { qf = append(qf, [a + 3, a + 4, b + 4, b + 3]); }
         }
         let LB = 5 * (MB - 1);
         qf = append(qf, [1, 2, 4]);
@@ -509,8 +534,9 @@ if lod == 0 {
         }
     }
     // ---- entrances: lit glazing bay + gold canopy fascia (S face, W face, N face, NE notch) ----
-    // the S entrance sits 45 % along S0 -> SD (54 m from the SW arc end, as before the extra S-run stations)
-    let ENT = [(KA + 1, 0.45, 1), (5, 0.54, 1), (3, 0.5, 1), (1, 0.55, 1)];
+    // the S entrance stays 54 m from the SW arc end (45 % along S0 -> SD), now inside the S1 -> SD span (r2 station S1)
+    let S_ENT = PL_S0 + 0.45 * (S_SD - PL_S0);
+    let ENT = [(KA + 2, (S_ENT - S_S1) / (S_SD - S_S1), 1), (5, 0.54, 1), (3, 0.5, 1), (1, 0.55, 1)];
     for e in ENT {
         let k = e.x;
         let pa = at(SP, k);
@@ -526,7 +552,9 @@ if lod == 0 {
     // ---- east curtain wall above the Z3 terrace: slab-edge fascias (45.0 / 50.5 / 56.0 m), dark mullions ----
     for f in 7..10 {
         let zf = MALL_FLOOR_G + f * MALL_FLOOR_UP;
-        for s in SEGS {
+        var SG = SEG1;
+        if zf >= STEM_Z0 { SG = SEGS; }
+        for s in SG {
             skin = merge(skin, beam_between(start: E1 + TG * s.x + NG * 17.5 + (0, 0, zf), end: E1 + TG * s.y + NG * 17.5 + (0, 0, zf), cross_width: 55, cross_height: 70, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
         }
     }

@@ -19,6 +19,17 @@
 // emblem near the NE end of the river face, ICS_WarmLight uplight strip along the box base + lit coping line, and
 // an infinity pool whose water runs over the SE (river) coping. The champagne cast of the glass itself is the
 // palette tint of ICS_TowerGlass2 (Management, world/00_base.weave).
+// Scene QC r2 (QC-A major "pale lilac-white tower" vs Magnolias' dark navy, Photo A = matched dark pair):
+// white is now only a fine line. Balcony slabs = 14 cm ICS_DarkMetal body + 18 cm ICS_White front fascia (was a
+// 40-42 cm all-white slab whose white soffit/top also read from cameras A/B); floor bands 30 -> 10 cm; 150 cm corner
+// piers ICS_White -> ICS_DarkMetal (Photo A corners read dark); parapet faces ICS_DarkMetal under a thin ICS_White
+// top cap; ICS_White stays on parapet tops, fascias/bands, BMU and pool rim. LOD1 follows (piers, 18 cm rings).
+// Scene QC r2 (QC-A/QC-B minors "flat matte brown box"): the box faces were already ICS_Gold since r1 and still
+// read (111,71,29) vs Photo B (134,118,80): the ~0.94-metallic slot mirrors the dark horizon/ground from both
+// cameras and the D13 box lights only make specular dots on it. Faces/coping/joints -> BOX_MAT = ICS_GoldRoof (the
+// D13-brightened palette gold, metallic 0.6, so the box takes diffuse sky + engine light; one constant, switch
+// back to "ICS_Gold" if Management rules the slot crown-only), + 15 cm ICS_Gold fins 20 cm proud at ~1.5 m
+// centres, + a thin ICS_WarmLight cove under the coping lip (roof-garden edge) beside the existing foot/coping lines.
 
 #meshpart MO_Tower
 param lodq = 0 range 0..2;
@@ -55,6 +66,11 @@ let PW0 = -24;
 let PW1 = 390;
 let PL0 = 400;
 let PL1 = 590;
+// Scene QC r2: podium box cladding slot, slab fascia / body thickness (fine white line on a dark slab)
+let BOX_MAT = "ICS_GoldRoof";
+let FAS_H = 18;
+let SLB_H = 14;
+let FIN_P = 150;
 
 // ---------------- plan polygons ----------------
 // P1: MO_FP without its narrow N bow tip (beyond U_NE + 6 m); P2: drop vertices whose two edges are both < 4 m
@@ -203,8 +219,9 @@ let glass_sw = translate(extrude(points: SWP, height: SW_ROOF - ZS0, material: "
 let glass_ne = translate(extrude(points: NEP, height: NE_ROOF - ZS0, material: "ICS_TowerGlass2"), (0, 0, ZS0));
 let roof_sw = translate(extrude(points: offset_polygon(points: SWP, delta: -20), height: 60, material: "ICS_DarkMetal"), (0, 0, SW_ROOF - 20));
 let roof_ne = translate(extrude(points: offset_polygon(points: NEP, delta: -20), height: 60, material: "ICS_DarkMetal"), (0, 0, NE_ROOF - 20));
-let par_sw = translate(extrude_shape(outer: offset_polygon(points: SWP, delta: 40), holes: [offset_polygon(points: SWP, delta: -50)], height: 200, material: "ICS_White"), (0, 0, SW_ROOF - 30));
-let par_ne = translate(extrude_shape(outer: offset_polygon(points: NEP, delta: 40), holes: [offset_polygon(points: NEP, delta: -50)], height: 200, material: "ICS_White"), (0, 0, NE_ROOF - 30));
+// parapets: dark metal faces (Scene QC r2) under a thin white top cap 6 cm proud both sides (overlaps the body 4 cm)
+let par_sw = merge(translate(extrude_shape(outer: offset_polygon(points: SWP, delta: 40), holes: [offset_polygon(points: SWP, delta: -50)], height: 186, material: "ICS_DarkMetal"), (0, 0, SW_ROOF - 30)), translate(extrude_shape(outer: offset_polygon(points: SWP, delta: 46), holes: [offset_polygon(points: SWP, delta: -56)], height: 16, material: "ICS_White"), (0, 0, SW_ROOF + 152)));
+let par_ne = merge(translate(extrude_shape(outer: offset_polygon(points: NEP, delta: 40), holes: [offset_polygon(points: NEP, delta: -50)], height: 186, material: "ICS_DarkMetal"), (0, 0, NE_ROOF - 30)), translate(extrude_shape(outer: offset_polygon(points: NEP, delta: 46), holes: [offset_polygon(points: NEP, delta: -56)], height: 16, material: "ICS_White"), (0, 0, NE_ROOF + 152)));
 
 // gold spine blade: profile in (v, z), extruded BT along u; sail crown + mast; the foot leans back behind the pool
 var BP = [];
@@ -261,9 +278,12 @@ if lodq == 0 {
   let fp_in = offset_polygon(points: MO_FP, delta: -250);
   let lobby = translate(extrude(points: fp_in, height: Z_LOB + 20, material: "ICS_ShopLit"), (0, 0, -10));
   let arcade = extrude_shape(outer: MO_FP, holes: [offset_polygon(points: MO_FP, delta: -255)], height: 3, material: "ICS_Paving");
-  // smooth champagne box (Photo A/B: one solid satin-gold volume)
-  let gbox = translate(extrude(points: MO_FP, height: LAT_H, material: "ICS_Gold"), (0, 0, Z_LOB));
-  let coping = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: 15), holes: [offset_polygon(points: MO_FP, delta: -60)], height: 65, material: "ICS_Gold"), (0, 0, Z_BOX - 20));
+  // bright gold box (Photo A/B: one solid warm-gold volume, uplit) - Scene QC r2: BOX_MAT (see header)
+  let gbox = translate(extrude(points: MO_FP, height: LAT_H, material: BOX_MAT), (0, 0, Z_LOB));
+  let coping = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: 15), holes: [offset_polygon(points: MO_FP, delta: -60)], height: 65, material: BOX_MAT), (0, 0, Z_BOX - 20));
+  // thin warm cove tucked under the coping lip (roof-garden edge): 6 cm exposed below the lip, 13 cm proud of the
+  // face, embedded 2 cm into the face and 2 cm up into the coping (no floating strip, no coplanar faces)
+  let cope_cove = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: 13), holes: [offset_polygon(points: MO_FP, delta: -2)], height: 8, material: "ICS_WarmLight"), (0, 0, Z_BOX - 26));
   let soffit_light = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: -30), holes: [offset_polygon(points: MO_FP, delta: -90)], height: 10, material: "ICS_WarmLight"), (0, 0, Z_LOB - 15));
   // warm uplight strip along the box base (light trough lens, 20 cm proud) and a lit line on the coping front
   let wash = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: 20), holes: [offset_polygon(points: MO_FP, delta: -3)], height: 45, material: "ICS_WarmLight"), (0, 0, Z_LOB + 5));
@@ -291,7 +311,7 @@ if lodq == 0 {
         if zha - zla > 40 {
           let sa0 = 15 + ca + (zla - Z_LOB) * LR;
           let sa1 = 15 + ca + (zha - Z_LOB) * LR;
-          PL = append(PL, beam_between(start: (a.x + ex * sa0 + ox * 0.5, a.y + ey * sa0 + oy * 0.5, zla), end: (a.x + ex * sa1 + ox * 0.5, a.y + ey * sa1 + oy * 0.5, zha), cross_width: 8, cross_height: 5, height_direction: (ox, oy, 0), material: "ICS_Gold"));
+          PL = append(PL, beam_between(start: (a.x + ex * sa0 + ox * 0.5, a.y + ey * sa0 + oy * 0.5, zla), end: (a.x + ex * sa1 + ox * 0.5, a.y + ey * sa1 + oy * 0.5, zha), cross_width: 8, cross_height: 5, height_direction: (ox, oy, 0), material: BOX_MAT));
         }
         let cb = ph + k * DW;
         let zlb = max(Z_LOB + 65, Z_LOB + (cb - sl) / LR);
@@ -299,7 +319,20 @@ if lodq == 0 {
         if zhb - zlb > 40 {
           let sb0 = 15 + cb - (zlb - Z_LOB) * LR;
           let sb1 = 15 + cb - (zhb - Z_LOB) * LR;
-          PL = append(PL, beam_between(start: (a.x + ex * sb0 + ox * 1.5, a.y + ey * sb0 + oy * 1.5, zlb), end: (a.x + ex * sb1 + ox * 1.5, a.y + ey * sb1 + oy * 1.5, zhb), cross_width: 8, cross_height: 7, height_direction: (ox, oy, 0), material: "ICS_Gold"));
+          PL = append(PL, beam_between(start: (a.x + ex * sb0 + ox * 1.5, a.y + ey * sb0 + oy * 1.5, zlb), end: (a.x + ex * sb1 + ox * 1.5, a.y + ey * sb1 + oy * 1.5, zhb), cross_width: 8, cross_height: 7, height_direction: (ox, oy, 0), material: BOX_MAT));
+        }
+      }
+    }
+    // Scene QC r2: vertical rhythm of 15 cm ICS_Gold fins, 20 cm proud (embedded 2 cm), ~1.5 m centres, from above
+    // the foot uplight strip to 9 cm under the coping cove; >= 60 cm clear of corners, clear of the river emblem
+    if el > 300 {
+      let nfin = max(1, round(el / FIN_P));
+      let fpit = el / nfin;
+      for j in 0..32 {
+        let sf = (j + 0.5) * fpit;
+        let clr_em = select(1, abs(sf - (el - 480)) > 235, i == ISE);
+        if (j < nfin) * (sf >= 60) * (sf <= el - 60) * clr_em > 0 {
+          PL = append(PL, beam_between(start: (a.x + ex * sf + ox * 9, a.y + ey * sf + oy * 9, Z_LOB + 55), end: (a.x + ex * sf + ox * 9, a.y + ey * sf + oy * 9, Z_BOX - 35), cross_width: 15, cross_height: 22, height_direction: (ox, oy, 0), material: "ICS_Gold"));
         }
       }
     }
@@ -341,16 +374,18 @@ if lodq == 0 {
       }
     }
   }
-  podium = merge(lobby, arcade, gbox, coping, soffit_light, wash, cope_light, merge(PL));
+  podium = merge(lobby, arcade, gbox, coping, soffit_light, wash, cope_light, cope_cove, merge(PL));
 
-  // ---- tower facade: pale corner piers, dark bay piers + mullion fins, white floor bands (Photo A/B) ----
+  // ---- tower facade: dark corner + bay piers, mullion fins, fine white floor lines (Photo A dark pair, Photo B rhythm) ----
+  // Scene QC r2: floor band 10 cm (level - 2 .. + 8 cm), nested 2 cm inside the 14 cm slab body (level - 4 .. + 10 cm)
+  // which sits inside the 18 cm white fascia (level - 6 .. + 12 cm): no coplanar top/bottom faces
   var FL = [];
   var BL = [];
   for bb in 0..2 {
     let PP = pick(bb, SWP, NEP);
     let RF = pick(bb, SW_ROOF, NE_ROOF);
     let np = len(PP);
-    let band = translate(extrude(points: offset_polygon(points: PP, delta: 35), height: 30, material: "ICS_White"), (0, 0, Z_BOX + FH - 15));
+    let band = translate(extrude(points: offset_polygon(points: PP, delta: 35), height: 10, material: "ICS_White"), (0, 0, Z_BOX + FH - 2));
     FL = append(FL, array(band, count: NNEF, offset: (0, 0, FH)));
     if bb == 0 {
       for m in 1..4 {
@@ -376,12 +411,12 @@ if lodq == 0 {
       let short_p = (elp < 250) * (abs(uz - U_SP) >= 5);
       let onu = ox * CU + oy * SU;
       let onv = oy * CU - ox * SU;
-      // single corner pier; two shaft vertices < 2.5 m apart share one pier on their midpoint
+      // single corner pier; two shaft vertices < 2.5 m apart share one pier on their midpoint (Scene QC r2: dark metal)
       if short_n > 0.5 {
-        FL = append(FL, beam_between(start: ((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5, ZS0), end: ((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5, RF + 450), cross_width: el + 30, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_White"));
+        FL = append(FL, beam_between(start: ((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5, ZS0), end: ((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5, RF + 450), cross_width: el + 30, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_DarkMetal"));
       }
       if (a_sp < 0.5) * (short_n < 0.5) * (short_p < 0.5) > 0 {
-        FL = append(FL, beam_between(start: (pa.x, pa.y, ZS0), end: (pa.x, pa.y, RF + 450), cross_width: 150, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_White"));
+        FL = append(FL, beam_between(start: (pa.x, pa.y, ZS0), end: (pa.x, pa.y, RF + 450), cross_width: 150, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_DarkMetal"));
       }
       if on_sp < 0.5 {
         let nb = max(1, round(el / 1100));
@@ -431,10 +466,13 @@ if lodq == 0 {
               let y0 = pa.y + ey * s0;
               let x1 = pa.x + ex * s1;
               let y1 = pa.y + ey * s1;
-              let slab = beam_between(start: (x0 + ox * (BAL_D / 2 - 5), y0 + oy * (BAL_D / 2 - 5), zk + 3), end: (x1 + ox * (BAL_D / 2 - 5), y1 + oy * (BAL_D / 2 - 5), zk + 3), cross_width: BAL_D + 10, cross_height: 42, height_direction: (0, 0, 1), material: "ICS_White");
+              // Scene QC r2: dark 14 cm slab body (-10 .. BAL_D - 4 off the face, 2 cm short at both ends) + 18 cm white
+              // front fascia (BAL_D - 6 .. BAL_D + 2): only a fine white line reads, no white soffit/top
+              let slab = beam_between(start: (x0 + ex * 2 + ox * (BAL_D / 2 - 7), y0 + ey * 2 + oy * (BAL_D / 2 - 7), zk + 3), end: (x1 - ex * 2 + ox * (BAL_D / 2 - 7), y1 - ey * 2 + oy * (BAL_D / 2 - 7), zk + 3), cross_width: BAL_D + 6, cross_height: SLB_H, height_direction: (0, 0, 1), material: "ICS_DarkMetal");
+              let fas = beam_between(start: (x0 + ox * (BAL_D - 2), y0 + oy * (BAL_D - 2), zk + 3), end: (x1 + ox * (BAL_D - 2), y1 + oy * (BAL_D - 2), zk + 3), cross_width: 8, cross_height: FAS_H, height_direction: (0, 0, 1), material: "ICS_White");
               let gl = beam_between(start: (x0 + ox * (BAL_D - 6), y0 + oy * (BAL_D - 6), zk + 61), end: (x1 + ox * (BAL_D - 6), y1 + oy * (BAL_D - 6), zk + 61), cross_width: 3, cross_height: 106, height_direction: (0, 0, 1), material: "ICS_SolidGlass");
               let rl = beam_between(start: (x0 + ox * (BAL_D - 6), y0 + oy * (BAL_D - 6), zk + 118), end: (x1 + ox * (BAL_D - 6), y1 + oy * (BAL_D - 6), zk + 118), cross_width: 8, cross_height: 8, height_direction: (0, 0, 1), material: "ICS_DarkMetal");
-              tier = merge(slab, gl, rl);
+              tier = merge(slab, fas, gl, rl);
               has_t = 1;
             }
             if (btype == 3) * (s1 - s0 > 200) > 0 {
@@ -442,13 +480,17 @@ if lodq == 0 {
               let y0 = pa.y + ey * s0;
               let x1 = pa.x + ex * s1;
               let y1 = pa.y + ey * s1;
-              tier = beam_between(start: (x0 + ox * 25, y0 + oy * 25, zk + 3), end: (x1 + ox * 25, y1 + oy * 25, zk + 3), cross_width: 70, cross_height: 42, height_direction: (0, 0, 1), material: "ICS_White");
+              // Scene QC r2: dark 14 cm slab body (-10 .. 56 off the face) + 18 cm white fascia (54 .. 62)
+              let sl3 = beam_between(start: (x0 + ex * 2 + ox * 23, y0 + ey * 2 + oy * 23, zk + 3), end: (x1 - ex * 2 + ox * 23, y1 - ey * 2 + oy * 23, zk + 3), cross_width: 66, cross_height: SLB_H, height_direction: (0, 0, 1), material: "ICS_DarkMetal");
+              let fs3 = beam_between(start: (x0 + ox * 58, y0 + oy * 58, zk + 3), end: (x1 + ox * 58, y1 + oy * 58, zk + 3), cross_width: 8, cross_height: FAS_H, height_direction: (0, 0, 1), material: "ICS_White");
+              tier = merge(sl3, fs3);
               has_t = 1;
             }
             if (btype == 2) * (s1 - s0 > 200) > 0 {
               var cp = [];
               var gp = [];
               var rp = [];
+              var fp = [];
               cp = append(cp, (pa.x + ex * s0 - ox * 10, pa.y + ey * s0 - oy * 10));
               cp = append(cp, (pa.x + ex * s1 - ox * 10, pa.y + ey * s1 - oy * 10));
               for m in 0..13 {
@@ -457,11 +499,14 @@ if lodq == 0 {
                 cp = append(cp, (pa.x + ex * sm + ox * wm, pa.y + ey * sm + oy * wm));
                 gp = append(gp, (pa.x + ex * sm + ox * (wm - 6), pa.y + ey * sm + oy * (wm - 6), zk + 61));
                 rp = append(rp, (pa.x + ex * sm + ox * (wm - 6), pa.y + ey * sm + oy * (wm - 6), zk + 118));
+                fp = append(fp, (pa.x + ex * sm + ox * (wm - 2), pa.y + ey * sm + oy * (wm - 2), zk + 3));
               }
-              let cslab = translate(extrude(points: cp, height: 40, material: "ICS_White"), (0, 0, zk - 22));
+              // Scene QC r2: dark 14 cm curved slab body + 18 cm white fascia swept along the bulge (wm - 6 .. wm + 2)
+              let cslab = translate(extrude(points: cp, height: SLB_H, material: "ICS_DarkMetal"), (0, 0, zk + 3 - SLB_H / 2));
+              let cfas = sweep_box_path(points: fp, width: 8, height: FAS_H, up: (0, 0, 1), material: "ICS_White");
               let cgl = sweep_box_path(points: gp, width: 3, height: 106, up: (0, 0, 1), material: "ICS_SolidGlass");
               let crl = sweep_box_path(points: rp, width: 8, height: 8, up: (0, 0, 1), material: "ICS_DarkMetal");
-              tier = merge(cslab, cgl, crl);
+              tier = merge(cslab, cfas, cgl, crl);
               has_t = 1;
             }
             if has_t > 0.5 {
@@ -647,13 +692,14 @@ if lodq == 0 {
 }
 
 // ---------------- far LOD ----------------
-// keeps the distance identity: gold spine strip, pale corner piers + dark bay piers, white slab edge + blue-grey
-// balcony glass rhythm (every 2nd floor), champagne box with lit base + coping lines, river-edge pool, lit lobby
+// keeps the distance identity: gold spine strip, dark corner + bay piers, fine white slab line + blue-grey
+// balcony glass rhythm (every 2nd floor), bright gold box with lit base + coping lines, river-edge pool, lit lobby
 var far = empty();
 if lodq == 1 {
-  let fbox = translate(extrude(points: MO_FP, height: LAT_H + 45, material: "ICS_Gold"), (0, 0, Z_LOB));
+  let fbox = translate(extrude(points: MO_FP, height: LAT_H + 45, material: BOX_MAT), (0, 0, Z_LOB));
   let fwash = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: 20), holes: [offset_polygon(points: MO_FP, delta: -3)], height: 45, material: "ICS_WarmLight"), (0, 0, Z_LOB + 5));
   let fcope = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: 21), holes: [offset_polygon(points: MO_FP, delta: -3)], height: 22, material: "ICS_WarmLight"), (0, 0, Z_BOX + 2));
+  let fcove = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: 13), holes: [offset_polygon(points: MO_FP, delta: -2)], height: 8, material: "ICS_WarmLight"), (0, 0, Z_BOX - 26));
   let flob = translate(extrude(points: offset_polygon(points: MO_FP, delta: -250), height: Z_LOB + 20, material: "ICS_ShopLit"), (0, 0, -10));
   let fgreen = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: -80), holes: [pin_far], height: 40, material: "ICS_Foliage"), (0, 0, Z_BOX + 20));
   let fpool = translate(extrude(points: pinner, height: 24, material: "ICS_Water"), (0, 0, Z_BOX + 28));
@@ -663,11 +709,12 @@ if lodq == 1 {
     let RF = pick(bb, SW_ROOF, NE_ROOF);
     let np = len(PP);
     // rings are solid slabs through the shaft (caps hidden inside the glass) to stay under 10 % of LOD0 verts
-    let wring = extrude(points: offset_polygon(points: PP, delta: 60), height: 25, material: "ICS_White");
-    FP = append(FP, array(translate(wring, (0, 0, Z_BOX + 2 * FH - 15)), count: floor(NNEF / 2), offset: (0, 0, 2 * FH)));
+    // Scene QC r2: fine 18 cm white ring (was 25 cm), same levels as the LOD0 fascias
+    let wring = extrude(points: offset_polygon(points: PP, delta: 60), height: FAS_H, material: "ICS_White");
+    FP = append(FP, array(translate(wring, (0, 0, Z_BOX + 2 * FH - 6)), count: floor(NNEF / 2), offset: (0, 0, 2 * FH)));
     if bb == 0 {
       for m in 1..4 {
-        if m <= NDUP { FP = append(FP, translate(wring, (0, 0, Z_BOX + (NNEF + 2 * m) * FH - 15))); }
+        if m <= NDUP { FP = append(FP, translate(wring, (0, 0, Z_BOX + (NNEF + 2 * m) * FH - 6))); }
       }
     }
     let gring = extrude(points: offset_polygon(points: PP, delta: 55), height: 100, material: "ICS_SolidGlass");
@@ -691,10 +738,10 @@ if lodq == 1 {
       let short_p = (elp < 250) * (abs(uz - U_SP) >= 5);
       let onv = oy * CU - ox * SU;
       if short_n > 0.5 {
-        FP = append(FP, beam_between(start: ((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5, ZS0), end: ((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5, RF + 450), cross_width: el + 30, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_White"));
+        FP = append(FP, beam_between(start: ((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5, ZS0), end: ((pa.x + pb.x) * 0.5, (pa.y + pb.y) * 0.5, RF + 450), cross_width: el + 30, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_DarkMetal"));
       }
       if (a_sp < 0.5) * (short_n < 0.5) * (short_p < 0.5) > 0 {
-        FP = append(FP, beam_between(start: (pa.x, pa.y, ZS0), end: (pa.x, pa.y, RF + 450), cross_width: 150, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_White"));
+        FP = append(FP, beam_between(start: (pa.x, pa.y, ZS0), end: (pa.x, pa.y, RF + 450), cross_width: 150, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_DarkMetal"));
       }
       if on_sp < 0.5 {
         let nb = max(1, round(el / 1100));
@@ -713,7 +760,7 @@ if lodq == 1 {
       }
     }
   }
-  far = merge(fbox, fwash, fcope, flob, fgreen, fpool, merge(FP));
+  far = merge(fbox, fwash, fcope, fcove, flob, fgreen, fpool, merge(FP));
 }
 
 // ---------------- collider ----------------
@@ -722,7 +769,7 @@ var coll = empty();
 if lodq == 2 {
   let cbp = [(VSE - 60, ZS0), (VNW + 350, ZS0), (VNW + 350, SAIL_LO), (VSE + 450, SAIL_HI), (VSE + 150, MO_ARCH_TOP), (VSE - 200, MO_ARCH_TOP - 900), (VSE - 200, ZS0 + 3000)];
   let cblade = translate(rotate_z(rotate_x(extrude(points: cbp, height: BT, material: "ICS_Gold"), degrees: 90, pivot: (0, 0, 0)), degrees: AX + 90, pivot: (0, 0, 0)), (BX0, BY0, 0));
-  let cpod = merge(extrude(points: offset_polygon(points: MO_FP, delta: -250), height: Z_LOB + 10, material: "ICS_GoldPanel"), translate(extrude(points: MO_FP, height: LAT_H + 20, material: "ICS_GoldPanel"), (0, 0, Z_LOB)));
+  let cpod = merge(extrude(points: offset_polygon(points: MO_FP, delta: -250), height: Z_LOB + 10, material: BOX_MAT), translate(extrude(points: MO_FP, height: LAT_H + 20, material: BOX_MAT), (0, 0, Z_LOB)));
   coll = merge(cpod, translate(extrude(points: SWP, height: SW_ROOF + 170 - ZS0, material: "ICS_TowerGlass2"), (0, 0, ZS0)), translate(extrude(points: NEP, height: NE_ROOF + 170 - ZS0, material: "ICS_TowerGlass2"), (0, 0, ZS0)), cblade);
 }
 

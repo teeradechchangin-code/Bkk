@@ -378,7 +378,9 @@ if lod > 1.5 {
             DW = [];
         }
     }
-    // 20 m south ledge on top of the drum (south faces only, stops at x = Z1_FP[1].x - 80 so it never overlaps the Z1 roof)
+    // 20 m south ledge on top of the drum (south faces only, stops at x = Z1_FP[1].x - 80 so it never overlaps the Z1 roof);
+    // its balustrade is the same frame as the terraces (QC scene r2): gold 18 x 15 cm kerb, 3 cm teal infill, white 18 x 15 cm
+    // cap, all on the d+3 rail line
     let nsp = len(sp);
     var ls = 0;
     var le = [];
@@ -402,7 +404,8 @@ if lod > 1.5 {
             if (i == 0) + (dl > 60) > 0.5 {
                 let d = 60 * clamp(ls / 300, 0, 1);
                 le = append(le, (p.x + nxv * d, p.y + nyv * d));
-                lr = append(lr, (p.x + nxv * (d + 5), p.y + nyv * (d + 5), 0));
+                // rail line d+3, held at >= 9 cm so the 18 cm kerb / cap never enter the Z3 wall where the ledge starts at d = 0
+                lr = append(lr, (p.x + nxv * (max(d, 6) + 3), p.y + nyv * (max(d, 6) + 3), 0));
                 lb = append(lb, (p.x + nxv * (d - 30), p.y + nyv * (d - 30), 0));
                 lastp = p;
             }
@@ -418,8 +421,9 @@ if lod > 1.5 {
         translate(extrude(points: plate, height: 46, material: "ICS_SolidGlass"), (0, 0, zl - 54)),
         translate(extrude(points: plate, height: 4, material: "ICS_White"), (0, 0, zl - 58)),
         translate(extrude(points: offset_polygon(points: plate, delta: -25), height: 20, material: "ICS_Paving"), (0, 0, zl - 10)),
-        sweep_box_path(points: move_points(lr, by: (0, 0, zl + 52)), width: 6, height: 118, up: (0, 0, 1), material: "ICS_Balustrade"),
-        sweep_box_path(points: move_points(lr, by: (0, 0, zl + 113)), width: 7, height: 6, up: (0, 0, 1), material: "ICS_DarkMetal"),
+        sweep_box_path(points: move_points(lr, by: (0, 0, zl - 4.5)), width: 18, height: 15, up: (0, 0, 1), material: "ICS_Gold"),
+        sweep_box_path(points: move_points(lr, by: (0, 0, zl + 52)), width: 3, height: 98, up: (0, 0, 1), material: "ICS_Balustrade"),
+        sweep_box_path(points: move_points(lr, by: (0, 0, zl + 108.5)), width: 18, height: 15, up: (0, 0, 1), material: "ICS_White"),
         sweep_box_path(points: move_points(lb, by: (0, 0, zl - 61)), width: 10, height: 6, up: (0, 0, 1), material: "ICS_WarmLight"));
     // Podium ICONSIAM wordmark (Photo A: top band of the silver drum, left of the first maison), 1.1 m stroke letters
     // on the upper glass of the SE diagonal (kc 22..30), centred +57 cm: the 8 cm strokes sit 1 cm into the glass face
@@ -621,10 +625,11 @@ if lod > 0.5 {
             if (c > 0) * (mod(i, 2) < 0.5) { shrubs = append(shrubs, (p.x - nxv * (190 + hash(i, seed: 3) * 50), p.y - nyv * (190 + hash(i, seed: 3) * 50), 2070)); }
             if (c == 0) * (mod(i, 2) < 0.5) { globes = append(globes, (p.x - nxv * 260, p.y - nyv * 260, 2010)); }
         }
-        // 1.1 m glass roof balustrade: 1 cm into the 20.10 m paving, dark handrail on its top edge
+        // 1.15 m glass roof balustrade (QC scene r2: teal only on the 3 cm infill, z 20.09-21.10 m, 1 cm into the 20.10 m
+        // paving, flush under the cap) under a 10 x 15 cm ICS_White handrail cap (z 21.10-21.25 m, same top as before): one thin bright edge line
         garden = merge(garden,
-            sweep_box_path(points: move_points(rl, by: (0, 0, 2064)), width: 4, height: 110, up: (0, 0, 1), material: "ICS_Balustrade"),
-            sweep_box_path(points: move_points(rl, by: (0, 0, 2122)), width: 7, height: 6, up: (0, 0, 1), material: "ICS_DarkMetal"));
+            sweep_box_path(points: move_points(rl, by: (0, 0, 2059.5)), width: 3, height: 101, up: (0, 0, 1), material: "ICS_Balustrade"),
+            sweep_box_path(points: move_points(rl, by: (0, 0, 2117.5)), width: 10, height: 15, up: (0, 0, 1), material: "ICS_White"));
         if c > 0 {
             garden = merge(garden,
                 sweep_box_path(points: hedgeC, width: 230, height: 60, up: (0, 0, 1), material: "ICS_White"),
@@ -802,9 +807,15 @@ let z3mass = extrude(points: Z3_FP, height: 4150, material: "ICS_MallGlass");
 // resample). Checked with a Python port of this block: every rail, upstand, cove and slab-edge point stays >= 35 cm
 // outside Z2_FP and Z3_FP (>= 55 cm within 6 m of the tongue / NE corners). At k4 the rail / handrail / upstand / cove
 // stop >= 90 cm east of the u=40 line (MallMain's 0.75 m strip), like the pergola's 0.8 m clearance.
-// QC (scene r1): the teal balustrade is a 1.18 m band standing on the slab (no longer hung over the slab edge), with a
-// 0.49 m blue-grey upstand behind it; a 16 cm warm cove under every slab edge and a warm ceiling-line strip on the
-// set-back wall under every slab (D9 fixtures) make each terrace floor read as its own lit band.
+// QC (scene r1): a 16 cm warm cove under every slab edge and a warm ceiling-line strip on the set-back wall under every
+// slab (D9 fixtures) make each terrace floor read as its own lit band.
+// QC (scene r2, QCA minor "cyan stripes"): the balustrade is a frame of two solid edge lines with a thin teal glass infill
+// between them, all on one station line (rail path, d+3): an 18 x 15 cm ICS_Gold kerb (the solid upstand, zl-12..zl+3,
+// overlapping the slab edge by 6 x 4 cm) and an 18 x 15 cm ICS_White handrail cap (zl+101..zl+116, same top as before); the teal is only
+// the 3 cm infill (zl+3..zl+101, standing flush on the kerb and flush under the cap: an embedded infill made
+// coplanar end caps with the kerb at every chunk end, W_COPLANAR_FACES). The 49 cm blue-grey upstand band and
+// the 6 cm-thick 1.18 m teal band are gone. Re-checked with a Python port on the swept solids (inner faces d-6): >= 43.7 cm
+// outside Z2_FP / Z3_FP at every level (53.7 cm at the k1 tongue Z2_FP[0]); k4 members >= 109 cm east of the u=40 line.
 let pot = merge(cylinder_at(r_bot: 26, r_top: 34, height: 60, segments: 8, bottom_center: (0, 0, 0), material: "ICS_DarkMetal"),
     translate(scale(sphere(radius: 55, segments: 8, material: "ICS_Foliage"), (1, 1, 0.8)), (0, 0, 52)));
 // Z4 river-face frame for the k4 trim: u measured east of the Z3_FP[0] -> Z3_FP[4] line (the u=40 line)
@@ -852,7 +863,6 @@ for k in 1..5 {
     var er = [];
     var br = [];
     var rr = [];
-    var ur = [];
     var pr = [];
     var wr = [];
     var pots = [];
@@ -895,8 +905,7 @@ for k in 1..5 {
         let dm = d * mf;
         er = append(er, (p.x + nxv * dm, p.y + nyv * dm));
         br = append(br, (p.x + nxv * (d - 15) * mf, p.y + nyv * (d - 15) * mf, 0));
-        rr = append(rr, (p.x + nxv * (d + 5) * mf, p.y + nyv * (d + 5) * mf, 0));
-        ur = append(ur, (p.x + nxv * (d - 3) * mf, p.y + nyv * (d - 3) * mf, 0));
+        rr = append(rr, (p.x + nxv * (d + 3) * mf, p.y + nyv * (d + 3) * mf, 0));
         pr = append(pr, (p.x + nxv * (d - 25) * mf, p.y + nyv * (d - 25) * mf));
         // ceiling-line strip on the set-back wall (3..7 cm off the glass, mitred at the corners)
         let uw = (p.x + nxv * 5 * mf - at(Z3_FP, 0).x) * z4n.x + (p.y + nyv * 5 * mf - at(Z3_FP, 0).y) * z4n.y;
@@ -913,18 +922,15 @@ for k in 1..5 {
     var p2 = pr;
     var b2 = br;
     var r2 = rr;
-    var u2 = ur;
     for it in 0..2 {
         var ne = [];
         var np = [];
         var nb = [];
         var nr = [];
-        var nu = [];
         ne = append(ne, at(e2, 0));
         np = append(np, at(p2, 0));
         nb = append(nb, at(b2, 0));
         nr = append(nr, at(r2, 0));
-        nu = append(nu, at(u2, 0));
         for i in 0..(len(e2) - 1) {
             ne = append(ne, at(e2, i) * 0.75 + at(e2, i + 1) * 0.25);
             ne = append(ne, at(e2, i) * 0.25 + at(e2, i + 1) * 0.75);
@@ -934,19 +940,15 @@ for k in 1..5 {
             nb = append(nb, at(b2, i) * 0.25 + at(b2, i + 1) * 0.75);
             nr = append(nr, at(r2, i) * 0.75 + at(r2, i + 1) * 0.25);
             nr = append(nr, at(r2, i) * 0.25 + at(r2, i + 1) * 0.75);
-            nu = append(nu, at(u2, i) * 0.75 + at(u2, i + 1) * 0.25);
-            nu = append(nu, at(u2, i) * 0.25 + at(u2, i + 1) * 0.75);
         }
         ne = append(ne, at(e2, len(e2) - 1));
         np = append(np, at(p2, len(p2) - 1));
         nb = append(nb, at(b2, len(b2) - 1));
         nr = append(nr, at(r2, len(r2) - 1));
-        nu = append(nu, at(u2, len(u2) - 1));
         e2 = ne;
         p2 = np;
         b2 = nb;
         r2 = nr;
-        u2 = nu;
     }
     // close the plate with two points inside Z4 (40 cm in from both Z4 faces); the plate outlines use every other Chaikin
     // point (<= 6 cm chord sag on the scallops) so the three big plates stay light for the buried-part lint
@@ -966,20 +968,18 @@ for k in 1..5 {
     // members sweep the Chaikin arrays directly; at k4 every point closer than 90 cm to the u=40 line is dropped
     var r3 = [];
     var b3 = [];
-    var u3 = [];
     for i in 0..len(r2) {
         let pr3 = at(r2, i);
         let ur3 = (pr3.x - at(Z3_FP, 0).x) * z4n.x + (pr3.y - at(Z3_FP, 0).y) * z4n.y;
         if (k < 4) + (ur3 >= 90) > 0.5 {
             r3 = append(r3, pr3);
             b3 = append(b3, at(b2, i));
-            u3 = append(u3, at(u2, i));
         }
     }
-    // dark blue-grey glass slab edge (46 cm) + 4 cm white soffit; a 1.18 m teal glass balustrade standing on the slab
-    // (z -7..+111 cm, 2 cm outside the slab edge) with a dark handrail on top, a 49 cm blue-grey upstand 8 cm behind it,
-    // a 16 cm warm cove under the slab edge and a warm ceiling-line strip on the set-back wall under the soffit. The paving
-    // closes 25 cm inside Z4 (15 cm short of the slab's closing edge).
+    // dark blue-grey glass slab edge (46 cm) + 4 cm white soffit; the balustrade frame on the rail line d+3 (gold kerb
+    // d-6..d+12 x zl-12..zl+3, overlapping the slab edge 6 cm x 4 cm; teal 3 cm glass infill zl+3..zl+101; white cap
+    // zl+101..zl+116), a 16 cm warm cove under the slab edge and a warm ceiling-line strip on the set-back wall under the
+    // soffit. The paving closes 25 cm inside Z4 (15 cm short of the slab's closing edge).
     let slab = translate(extrude(points: plate, height: 46, material: "ICS_SolidGlass"), (0, 0, zl - 54));
     let soff = translate(extrude(points: plate, height: 4, material: "ICS_White"), (0, 0, zl - 58));
     let pave = translate(extrude(points: pvp, height: 14, material: "ICS_Paving"), (0, 0, zl - 12));
@@ -991,17 +991,15 @@ for k in 1..5 {
         let j0 = ch * 23;
         let j1 = min(j0 + 23, nr3 - 1);
         var cr = [];
-        var cu = [];
         var cb = [];
         for i in j0..(j1 + 1) {
             cr = append(cr, at(r3, i));
-            cu = append(cu, at(u3, i));
             cb = append(cb, at(b3, i));
         }
         terr = merge(terr,
-            sweep_box_path(points: move_points(cr, by: (0, 0, zl + 52)), width: 6, height: 118, up: (0, 0, 1), material: "ICS_Balustrade"),
-            sweep_box_path(points: move_points(cr, by: (0, 0, zl + 113)), width: 7, height: 6, up: (0, 0, 1), material: "ICS_DarkMetal"),
-            sweep_box_path(points: move_points(cu, by: (0, 0, zl + 15.5)), width: 4, height: 49, up: (0, 0, 1), material: "ICS_SolidGlass"),
+            sweep_box_path(points: move_points(cr, by: (0, 0, zl - 4.5)), width: 18, height: 15, up: (0, 0, 1), material: "ICS_Gold"),
+            sweep_box_path(points: move_points(cr, by: (0, 0, zl + 52)), width: 3, height: 98, up: (0, 0, 1), material: "ICS_Balustrade"),
+            sweep_box_path(points: move_points(cr, by: (0, 0, zl + 108.5)), width: 18, height: 15, up: (0, 0, 1), material: "ICS_White"),
             sweep_box_path(points: move_points(cb, by: (0, 0, zl - 60.25)), width: 16, height: 5.5, up: (0, 0, 1), material: "ICS_WarmLight"));
     }
     let nwr = len(wr);
