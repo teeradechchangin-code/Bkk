@@ -109,7 +109,9 @@ material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr"
 material ICS_MallGlass { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#4A5A58" roomH = 6.0 bayW = 2.0 }
 material ICS_SolidGlass { base = "Glass" tint = "#8FA2B0" }
 material ICS_Balustrade { base = "GlassTransparent" tint = "#5E9C98" }
-material ICS_ShopLit { base = "Glass" tint = "#FFC77A" emission = 0.6 }
+// D9 (client): ground-floor shop / lobby glazing is ordinary interior-window glass like the upper floors (no emission);
+// the warm dusk glow comes from real pointLights in world/10_lights.weave.
+material ICS_ShopLit { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#45585A" roomH = 6.5 bayW = 2.0 }
 material ICS_WarmLight { base = "MetalDetail" tint = "#FFD08A" emission = 1.2 }
 material ICS_Deck { base = "WoodDark" tileM = 2.0 }
 material ICS_Foliage { base = "Foliage" lighting = "foliage" }
