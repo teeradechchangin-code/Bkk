@@ -229,7 +229,7 @@ out.geo = g;
 // ================================================================ LOD0
 #mesh ICS_Site
 budget(verts: 250000, indices: 750000);
-sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 1400));
+sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 1300));
 anchor(mode: "origin");
 
 // ---------- land slab: x = -20000 .. BANK_LINE, y = -16190 .. 19550, top z = 0, bottom = RIVER_BED_Z
@@ -608,10 +608,10 @@ let B2 = at(BANK_LINE, 2);
 let B3 = at(BANK_LINE, 3);
 let LOT = [(REX + (-16190 - w0.y) * kx, -16190), (B1.x - 200, -16190), (B2.x - 200, B2.y + 200), (B3.x - 200, B3.y + 200), (LXE, LYE - 912), (SA1.x, SA1.y - 912), (REX + (SA0.y - 912 - w0.y) * kx, SA0.y - 912)];
 lane = merge(lane, extrude(points: LOT, height: 10, material: "ICS_Foliage"));
-// scrub mounds (x, y, radius)
-let MOUNDS = [(-11140, -14610, 700), (-10730, -15520, 700), (-9700, -13900, 800), (-9090, -15310, 900), (-6810, -13900, 600), (-6080, -14620, 1000), (-4990, -14940, 700), (-3950, -14960, 1000), (-3560, -13580, 800), (-1410, -14750, 600), (-1240, -13490, 800), (600, -14260, 600), (2280, -15690, 600), (2400, -13730, 1000), (2840, -14920, 700), (3910, -15080, 800), (4040, -13980, 800), (4870, -14790, 700), (5260, -13550, 800), (5840, -15060, 800), (7240, -15250, 800), (8180, -14100, 700), (9090, -13650, 700), (9130, -15010, 1000), (10090, -15570, 700), (10450, -14650, 900)];
+// scrub canopy mounds (x, y, radius): low domes 3-6.6 m high, kept >= r + 0.6 m inside the lot (wall, bank, road, model edge)
+let MOUNDS = [(-10920, -14730, 800), (-9710, -15450, 600), (-9290, -14170, 600), (-8760, -15010, 900), (-7410, -14110, 700), (-6430, -13900, 800), (-6190, -14960, 600), (-4950, -14860, 700), (-4530, -13860, 700), (-3700, -15090, 800), (-2860, -13800, 700), (-1990, -15040, 700), (-240, -14090, 1000), (-190, -15110, 600), (710, -14680, 600), (1720, -14540, 1000), (2830, -15460, 600), (3530, -14100, 700), (4420, -14800, 700), (4540, -13350, 600), (5600, -14510, 600), (6330, -13600, 700), (6550, -14990, 700), (7570, -14060, 900), (8290, -15120, 700), (8790, -14040, 900), (9650, -15280, 700), (10460, -14850, 700)];
 for i, q in MOUNDS {
-    lane = merge(lane, translate(scale(sphere(radius: q.z, segments: 8, material: "ICS_Foliage"), (1, 1, 0.42 + 0.2 * hash(i, seed: 61))), (q.x, q.y, 5 - q.z * 0.12)));
+    lane = merge(lane, translate(scale(sphere(radius: q.z, segments: 8, material: "ICS_Foliage"), (1, 1, 0.3 + 0.1 * hash(i, seed: 61))), (q.x, q.y, 10 - q.z * 0.15)));
 }
 
 out.geo = merge(slab_lo, slab_hi, paving, prom, inlays, basin_wall, basin_rim, basin_water, jets, bank, posts, lamps, piers, gangways, shelters, fbridge, beds, trees, road, lane);
@@ -667,11 +667,16 @@ out.geo = merge(slab_lo, slab_hi, paving, basin_wall, basin_rim, basin_water, pi
 
 // ================================================================ collider: land slab, pier prisms, gangway plates, footbridge,
 // bank parapet along the whole frontage, fountain kerb ring (<= 1000 verts)
+// The bank uses a Douglas-Peucker subset of BANK_LINE (max deviation 19 cm) and the parapet is one mitred
+// 30 cm band prism per run (12 verts / point), so the full 19-segment frontage plus the basin kerb fit the budget.
 #mesh ICS_Site collider
 let B1 = at(BANK_LINE, 1);
+let BK = [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 20];
+var BS = [];
+for i in BK { BS = append(BS, at(BANK_LINE, i)); }
 var land = [(-20000, -16190)];
 land = append(land, (B1.x, -16190));
-for i 1..len(BANK_LINE) { let p = at(BANK_LINE, i); land = append(land, (p.x, p.y)); }
+for p in BS { land = append(land, (p.x, p.y)); }
 land = append(land, (-20000, 19550));
 let slab = translate(extrude(points: land, height: 200, material: "ICS_Concrete"), (0, 0, -200));
 let piers = merge(
@@ -687,12 +692,13 @@ let piers = merge(
 );
 let GAP_Y = [-9000, -2100, 8140, 11510];
 let GAP_HW = [212, 462, 212, 97];
-// parapet along the whole bank (segments 1..19), split only at the four gangway openings
+// parapet runs along the simplified bank, split only at the four gangway openings
 var subs = [];
-var cur = [B1];
-for i 1..len(BANK_LINE) - 1 {
-    let a = at(BANK_LINE, i);
-    let b = at(BANK_LINE, i + 1);
+var cur = [at(BS, 0)];
+let nbs = len(BS);
+for i 0..nbs - 1 {
+    let a = at(BS, i);
+    let b = at(BS, i + 1);
     let sv = b - a;
     let L = length(sv);
     var t0 = 2;
@@ -715,12 +721,27 @@ for i 1..len(BANK_LINE) - 1 {
 subs = append(subs, cur);
 var rail = empty();
 for k 0..len(subs) {
-    rail = merge(rail, sweep_box_path(points: move_points(at(subs, k), by: (0, 0, 40)), width: 30, height: 140, up: (0, 0, 1), material: "ICS_Concrete"));
+    let sp = at(subs, k);
+    let m = len(sp);
+    var lft = [];
+    var rgt = [];
+    for i 0..m {
+        let p = at(sp, i);
+        let dprev = normalize(at(sp, max(1, i)) - at(sp, max(1, i) - 1));
+        let dnext = normalize(at(sp, min(m - 1, i + 1)) - at(sp, min(m - 1, i + 1) - 1));
+        let n0 = (0 - dprev.y, dprev.x);
+        let nm = normalize(n0 + (0 - dnext.y, dnext.x));
+        let s = 15 / dot(nm, n0);
+        lft = append(lft, (p.x + nm.x * s, p.y + nm.y * s));
+        rgt = append(rgt, (p.x - nm.x * s, p.y - nm.y * s));
+    }
+    rail = merge(rail, translate(extrude(points: concat_points(lft, reverse_points(rgt)), height: 140, material: "ICS_Concrete"), (0, 0, -30)));
 }
-// fountain basin kerb ring on the coping line (-2.5..22.5)
-var rim0 = [];
-for p in BASIN_FP { rim0 = append(rim0, (p.x, p.y, 10)); }
-rim0 = append(rim0, (at(BASIN_FP, 0).x, at(BASIN_FP, 0).y, 10));
-let rim = sweep_box_path(points: resample_path(points: rim0, count: 13), width: 60, height: 25, up: (0, 0, 1), material: "ICS_Concrete");
+// fountain basin kerb: 25 cm ring on a 9-vertex subset of BASIN_FP, 60 cm inside .. 120 cm outside it
+// (covers 100 % of the real coping line)
+let RIM_IDX = [0, 2, 5, 8, 10, 11, 14, 15, 17];
+var BSN = [];
+for i in RIM_IDX { BSN = append(BSN, at(BASIN_FP, i)); }
+let rim = translate(extrude_shape(outer: offset_polygon(points: BSN, delta: 120), holes: [offset_polygon(points: BSN, delta: -60)], height: 25, material: "ICS_Concrete"), (0, 0, -2));
 out.geo = merge(slab, piers, rail, rim);
 #end

@@ -1,7 +1,11 @@
 #meshpart RIV_Z1Mass
-// Z1 podium mass on the Chaikin-smoothed krathong outline (same construction as LOD0, fewer passes)
+// Z1 podium mass on the Chaikin-smoothed krathong outline (same construction as LOD0, fewer passes).
+// pave: roof paving; band: dark roof-fascia ring (LOD1); grow: outline offset (collider covers the shopfronts)
 param iters = 2;
 param h = 2000;
+param pave = 1;
+param band = 0;
+param grow = 0;
 var kc = [];
 for c in 0..3 {
     let i0 = pick(c, 1, 5, 12);
@@ -24,8 +28,280 @@ for c in 0..3 {
 var ol = [];
 ol = append(ol, at(Z1_FP, 0));
 for i in 0..len(kc) { ol = append(ol, at(kc, i)); }
-out.geo = merge(extrude(points: ol, height: h - 10, material: "ICS_ShopLit"),
-    translate(extrude(points: offset_polygon(points: ol, delta: -30), height: 14, material: "ICS_Paving"), (0, 0, h - 14)));
+var olg = ol;
+if abs(grow) > 0.5 { olg = offset_polygon(points: ol, delta: grow); }
+out.geo = extrude(points: olg, height: h - 10, material: "ICS_ShopLit");
+if pave > 0.5 {
+    out.geo = merge(out.geo, translate(extrude(points: offset_polygon(points: ol, delta: -30), height: 14, material: "ICS_Paving"), (0, 0, h - 14)));
+}
+if band > 0.5 {
+    out.geo = merge(out.geo, translate(extrude_shape(outer: offset_polygon(points: ol, delta: 60), holes: [offset_polygon(points: ol, delta: -30)], height: 81, material: "ICS_DarkMetal"), (0, 0, h - 85)));
+}
+#end
+
+#meshpart RIV_Pavilion
+// NE river pavilion (Photo A, right-hand bookend of the waterfront): a faceted gold-lit glass volume 1.3 m proud of the
+// north krathong chain wherever x > 104.9 m (the Z1_FP[13]..[16] tip), top 15.5 m rising to 17 m at the river tip,
+// chamfered top edge. detail 1 adds the 60 cm warm light band under the cap and gold fins at 1.6 m pitch.
+param iters = 3;
+param spacing = 320;
+param detail = 1;
+var pts = [];
+for i in 12..21 { pts = append(pts, at(Z1_FP, i)); }
+for it in 0..iters {
+    var nx = [];
+    nx = append(nx, at(pts, 0));
+    for i in 0..(len(pts) - 1) {
+        nx = append(nx, at(pts, i) * 0.75 + at(pts, i + 1) * 0.25);
+        nx = append(nx, at(pts, i) * 0.25 + at(pts, i + 1) * 0.75);
+    }
+    nx = append(nx, at(pts, len(pts) - 1));
+    pts = nx;
+}
+var c3 = [];
+for p in pts { c3 = append(c3, (p.x, p.y, 0)); }
+let q = resample_path(c3, spacing: spacing);
+let nq = len(q);
+var secs = [];
+var band = [];
+var outl = [];
+for i in 0..nq {
+    let a = at(q, max(i - 1, 0));
+    let b = at(q, min(i + 1, nq - 1));
+    let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+    let nxv = (b.y - a.y) / tl;
+    let nyv = (a.x - b.x) / tl;
+    let p = at(q, i);
+    if p.x > 10490 {
+        let hh = 1550 + 150 * clamp((p.x - 10500) / 650, 0, 1);
+        secs = append(secs, [(p.x - nxv * 100, p.y - nyv * 100, 0), (p.x + nxv * 130, p.y + nyv * 130, 0), (p.x + nxv * 130, p.y + nyv * 130, hh - 70), (p.x + nxv * 70, p.y + nyv * 70, hh), (p.x - nxv * 100, p.y - nyv * 100, hh)]);
+        band = append(band, (p.x + nxv * 134, p.y + nyv * 134, hh - 115));
+        outl = append(outl, (p.x + nxv * 130, p.y + nyv * 130, hh));
+    }
+}
+out.geo = loft_solid(sections: secs, closed: "yes", cap_start: "yes", cap_end: "yes", material: "ICS_ShopLit");
+if detail > 0.5 {
+    out.geo = merge(out.geo, sweep_box_path(points: band, width: 6, height: 60, up: (0, 0, 1), material: "ICS_WarmLight"));
+    let fq = resample_path(outl, spacing: 160);
+    let nf = len(fq);
+    for i in 0..nf {
+        let a = at(fq, max(i - 1, 0));
+        let b = at(fq, min(i + 1, nf - 1));
+        let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+        let nxv = (b.y - a.y) / tl;
+        let nyv = (a.x - b.x) / tl;
+        let f = at(fq, i);
+        out.geo = merge(out.geo, beam_between(start: (f.x + nxv * 18, f.y + nyv * 18, 0), end: (f.x + nxv * 18, f.y + nyv * 18, f.z - 75), cross_width: 10, cross_height: 36, height_direction: (nxv, nyv, 0), material: "ICS_Gold"));
+    }
+}
+#end
+
+#meshpart RIV_Drum
+// SE curved two-storey glass drum (Photo B lower centre) along the OSM south faces Z3_FP[0..2] -> notch Z2_FP[5] ->
+// Z2_FP[0] -> Z1 drum chain Z1_FP[1..5]. Extra control points 20 % along the notch edges keep the curve within ~0.35 m
+// of the OSM notch (bend radius >= 1.1 m); the Z2_FP[0] control point is nudged (-30,-60) so the Z2 corner sits
+// ~0.27 m behind the curve (0.35 m behind the inner face of the lower glass).
+// lod 0: full drum + 20 m south ledge + podium ICONSIAM wordmark; lod 1: coarse bands (LOD1); lod 2: collision prism.
+param lod = 0;
+param iters = 3;
+let P5 = at(Z2_FP, 5);
+let P0 = at(Z2_FP, 0);
+var sp = [];
+sp = append(sp, at(Z3_FP, 0));
+sp = append(sp, at(Z3_FP, 1));
+sp = append(sp, at(Z3_FP, 2));
+sp = append(sp, P5 + (at(Z3_FP, 2) - P5) * 0.2);
+sp = append(sp, P5);
+sp = append(sp, P5 + (P0 - P5) * 0.2);
+sp = append(sp, P0 + (P5 - P0) * 0.2);
+sp = append(sp, P0 + (-30, -60));
+sp = append(sp, P0 + (at(Z1_FP, 1) - P0) * 0.25);
+sp = append(sp, at(Z1_FP, 1));
+var dcc = [];
+for i in 1..6 { dcc = append(dcc, at(Z1_FP, i)); }
+for it in 0..iters {
+    var nx = [];
+    nx = append(nx, at(sp, 0));
+    for i in 0..(len(sp) - 1) {
+        nx = append(nx, at(sp, i) * 0.75 + at(sp, i + 1) * 0.25);
+        nx = append(nx, at(sp, i) * 0.25 + at(sp, i + 1) * 0.75);
+    }
+    nx = append(nx, at(sp, len(sp) - 1));
+    sp = nx;
+    var nd = [];
+    nd = append(nd, at(dcc, 0));
+    for i in 0..(len(dcc) - 1) {
+        nd = append(nd, at(dcc, i) * 0.75 + at(dcc, i + 1) * 0.25);
+        nd = append(nd, at(dcc, i) * 0.25 + at(dcc, i + 1) * 0.75);
+    }
+    nd = append(nd, at(dcc, len(dcc) - 1));
+    dcc = nd;
+}
+var dc3 = [];
+for p in sp { dc3 = append(dc3, (p.x, p.y, 0)); }
+for i in 1..len(dcc) { let p = at(dcc, i); dc3 = append(dc3, (p.x, p.y, 0)); }
+if lod > 1.5 {
+    // collision: drum outline +65 cm, closed back through the Z1 / Z2 / Z3 interiors
+    let cq = resample_path(dc3, spacing: 500);
+    let ncq = len(cq);
+    var cp = [];
+    for i in 0..ncq {
+        let a = at(cq, max(i - 1, 0));
+        let b = at(cq, min(i + 1, ncq - 1));
+        let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+        let p = at(cq, i);
+        cp = append(cp, (p.x + (b.y - a.y) / tl * 65, p.y + (a.x - b.x) / tl * 65));
+    }
+    cp = append(cp, at(Z1_FP, 5) + (-670, -460));
+    cp = append(cp, P0 + (140, 520));
+    cp = append(cp, P5 + (220, 120));
+    cp = append(cp, at(Z3_FP, 1) + (-170, 90));
+    cp = append(cp, at(Z3_FP, 0) + (-40, 40));
+    out.geo = extrude(points: cp, height: 1950, material: "ICS_Concrete");
+} else if lod > 0.5 {
+    // LOD1: gold-lit lower storey, white band at 10 m, blue-grey upper storey
+    let cq = resample_path(dc3, spacing: 700);
+    let ncq = len(cq);
+    var lo = [];
+    var bd = [];
+    var up = [];
+    for i in 0..ncq {
+        let a = at(cq, max(i - 1, 0));
+        let b = at(cq, min(i + 1, ncq - 1));
+        let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+        let nxv = (b.y - a.y) / tl;
+        let nyv = (a.x - b.x) / tl;
+        let p = at(cq, i);
+        lo = append(lo, (p.x + nxv * 12, p.y + nyv * 12, 475));
+        bd = append(bd, (p.x + nxv * 40, p.y + nyv * 40, 1000));
+        up = append(up, (p.x + nxv * 50, p.y + nyv * 50, 1500));
+    }
+    out.geo = merge(sweep_box_path(points: lo, width: 8, height: 950, up: (0, 0, 1), material: "ICS_ShopLit"),
+        sweep_box_path(points: bd, width: 80, height: 100, up: (0, 0, 1), material: "ICS_White"),
+        sweep_box_path(points: up, width: 8, height: 900, up: (0, 0, 1), material: "ICS_SolidGlass"));
+} else {
+    let dq = resample_path(dc3, spacing: 220);
+    let ndq = len(dq);
+    let sgc = at(dcc, 26);
+    var dLow = [];
+    var dBand = [];
+    var dUp = [];
+    var drum = empty();
+    var s = 0;
+    for i in 0..ndq {
+        let a = at(dq, max(i - 1, 0));
+        let b = at(dq, min(i + 1, ndq - 1));
+        let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+        let nxv = (b.y - a.y) / tl;
+        let nyv = (a.x - b.x) / tl;
+        let p = at(dq, i);
+        if i > 0 {
+            let pp = at(dq, i - 1);
+            s = s + sqrt((p.x - pp.x) * (p.x - pp.x) + (p.y - pp.y) * (p.y - pp.y));
+        }
+        // band / upper glass / fins die into the Z4 SE corner over the first 3 m
+        let rp = clamp(s / 300, 0, 1);
+        dLow = append(dLow, (p.x + nxv * 12, p.y + nyv * 12, 475));
+        dBand = append(dBand, (p.x + nxv * 40 * rp, p.y + nyv * 40 * rp, 1000));
+        dUp = append(dUp, (p.x + nxv * (12 + 38 * rp), p.y + nyv * (12 + 38 * rp), 1500));
+        drum = merge(drum, beam_between(start: (p.x + nxv * 15, p.y + nyv * 15, 472), end: (p.x + nxv * 42, p.y + nyv * 42, 472), cross_width: 20, cross_height: 938, height_direction: (0, 0, 1), material: "ICS_Gold"));
+        let dsg = sqrt((p.x - sgc.x) * (p.x - sgc.x) + (p.y - sgc.y) * (p.y - sgc.y));
+        if (rp > 0.5) * (dsg > 470) {
+            drum = merge(drum, beam_between(start: (p.x + nxv * (12 + 44 * rp), p.y + nyv * (12 + 44 * rp), 1500), end: (p.x + nxv * (12 + 88 * rp), p.y + nyv * (12 + 88 * rp), 1500), cross_width: 26, cross_height: 890, height_direction: (0, 0, 1), material: "ICS_White"));
+        }
+    }
+    drum = merge(drum,
+        sweep_box_path(points: dLow, width: 8, height: 950, up: (0, 0, 1), material: "ICS_ShopLit"),
+        sweep_box_path(points: dBand, width: 80, height: 100, up: (0, 0, 1), material: "ICS_White"),
+        sweep_box_path(points: dUp, width: 8, height: 900, up: (0, 0, 1), material: "ICS_SolidGlass"));
+    // 20 m south ledge on top of the drum (south faces only, stops at x = Z1_FP[1].x - 80 so it never overlaps the Z1 roof)
+    let nsp = len(sp);
+    var ls = 0;
+    var le = [];
+    var lr = [];
+    var lb = [];
+    var lastp = at(sp, 0);
+    for i in 0..nsp {
+        let p = at(sp, i);
+        if p.x <= at(Z1_FP, 1).x - 80 {
+            let a = at(sp, max(i - 1, 0));
+            let b = at(sp, min(i + 1, nsp - 1));
+            let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+            let nxv = (b.y - a.y) / tl;
+            let nyv = (a.x - b.x) / tl;
+            if i > 0 {
+                let pp = at(sp, i - 1);
+                ls = ls + sqrt((p.x - pp.x) * (p.x - pp.x) + (p.y - pp.y) * (p.y - pp.y));
+            }
+            // keep >= 60 cm between kept points (Chaikin crowds points at the ends and corners)
+            let dl = sqrt((p.x - lastp.x) * (p.x - lastp.x) + (p.y - lastp.y) * (p.y - lastp.y));
+            if (i == 0) + (dl > 60) > 0.5 {
+                let d = 60 * clamp(ls / 300, 0, 1);
+                le = append(le, (p.x + nxv * d, p.y + nyv * d));
+                lr = append(lr, (p.x + nxv * (d + 5), p.y + nyv * (d + 5), 0));
+                lb = append(lb, (p.x + nxv * (d - 30), p.y + nyv * (d - 30), 0));
+                lastp = p;
+            }
+        }
+    }
+    var plate = le;
+    plate = append(plate, P0 + (100, 320));
+    plate = append(plate, P5 + (220, 120));
+    plate = append(plate, at(Z3_FP, 1) + (-170, 90));
+    plate = append(plate, at(Z3_FP, 0) + (-40, 40));
+    let zl = Z1_ROOF;
+    drum = merge(drum,
+        translate(extrude(points: plate, height: 46, material: "ICS_SolidGlass"), (0, 0, zl - 54)),
+        translate(extrude(points: plate, height: 4, material: "ICS_White"), (0, 0, zl - 58)),
+        translate(extrude(points: offset_polygon(points: plate, delta: -25), height: 20, material: "ICS_Paving"), (0, 0, zl - 10)),
+        sweep_box_path(points: move_points(lr, by: (0, 0, zl + 30.5)), width: 6, height: 169, up: (0, 0, 1), material: "ICS_Balustrade"),
+        sweep_box_path(points: move_points(lr, by: (0, 0, zl + 118)), width: 7, height: 6, up: (0, 0, 1), material: "ICS_DarkMetal"),
+        sweep_box_path(points: move_points(lb, by: (0, 0, zl - 61)), width: 10, height: 6, up: (0, 0, 1), material: "ICS_WarmLight"));
+    // Podium ICONSIAM wordmark (Photo A: top band of the silver drum, left of the first maison), 1.1 m stroke letters
+    // on the upper glass of the SE diagonal (kc 22..30), +70 cm (20 cm clear of the glass); fins are left out behind it.
+    var s3 = [];
+    for i in 22..31 { let p = at(dcc, i); s3 = append(s3, (p.x, p.y, 0)); }
+    let sg = resample_path(s3, spacing: 10);
+    let nsg = len(sg);
+    var cu = (nsg - 1) * 5 - 403;
+    for k in 0..8 {
+        let lt = pick(k, 0, 1, 2, 3, 4, 0, 5, 6);
+        let w = pick(lt, 14, 84, 92, 88, 76, 96, 104);
+        let ci = clamp(round((cu + w * 0.5) / 10), 3, nsg - 4);
+        let pc = at(sg, ci);
+        let pa = at(sg, ci - 3);
+        let pb = at(sg, ci + 3);
+        let tl = sqrt((pb.x - pa.x) * (pb.x - pa.x) + (pb.y - pa.y) * (pb.y - pa.y));
+        let tx = (pb.x - pa.x) / tl;
+        let ty = (pb.y - pa.y) / tl;
+        let ox = pc.x + ty * 70 - tx * w * 0.5;
+        let oy = pc.y - tx * 70 - ty * w * 0.5;
+        let oz = 1595;
+        let nstr = pick(lt, 1, 0, 0, 3, 0, 3, 4);
+        for m in 0..nstr {
+            let si = lt * 4 + m;
+            let u0 = pick(si, (7, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (7, 0), (81, 0), (7, 110), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (7, 0), (48, 110), (24, 40), (0, 0), (7, 0), (97, 0), (7, 110), (52, 30));
+            let u1 = pick(si, (7, 110), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (7, 110), (81, 110), (81, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (48, 110), (89, 0), (72, 40), (0, 0), (7, 110), (97, 110), (52, 30), (97, 110));
+            drum = merge(drum, beam_between(start: (ox + tx * u0.x, oy + ty * u0.x, oz + u0.y), end: (ox + tx * u1.x, oy + ty * u1.x, oz + u1.y), cross_width: 14, cross_height: 8, height_direction: (ty, 0 - tx, 0), material: "ICS_White"));
+        }
+        let narc = pick(lt, 0, 1, 1, 0, 2, 0, 0);
+        for m in 0..narc {
+            let ai = lt * 2 + m;
+            let ac = pick(ai, (0, 0), (0, 0), (45, 55), (0, 0), (46, 55), (0, 0), (0, 0), (0, 0), (38, 80), (38, 30), (0, 0), (0, 0), (0, 0), (0, 0));
+            let ar = pick(ai, (1, 1), (1, 1), (38, 48), (1, 1), (39, 48), (1, 1), (1, 1), (1, 1), (31, 25), (31, 25), (1, 1), (1, 1), (1, 1), (1, 1));
+            let aa = pick(ai, (0, 0), (0, 0), (45, 315), (0, 0), (0, 360), (0, 0), (0, 0), (0, 0), (15, 270), (90, -165), (0, 0), (0, 0), (0, 0), (0, 0));
+            var ap = [];
+            for j in 0..17 {
+                let ang = aa.x + (aa.y - aa.x) * j / 16;
+                let uu = ac.x + ar.x * cos(ang);
+                ap = append(ap, (ox + tx * uu, oy + ty * uu, oz + ac.y + ar.y * sin(ang)));
+            }
+            drum = merge(drum, sweep_box_path(points: ap, width: 14, height: 8, up: (ty, 0 - tx, 0), material: "ICS_White"));
+        }
+        cu = cu + w + 34;
+    }
+    out.geo = drum;
+}
 #end
 
 #mesh ICS_MallRiverfront
@@ -65,37 +341,50 @@ for i in 0..176 {
 
 // ================= 2. Primary masses =================
 let z1core = extrude(points: offset_polygon(points: Z1S, delta: -170), height: 1950, material: "ICS_ShopLit");
-let z1slab = translate(extrude(points: offset_polygon(points: Z1S, delta: 80), height: 60, material: "ICS_White"), (0, 0, 1940));
+// close the mouth of the 1.7 m core/Z2 slot at Z1_FP[20] (tower-plaza side): panel along the corner bisector into the core
+let uA = normalize(at(Z1_FP, 20) - at(Z1_FP, 19));
+let uB = normalize(at(Z1_FP, 0) - at(Z1_FP, 20));
+let nA = (0 - uA.y, uA.x);
+let nB = (0 - uB.y, uB.x);
+let cmv = (nA + nB) * (170 / (1 + dot(nA, nB)));
+let p20 = at(Z1_FP, 20);
+let slotcap = beam_between(start: (p20.x, p20.y, 975), end: (p20.x + cmv.x * 1.4, p20.y + cmv.y * 1.4, 975), cross_width: 10, cross_height: 1950, height_direction: (0, 0, 1), material: "ICS_ShopLit");
+// dark roof fascia 19.2-20.0 m (Photo A), 80 cm proud of the smoothed outline
+let z1slab = translate(extrude(points: offset_polygon(points: Z1S, delta: 80), height: 80, material: "ICS_DarkMetal"), (0, 0, 1920));
 let z1pave = translate(extrude(points: offset_polygon(points: Z1S, delta: -20), height: 14, material: "ICS_Paving"), (0, 0, 1996));
 let z2mass = extrude(points: Z2_FP, height: 3600, material: "ICS_MallGlass");
 let z3mass = extrude(points: Z3_FP, height: 4150, material: "ICS_MallGlass");
 
 // ================= 3. Terrace plates (Z2/Z3 stepped, scalloped balconies) =================
-// k0 = 20 m (south podium roof, south-facing only), k1..k3 = 25.5 / 31 / 36.5 m around Z2+Z3, k4 = 42 m around Z3.
+// k1..k3 = 25.5 / 31 / 36.5 m around Z2+Z3 (hull follows the OSM notch), k4 = 42 m around Z3. The 20 m south ledge lives
+// in RIV_Drum. Large scallops only on east-facing samples (over the Z1 roof); every other face is capped at 70-10k cm,
+// so higher levels step back. Ends land exactly on Z3_FP[0] / Z3_FP[4] and the plate closes inside Z4.
 let pot = merge(cylinder_at(r_bot: 26, r_top: 34, height: 60, segments: 8, bottom_center: (0, 0, 0), material: "ICS_DarkMetal"),
     translate(scale(sphere(radius: 55, segments: 8, material: "ICS_Foliage"), (1, 1, 0.8)), (0, 0, 52)));
 var terr = empty();
-for k in 0..5 {
+for k in 1..5 {
     let zl = pick(k, Z1_ROOF, Z1_ROOF + MALL_FLOOR_UP, Z1_ROOF + MALL_FLOOR_UP * 2, Z2_ROOF, Z3_ROOF);
     let base = pick(k, 220, 330, 250, 170, 120);
     let amp = pick(k, 230, 330, 260, 210, 180);
     let ph = pick(k, 10, 0, 18, 36, 54);
-    let hn = select(7, 5, k > 3);
+    let hn = select(9, 5, k > 3);
     var hp = [];
     for j in 0..hn {
         var p = at(Z3_FP, 0);
         if k < 4 {
-            p = pick(j, at(Z3_FP, 0), at(Z3_FP, 2), at(Z2_FP, 0), at(Z2_FP, 1), at(Z2_FP, 2), at(Z2_FP, 3), at(Z3_FP, 4));
+            p = pick(j, at(Z3_FP, 0), at(Z3_FP, 1), at(Z3_FP, 2), at(Z2_FP, 5), at(Z2_FP, 0), at(Z2_FP, 1), at(Z2_FP, 2), at(Z2_FP, 3), at(Z3_FP, 4));
         } else {
             p = at(Z3_FP, j);
         }
         hp = append(hp, (p.x, p.y, 0));
     }
-    let q = resample_path(hp, spacing: 300);
+    let q = resample_path(hp, spacing: 340);
     let nq = len(q);
     var er = [];
     var br = [];
+    var rr = [];
     var pots = [];
+    var hg = [];
     for i in 0..nq {
         let a = at(q, max(i - 1, 0));
         let b = at(q, min(i + 1, nq - 1));
@@ -106,184 +395,256 @@ for k in 0..5 {
         let wave = 0.5 + 0.5 * sin(360 * t * 7 + ph);
         let ramp = clamp(min(t, 1 - t) / 0.06, 0, 1);
         let p = at(q, i);
-        var d = 60 + (base - 60 + amp * wave) * ramp;
-        if k == 0 {
-            let s = clamp(0 - nyv * 2 - 0.4, 0, 1);
-            let s2 = clamp((at(Z1_FP, 1).x - 400 - p.x) / 800, 0, 1);
-            d = mix(-60, mix(100, d, s2), s);
-        }
+        var d = (base + amp * wave) * ramp;
+        let se = clamp((nxv - 0.8) * 5, 0, 1);
+        d = mix(min(d, 70 - 10 * k), d, se);
         er = append(er, (p.x + nxv * d, p.y + nyv * d));
         br = append(br, (p.x + nxv * (d - 30), p.y + nyv * (d - 30), 0));
+        rr = append(rr, (p.x + nxv * (d + 5), p.y + nyv * (d + 5), 0));
         if (mod(i, 2) < 0.5) * (d > 280) { pots = append(pots, (p.x + nxv * (d - 170), p.y + nyv * (d - 170), zl + 2)); }
+        if (se > 0.99) * (d > 100) { hg = append(hg, (p.x + nxv * (d - 75), p.y + nyv * (d - 75), zl + 26)); }
     }
-    // Chaikin x2 on the edge + balustrade lines (keeps them flowing)
+    // Chaikin x2 on the edge, cove and rail lines (keeps them flowing)
     var e2 = er;
     var b2 = br;
+    var r2 = rr;
     for it in 0..2 {
         var ne = [];
         var nb = [];
+        var nr = [];
         ne = append(ne, at(e2, 0));
         nb = append(nb, at(b2, 0));
+        nr = append(nr, at(r2, 0));
         for i in 0..(len(e2) - 1) {
             ne = append(ne, at(e2, i) * 0.75 + at(e2, i + 1) * 0.25);
             ne = append(ne, at(e2, i) * 0.25 + at(e2, i + 1) * 0.75);
             nb = append(nb, at(b2, i) * 0.75 + at(b2, i + 1) * 0.25);
             nb = append(nb, at(b2, i) * 0.25 + at(b2, i + 1) * 0.75);
+            nr = append(nr, at(r2, i) * 0.75 + at(r2, i + 1) * 0.25);
+            nr = append(nr, at(r2, i) * 0.25 + at(r2, i + 1) * 0.75);
         }
         ne = append(ne, at(e2, len(e2) - 1));
         nb = append(nb, at(b2, len(b2) - 1));
+        nr = append(nr, at(r2, len(r2) - 1));
         e2 = ne;
         b2 = nb;
+        r2 = nr;
     }
-    // close the plate 40 cm inside Z4 so it seals against the main block
+    // close the plate with two points inside Z4 (40 cm in from both Z4 faces)
     var plate = [];
-    let e0 = at(e2, 0);
-    let e1 = at(e2, len(e2) - 1);
     for i in 0..len(e2) { plate = append(plate, at(e2, i)); }
-    plate = append(plate, (e1.x - 40, e1.y));
-    plate = append(plate, (e0.x - 40, e0.y));
-    let slab = translate(extrude(points: plate, height: 46, material: "ICS_White"), (0, 0, zl - 54));
+    plate = append(plate, (at(Z3_FP, 4).x - 40, at(Z3_FP, 4).y - 40));
+    plate = append(plate, (at(Z3_FP, 0).x - 40, at(Z3_FP, 0).y + 40));
+    // dark teal glass slab edge + 4 cm white soffit; one 1.69 m teal glass ribbon on the slab edge (Photo B)
+    let slab = translate(extrude(points: plate, height: 46, material: "ICS_SolidGlass"), (0, 0, zl - 54));
+    let soff = translate(extrude(points: plate, height: 4, material: "ICS_White"), (0, 0, zl - 58));
     let pave = translate(extrude(points: offset_polygon(points: plate, delta: -25), height: 14, material: "ICS_Paving"), (0, 0, zl - 12));
+    let r3 = resample_path(r2, spacing: 250);
     let b3 = resample_path(b2, spacing: 250);
-    let rail = sweep_box_path(points: move_points(b3, by: (0, 0, zl + 57)), width: 4, height: 110, up: (0, 0, 1), material: "ICS_Balustrade");
-    let hand = sweep_box_path(points: move_points(b3, by: (0, 0, zl + 115)), width: 7, height: 6, up: (0, 0, 1), material: "ICS_DarkMetal");
-    let cove = sweep_box_path(points: move_points(b3, by: (0, 0, zl - 56)), width: 10, height: 6, up: (0, 0, 1), material: "ICS_WarmLight");
-    terr = merge(terr, slab, pave, rail, hand, cove);
-    if k > 0 {
-        let b4 = resample_path(b2, spacing: 400);
-        var hg = [];
-        for i in 1..(len(b4) - 1) {
-            let pa = at(b4, i - 1);
-            let pc = at(b4, i + 1);
-            let tl = sqrt((pc.x - pa.x) * (pc.x - pa.x) + (pc.y - pa.y) * (pc.y - pa.y));
-            let pp = at(b4, i);
-            hg = append(hg, (pp.x - (pc.y - pa.y) / tl * 45, pp.y - (pa.x - pc.x) / tl * 45, zl + 26));
-        }
-        terr = merge(terr, sweep_box_path(points: hg, width: 55, height: 52, up: (0, 0, 1), material: "ICS_Foliage"));
-    }
+    let rail = sweep_box_path(points: move_points(r3, by: (0, 0, zl + 30.5)), width: 6, height: 169, up: (0, 0, 1), material: "ICS_Balustrade");
+    let hand = sweep_box_path(points: move_points(r3, by: (0, 0, zl + 118)), width: 7, height: 6, up: (0, 0, 1), material: "ICS_DarkMetal");
+    let cove = sweep_box_path(points: move_points(b3, by: (0, 0, zl - 61)), width: 10, height: 6, up: (0, 0, 1), material: "ICS_WarmLight");
+    terr = merge(terr, slab, soff, pave, rail, hand, cove);
+    if len(hg) > 1 { terr = merge(terr, sweep_box_path(points: hg, width: 55, height: 52, up: (0, 0, 1), material: "ICS_Foliage")); }
     if len(pots) > 0 { terr = merge(terr, copy_to_points(pot, points: pots)); }
 }
-
-// ================= 4. South podium + drum: one curved two-storey glass base =================
-// Hull of the Z2/Z3 south faces (Z4 corner -> Z2 spur -> P1), Chaikin x3, then the drum chain kc[0,40).
-var sp = [];
-sp = append(sp, at(Z3_FP, 0));
-sp = append(sp, at(Z3_FP, 2));
-sp = append(sp, at(Z2_FP, 0));
-sp = append(sp, at(Z1_FP, 1));
-for it in 0..3 {
-    var nx = [];
-    nx = append(nx, at(sp, 0));
-    for i in 0..(len(sp) - 1) {
-        nx = append(nx, at(sp, i) * 0.75 + at(sp, i + 1) * 0.25);
-        nx = append(nx, at(sp, i) * 0.25 + at(sp, i + 1) * 0.75);
-    }
-    nx = append(nx, at(sp, len(sp) - 1));
-    sp = nx;
+// Terrace foot opposite the planters (Photo B): warm two-storey glass hall on the Z2 east face, 20-24.9 m,
+// under a dark sawtooth canopy (3 m panels tilted 15 deg, projecting 3 m) hung below the 25.5 m terrace soffit
+let fa = at(Z2_FP, 1);
+let fb = at(Z2_FP, 2);
+let fl = sqrt((fb.x - fa.x) * (fb.x - fa.x) + (fb.y - fa.y) * (fb.y - fa.y));
+let ftx = (fb.x - fa.x) / fl;
+let fty = (fb.y - fa.y) / fl;
+let hall = beam_between(start: (fa.x + ftx * 5000 + fty * 5, fa.y + fty * 5000 - ftx * 5, 2250), end: (fa.x + ftx * 9500 + fty * 5, fa.y + fty * 9500 - ftx * 5, 2250), cross_width: 6, cross_height: 480, height_direction: (0, 0, 1), material: "ICS_ShopLit");
+let sawp = rotate_z_to(rotate_y(box_center(size: (300, 300, 6), center: (0, -155, 0), material: "ICS_DarkMetal"), 15), direction: (ftx, fty, 0));
+var saw = empty();
+for j in 0..15 {
+    let s = 5150 + j * 300;
+    saw = merge(saw, translate(sawp, (fa.x + ftx * s, fa.y + fty * s, 2440)));
 }
-var dc3 = [];
-for i in 0..len(sp) { let p = at(sp, i); dc3 = append(dc3, (p.x, p.y, 0)); }
-for i in 1..40 { let p = at(kc, i); dc3 = append(dc3, (p.x, p.y, 0)); }
-let dq = resample_path(dc3, spacing: 220);
-let ndq = len(dq);
-var dLow = [];
-var dBand = [];
-var dUp = [];
-var drum = empty();
-for i in 0..ndq {
-    let a = at(dq, max(i - 1, 0));
-    let b = at(dq, min(i + 1, ndq - 1));
-    let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
-    let nxv = (b.y - a.y) / tl;
-    let nyv = (a.x - b.x) / tl;
-    let p = at(dq, i);
-    dLow = append(dLow, (p.x + nxv * 12, p.y + nyv * 12, 475));
-    dBand = append(dBand, (p.x + nxv * 50, p.y + nyv * 50, 1000));
-    dUp = append(dUp, (p.x + nxv * 62, p.y + nyv * 62, 1500));
-    drum = merge(drum,
-        beam_between(start: (p.x + nxv * 15, p.y + nyv * 15, 472), end: (p.x + nxv * 48, p.y + nyv * 48, 472), cross_width: 20, cross_height: 938, height_direction: (0, 0, 1), material: "ICS_Gold"),
-        beam_between(start: (p.x + nxv * 64, p.y + nyv * 64, 1500), end: (p.x + nxv * 122, p.y + nyv * 122, 1500), cross_width: 26, cross_height: 890, height_direction: (0, 0, 1), material: "ICS_White"));
-}
-drum = merge(drum,
-    sweep_box_path(points: dLow, width: 8, height: 950, up: (0, 0, 1), material: "ICS_ShopLit"),
-    sweep_box_path(points: dBand, width: 124, height: 100, up: (0, 0, 1), material: "ICS_White"),
-    sweep_box_path(points: dUp, width: 8, height: 900, up: (0, 0, 1), material: "ICS_SolidGlass"));
 
-// ================= 5. Krathong pleated glass + glass swords + G-floor maisons (mid, north) =================
+// ================= 4. South drum + 20 m south ledge + podium wordmark (RIV_Drum) =================
+let drum = part(RIV_Drum);
+
+// ================= 5. River face: maisons 0-11.5 m, hung pleats 12-20 m, glass swords + fin screen to 24 m =================
+// Bays (Photo A, south to north): GUCCI white frame, Bottega dark lattice, LV gold lattice, Cartier dark box,
+// two-storey gold hall (continues round Z1_FP[12]), NE pavilion (RIV_Pavilion), then plaza-side halls on the north face.
 var face = empty();
-for c in 1..3 {
+var screen = empty();
+for c in 0..3 {
     let s0 = pick(c, 0, 40, 104);
     let cn = pick(c, 40, 64, 72);
-    let zc = pick(c, 0, 1215, 1218);
-    let zh = pick(c, 0, 1560, 1540);
     var c3 = [];
     for i in 0..cn { let p = at(kc, s0 + i); c3 = append(c3, (p.x, p.y, 0)); }
     let q = resample_path(c3, spacing: 320);
     let nq = len(q);
+    var nrm = [];
+    var bid = [];
     var zz = [];
-    var hdr = [];
-    var can = [];
-    var cov = [];
-    var shoe = [];
+    var fo = [];
     for i in 0..nq {
         let a = at(q, max(i - 1, 0));
         let b = at(q, min(i + 1, nq - 1));
         let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
         let nxv = (b.y - a.y) / tl;
         let nyv = (a.x - b.x) / tl;
+        nrm = append(nrm, (nxv, nyv));
         let p = at(q, i);
-        let off = select(55, -55, mod(i, 2));
-        zz = append(zz, (p.x + nxv * off, p.y + nyv * off, zc));
-        hdr = append(hdr, (p.x + nxv * 5, p.y + nyv * 5, 364.5));
-        can = append(can, (p.x + nxv * 95, p.y + nyv * 95, 415));
-        cov = append(cov, (p.x + nxv * 172, p.y + nyv * 172, 397));
-        if mod(i, 2) > 0.5 {
-            // glass "swords" 1.1 m deep from the pane shoe up to Z1_FIN_TOP (gold-clad below the roof on the NE pavilion)
-            if c == 1 {
-                face = merge(face, beam_between(start: (p.x - nxv * 55, p.y - nyv * 55, (Z1_FIN_TOP + 435) * 0.5), end: (p.x + nxv * 55, p.y + nyv * 55, (Z1_FIN_TOP + 435) * 0.5), cross_width: 10, cross_height: Z1_FIN_TOP - 435, height_direction: (0, 0, 1), material: "ICS_SolidGlass"));
-            } else {
-                face = merge(face,
-                    beam_between(start: (p.x - nxv * 55, p.y - nyv * 55, 1213.5), end: (p.x + nxv * 55, p.y + nyv * 55, 1213.5), cross_width: 10, cross_height: 1557, height_direction: (0, 0, 1), material: "ICS_Gold"),
-                    beam_between(start: (p.x - nxv * 55, p.y - nyv * 55, (Z1_FIN_TOP + 1990) * 0.5), end: (p.x + nxv * 55, p.y + nyv * 55, (Z1_FIN_TOP + 1990) * 0.5), cross_width: 10, cross_height: Z1_FIN_TOP - 1990, height_direction: (0, 0, 1), material: "ICS_SolidGlass"));
-            }
+        var bb = 98;
+        if c == 1 { bb = (i >= 5) + (i >= 10) + (i >= 16) + (i >= 20); }
+        if c == 2 {
+            bb = select(6 + (i >= 23) + (i >= 29), 5, i < 8);
+            if p.x > 10490 { bb = 99; }
         }
-        // gold portal pilasters every 4 pleats (~12.8 m maison bays)
-        if mod(i, 4) < 0.5 {
-            face = merge(face, beam_between(start: (p.x - nxv * 30, p.y - nyv * 30, 0), end: (p.x - nxv * 30, p.y - nyv * 30, 402), cross_width: 55, cross_height: 75, height_direction: (nxv, nyv, 0), material: "ICS_Gold"));
-            if i + 4 < nq {
-                let pb = at(q, i + 4);
-                let hb = hash(i + c * 100, seed: 7);
-                if hb < 0.62 {
-                    face = merge(face, beam_between(start: (p.x * 0.96 + pb.x * 0.04 - nxv * 168, p.y * 0.96 + pb.y * 0.04 - nyv * 168, 255), end: (pb.x * 0.96 + p.x * 0.04 - nxv * 168, pb.y * 0.96 + p.y * 0.04 - nyv * 168, 255), cross_width: 10, cross_height: 150, height_direction: (0, 0, 1), material: pick(floor(hb * 3.2), "ICS_GoldPanel", "ICS_DarkMetal")));
+        bid = append(bid, bb);
+        let off = select(55, -55, mod(i, 2));
+        zz = append(zz, (p.x + nxv * off, p.y + nyv * off, 1598));
+        fo = append(fo, (p.x + nxv * 112, p.y + nyv * 112, 1945));
+        // glass swords at every crease (3.2 m), 1.1 m deep, up to Z1_FIN_TOP (the chain-end station is owned by the next chain)
+        let own = (c == 2) + (i < nq - 1);
+        if (c == 0) * own {
+            screen = merge(screen, beam_between(start: (p.x - nxv * 55, p.y - nyv * 55, (Z1_FIN_TOP + Z1_ROOF) * 0.5), end: (p.x + nxv * 55, p.y + nyv * 55, (Z1_FIN_TOP + Z1_ROOF) * 0.5), cross_width: 10, cross_height: Z1_FIN_TOP - Z1_ROOF, height_direction: (0, 0, 1), material: "ICS_SolidGlass"));
+        }
+        if c == 1 {
+            let zp = at(zz, i);
+            if own { screen = merge(screen, beam_between(start: (p.x - nxv * 55, p.y - nyv * 55, (Z1_FIN_TOP + 1200) * 0.5), end: (p.x + nxv * 55, p.y + nyv * 55, (Z1_FIN_TOP + 1200) * 0.5), cross_width: 10, cross_height: Z1_FIN_TOP - 1200, height_direction: (0, 0, 1), material: "ICS_SolidGlass")); }
+            screen = merge(screen,
+                beam_between(start: (zp.x, zp.y, 1190), end: (zp.x, zp.y, 1995), cross_width: 8, cross_height: 14, height_direction: (nxv, nyv, 0), material: "ICS_Gold"));
+        }
+        if c == 2 {
+            // gold-clad below the roof (from the pavilion cap where the pavilion stands), clear glass above
+            let zlo = select(1200, 1550 + 150 * clamp((p.x - 10500) / 650, 0, 1), bb > 98.5);
+            screen = merge(screen,
+                beam_between(start: (p.x - nxv * 55, p.y - nyv * 55, (zlo + 1990) * 0.5), end: (p.x + nxv * 55, p.y + nyv * 55, (zlo + 1990) * 0.5), cross_width: 10, cross_height: 1990 - zlo, height_direction: (0, 0, 1), material: "ICS_Gold"),
+                beam_between(start: (p.x - nxv * 55, p.y - nyv * 55, (Z1_FIN_TOP + 1990) * 0.5), end: (p.x + nxv * 55, p.y + nyv * 55, (Z1_FIN_TOP + 1990) * 0.5), cross_width: 10, cross_height: Z1_FIN_TOP - 1990, height_direction: (0, 0, 1), material: "ICS_SolidGlass"));
+        }
+    }
+    // fin-screen balustrade tying the sword tops (23-24 m) + dark cap rail, and trailing plants on the roof edge
+    screen = merge(screen,
+        sweep_box_path(points: move_points(q, by: (0, 0, 2350)), width: 4, height: 100, up: (0, 0, 1), material: "ICS_Balustrade"),
+        sweep_box_path(points: move_points(q, by: (0, 0, 2404)), width: 12, height: 8, up: (0, 0, 1), material: "ICS_DarkMetal"),
+        sweep_box_path(points: fo, width: 60, height: 90, up: (0, 0, 1), material: "ICS_Foliage"));
+    if c > 0 {
+        // hung pleated glass 12.0-19.95 m (all warm ShopLit, folds read by geometry) on a dark shoe
+        var shoe = [];
+        for i in 0..nq {
+            var sh = at(zz, i);
+            if i == 0 { sh = at(zz, 0) * 0.96 + at(zz, 1) * 0.04; }
+            if i == nq - 1 { sh = at(zz, nq - 1) * 0.96 + at(zz, nq - 2) * 0.04; }
+            shoe = append(shoe, (sh.x, sh.y, 1200));
+        }
+        face = merge(face,
+            sweep_box_path(points: zz, width: 6, height: 795, up: (0, 0, 1), material: "ICS_ShopLit"),
+            sweep_box_path(points: shoe, width: 14, height: 23, up: (0, 0, 1), material: "ICS_DarkMetal"));
+        // maison bays, each a full-height front 0.4 m proud of the chain, 0-10.85 m, gold header to 11.55 m
+        let nb = select(5, 4, c == 2);
+        let b0 = select(0, 5, c == 2);
+        for bi in 0..nb {
+            let bb = b0 + bi;
+            let bt = pick(bb, 0, 1, 2, 3, 4, 4, 4, 3, 4);
+            var ix = [];
+            var fr = [];
+            var hd = [];
+            var cnp = [];
+            var cv = [];
+            for i in 0..nq {
+                let bc = at(bid, i);
+                let bp = at(bid, max(i - 1, 0));
+                let bn = at(bid, min(i + 1, nq - 1));
+                if (bc == bb) + (i > 0) * (bp == bb) + (bc > 98.5) * (bn == bb) > 0.5 {
+                    let n = at(nrm, i);
+                    let p = at(q, i);
+                    ix = append(ix, i);
+                    fr = append(fr, (p.x + n.x * 40, p.y + n.y * 40, 542.5));
+                    if bc < 98.5 {
+                        hd = append(hd, (p.x + n.x * 45, p.y + n.y * 45, 1120));
+                        cnp = append(cnp, (p.x + n.x * 95, p.y + n.y * 95, 1170));
+                        cv = append(cv, (p.x + n.x * 172, p.y + n.y * 172, 1150));
+                    }
+                }
+            }
+            let nix = len(ix);
+            face = merge(face, sweep_box_path(points: fr, width: 10, height: 1085, up: (0, 0, 1), material: pick(bt, "ICS_ShopLit", "ICS_DarkMetal", "ICS_ShopLit", "ICS_DarkMetal", "ICS_ShopLit")));
+            if len(hd) > 1 {
+                face = merge(face,
+                    sweep_box_path(points: hd, width: 40, height: 69, up: (0, 0, 1), material: "ICS_Gold"),
+                    sweep_box_path(points: cnp, width: 190, height: 30, up: (0, 0, 1), material: "ICS_DarkMetal"),
+                    sweep_box_path(points: cv, width: 10, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"));
+            }
+            // gold portal pilasters at the bay junctions
+            for e in 0..2 {
+                let ie = select(at(ix, 0), at(ix, nix - 1), e > 0);
+                let want = select(at(bid, ie) < 98.5, (c == 2) * (bi == nb - 1), e > 0);
+                if want > 0.5 {
+                    let n = at(nrm, ie);
+                    let p = at(q, ie);
+                    face = merge(face, beam_between(start: (p.x + n.x * 40, p.y + n.y * 40, 0), end: (p.x + n.x * 40, p.y + n.y * 40, 1150), cross_width: 55, cross_height: 75, height_direction: (n.x, n.y, 0), material: "ICS_Gold"));
+                }
+            }
+            // per-bay dressing on the front line
+            var l1 = [];
+            var l2 = [];
+            for m in 0..nix {
+                let n = at(nrm, at(ix, m));
+                let p = at(q, at(ix, m));
+                l1 = append(l1, (p.x + n.x * pick(bt, 76, 49, 49, 49, 53), p.y + n.y * pick(bt, 76, 49, 49, 49, 53), 0));
+                l2 = append(l2, (p.x + n.x * 52, p.y + n.y * 52, 0));
+            }
+            if bt == 0 {
+                // (a) white-framed lit box (GUCCI)
+                let fa0 = at(l1, 0);
+                let fa1 = at(l1, nix - 1);
+                let fn0 = at(nrm, at(ix, 0));
+                let fn1 = at(nrm, at(ix, nix - 1));
+                face = merge(face,
+                    beam_between(start: (fa0.x, fa0.y, 0), end: (fa0.x, fa0.y, 1085), cross_width: 60, cross_height: 60, height_direction: (fn0.x, fn0.y, 0), material: "ICS_White"),
+                    beam_between(start: (fa1.x, fa1.y, 0), end: (fa1.x, fa1.y, 1085), cross_width: 60, cross_height: 60, height_direction: (fn1.x, fn1.y, 0), material: "ICS_White"),
+                    sweep_box_path(points: move_points(l1, by: (0, 0, 1055)), width: 60, height: 60, up: (0, 0, 1), material: "ICS_White"),
+                    sweep_box_path(points: move_points(l1, by: (0, 0, 790)), width: 60, height: 60, up: (0, 0, 1), material: "ICS_White"));
+            }
+            if (bt == 1) + (bt == 2) > 0.5 {
+                // (b) dark box with warm-light lattice (Bottega) / (c) gold lattice over lit glass (LV)
+                let lm = select("ICS_WarmLight", "ICS_Gold", bt == 2);
+                let lw = select(8, 12, bt == 2);
+                let nr = select(6, 7, bt == 2);
+                let lb = pick(select(0, 1, bt == 2), l1, l2);
+                for r in 0..nr {
+                    let zr = select(120 + r * 190, 60 + r * 165, bt == 2);
+                    face = merge(face, sweep_box_path(points: move_points(lb, by: (0, 0, zr)), width: 6, height: lw, up: (0, 0, 1), material: lm));
+                }
+                for m in 0..nix {
+                    let pm = at(lb, m);
+                    let n = at(nrm, at(ix, m));
+                    // bay-end bars would sit inside the gold pilasters
+                    if (m > 0) * (m < nix - 1) {
+                        face = merge(face, beam_between(start: (pm.x, pm.y, 40), end: (pm.x, pm.y, 1070), cross_width: lw, cross_height: 6, height_direction: (n.x, n.y, 0), material: lm));
+                    }
+                    if m < nix - 1 {
+                        let pn = at(lb, m + 1);
+                        face = merge(face, beam_between(start: ((pm.x + pn.x) * 0.5, (pm.y + pn.y) * 0.5, 40), end: ((pm.x + pn.x) * 0.5, (pm.y + pn.y) * 0.5, 1070), cross_width: lw, cross_height: 6, height_direction: (n.x, n.y, 0), material: lm));
+                    }
+                }
+            }
+            if bt == 3 {
+                // (d) dark box with lit display windows and a 1 m warm sign bar (Cartier)
+                var sb = [];
+                for m in 1..(nix - 1) { sb = append(sb, at(l2, m)); }
+                face = merge(face, sweep_box_path(points: move_points(l1, by: (0, 0, 230)), width: 4, height: 420, up: (0, 0, 1), material: "ICS_ShopLit"));
+                if len(sb) > 1 { face = merge(face, sweep_box_path(points: move_points(sb, by: (0, 0, 850)), width: 6, height: 100, up: (0, 0, 1), material: "ICS_WarmLight")); }
+            }
+            if bt == 4 {
+                // (e) two-storey gold-lit hall: gold transom at 6 m + gold mullions at every station
+                face = merge(face, sweep_box_path(points: move_points(l1, by: (0, 0, 600)), width: 14, height: 30, up: (0, 0, 1), material: "ICS_Gold"));
+                for m in 0..nix {
+                    let pm = at(l1, m);
+                    let n = at(nrm, at(ix, m));
+                    face = merge(face, beam_between(start: (pm.x, pm.y, 0), end: (pm.x, pm.y, 1085), cross_width: 10, cross_height: 14, height_direction: (n.x, n.y, 0), material: "ICS_Gold"));
                 }
             }
         }
     }
-    // dark glass shoe under the hung panes, pulled 4% in from the chain ends so its caps clear the end panes
-    for i in 0..nq {
-        var sh = at(zz, i);
-        if i == 0 { sh = at(zz, 0) * 0.96 + at(zz, 1) * 0.04; }
-        if i == nq - 1 { sh = at(zz, nq - 1) * 0.96 + at(zz, nq - 2) * 0.04; }
-        shoe = append(shoe, (sh.x, sh.y, 438));
-    }
-    if c == 1 {
-        // middle krathong: folds alternate lit-interior glass and warm-lit glass (Photo A light strips)
-        for i in 0..(nq - 1) {
-            let f0 = at(zz, i);
-            let f1 = at(zz, i + 1);
-            let fz = select(1215, 1217, mod(i, 2));
-            let fh = select(1560, 1550, mod(i, 2));
-            face = merge(face, beam_between(start: (f0.x, f0.y, fz), end: (f1.x, f1.y, fz), cross_width: 6, cross_height: fh, height_direction: (0, 0, 1), material: pick(mod(i, 2), "ICS_MallGlass", "ICS_ShopLit")));
-        }
-    } else {
-        face = merge(face, sweep_box_path(points: zz, width: 6, height: zh, up: (0, 0, 1), material: "ICS_ShopLit"));
-    }
-    face = merge(face,
-        sweep_box_path(points: shoe, width: 14, height: 23, up: (0, 0, 1), material: "ICS_DarkMetal"),
-        sweep_box_path(points: hdr, width: 40, height: 69, up: (0, 0, 1), material: "ICS_Gold"),
-        sweep_box_path(points: can, width: 190, height: 30, up: (0, 0, 1), material: "ICS_DarkMetal"),
-        sweep_box_path(points: cov, width: 10, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"));
 }
+let pavilion = part(RIV_Pavilion);
 
 // ================= 6. Z1 roof garden =================
 var garden = empty();
@@ -326,7 +687,8 @@ for c in 0..3 {
         garden = merge(garden, copy_to_points(globe, points: globes));
     }
 }
-// Circular planters in a row along the terrace foot (Photo B), on the Z2 east line frame
+// Circular planters: the one row of 5 on the podium roof deck at the terrace foot (Photo B; brief rev B D1 gives them to
+// Riverfront). Centres 7.5-9.4 m east of the Z2 face so every planter clears the mid lawn bed by >= 3.5 m.
 let za = at(Z2_FP, 1);
 let zb = at(Z2_FP, 2);
 let zlen = sqrt((zb.x - za.x) * (zb.x - za.x) + (zb.y - za.y) * (zb.y - za.y));
@@ -335,7 +697,7 @@ let zty = (zb.y - za.y) / zlen;
 var circ = [];
 for j in 0..5 {
     let s = 5800 + j * 950;
-    let u = 1150 + 100 * sin(j * 70);
+    let u = 850 + 100 * sin(j * 70);
     circ = append(circ, (za.x + ztx * s + zty * u, za.y + zty * s - ztx * u, 2006));
 }
 let planter = merge(cylinder_at(radius: 300, height: 55, segments: 32, bottom_center: (0, 0, 0), material: "ICS_White"),
@@ -366,7 +728,7 @@ for c in 0..2 {
         translate(extrude(points: lawnP, height: 40, material: "ICS_White"), (0, 0, 2006)),
         translate(extrude(points: offset_polygon(points: lawnP, delta: -25), height: 46, material: "ICS_Foliage"), (0, 0, 2006)));
 }
-// NE lobe roof: white curved amphitheatre steps facing the river + a grove of trees
+// NE lobe roof: white curved amphitheatre steps facing the river + a grove of trees (trunks >= 4.5 m inside the roof edge)
 let nc = (at(Z1_FP, 15) + at(Z1_FP, 18)) * 0.5;
 for j in 0..3 {
     let rr = 650 + j * 140;
@@ -378,7 +740,7 @@ let tree = merge(cylinder_at(r_bot: 22, r_top: 14, height: 300, segments: 8, bot
 var trees = [];
 for j in 0..7 {
     let ang = 20 + j * 47;
-    let rr = 1250 + 250 * hash(j, seed: 11);
+    let rr = pick(j, 1230, 1180, 1000, 1250, 1250, 1250, 1100) + 50 * hash(j, seed: 11);
     trees = append(trees, (nc.x + cos(ang) * rr, nc.y + sin(ang) * rr * 0.7, 2006));
 }
 garden = merge(garden, copy_to_points(tree, points: trees));
@@ -404,52 +766,89 @@ for j in 0..4 {
     ent = merge(ent, beam_between(start: (n0.x + (n1.x - n0.x) * f - nnx * 38, n0.y + (n1.y - n0.y) * f - nny * 38, 0), end: (n0.x + (n1.x - n0.x) * f - nnx * 38, n0.y + (n1.y - n0.y) * f - nny * 38, 532), cross_width: 50, cross_height: 80, height_direction: (0 - nnx, 0 - nny, 0), material: "ICS_Gold"));
 }
 
-// Open-air dining umbrellas on the 5F (Z2 roof) and 6F Tasana Nakorn (Z3 roof) terraces
+// Open-air dining: 12 umbrellas in three loose clusters (two on the 5F Z2 roof, one on the 6F Tasana Nakorn Z3 roof)
 let umb = merge(cylinder_at(radius: 5, height: 240, segments: 6, bottom_center: (0, 0, 0), material: "ICS_DarkMetal"),
     cylinder_at(r_bot: 165, r_top: 6, height: 55, segments: 12, bottom_center: (0, 0, 228), material: "ICS_White"),
     cylinder_at(radius: 55, height: 6, segments: 10, bottom_center: (0, 0, 72), material: "ICS_DarkMetal"));
-var umbs = [];
-for t in 0..2 {
-    let ua = pick(t, at(Z2_FP, 1), at(Z3_FP, 2));
-    let ub = pick(t, at(Z2_FP, 2), at(Z3_FP, 3));
-    let zt = pick(t, Z2_ROOF + 2, Z3_ROOF + 2);
+var dining = empty();
+for m in 0..12 {
+    let cl = floor(m / 4);
+    let jj = mod(m, 4);
+    let ua = pick(cl, at(Z2_FP, 1), at(Z2_FP, 1), at(Z3_FP, 2));
+    let ub = pick(cl, at(Z2_FP, 2), at(Z2_FP, 2), at(Z3_FP, 3));
+    let zt = pick(cl, Z2_ROOF + 2, Z2_ROOF + 2, Z3_ROOF + 2);
     let ul = sqrt((ub.x - ua.x) * (ub.x - ua.x) + (ub.y - ua.y) * (ub.y - ua.y));
     let tx = (ub.x - ua.x) / ul;
     let ty = (ub.y - ua.y) / ul;
-    for j in 0..13 {
-        for r in 0..2 {
-            let s = 900 + j * 800 + r * 400;
-            let u = 450 + r * 600;
-            if s < ul - 700 { umbs = append(umbs, (ua.x + tx * s - ty * u, ua.y + ty * s + tx * u, zt)); }
-        }
-    }
+    let o = pick(jj, (-220, -180), (230, -120), (-160, 210), (200, 240));
+    let s = pick(cl, 2500, 8200, 4500) + o.x + (hash(m, seed: 21) - 0.5) * 300;
+    let u = pick(cl, 700, 650, 700) + o.y + (hash(m, seed: 22) - 0.5) * 300;
+    let rs = (140 + 40 * hash(m, seed: 23)) / 165;
+    dining = merge(dining, translate(scale(umb, (rs, rs, 1)), (ua.x + tx * s - ty * u, ua.y + ty * s + tx * u, zt)));
 }
-let dining = copy_to_points(umb, points: umbs);
 
-// Small white ICONSIAM sign on the upper pleated glass of the middle krathong (Photo A, above the maisons)
-let sp0 = at(kc, 70);
-let sp1 = at(kc, 74);
-let sl = sqrt((sp1.x - sp0.x) * (sp1.x - sp0.x) + (sp1.y - sp0.y) * (sp1.y - sp0.y));
-let snx = (sp1.y - sp0.y) / sl;
-let sny = (sp0.x - sp1.x) / sl;
-let sign = translate(rotate_z(center(text_mesh(text: "ICONSIAM", font: "font.google.Cinzel", height: 150, depth: 10, material: "ICS_SignWhite"), axes: "xyz", at: (0, 0, 0)), atan2(snx, 0 - sny)),
-    ((sp0.x + sp1.x) * 0.5 + snx * 58, (sp0.y + sp1.y) * 0.5 + sny * 58, 1560));
-
-out.geo = merge(z1core, z1slab, z1pave, z2mass, z3mass, terr, drum, face, garden, ent, dining, sign);
+out.geo = merge(z1core, slotcap, z1slab, z1pave, z2mass, z3mass, terr, hall, saw, drum, face, screen, pavilion, garden, ent, dining);
 #end
 
 #mesh ICS_MallRiverfront lod: 1
-// far massing: the three zone extrusions (Z1 on the smoothed krathong outline)
-out.geo = merge(part(RIV_Z1Mass, iters: 2, h: Z1_ROOF),
+// far massing: Z1 on the smoothed krathong outline with its dark roof fascia, Z2/Z3 prisms, one coarse teal-glass plate
+// per terrace level (25.5 / 31 / 36.5 / 42 m), the drum's lower / white / upper bands and the NE pavilion volume
+var plates = empty();
+for k in 1..5 {
+    let zl = pick(k, Z1_ROOF, Z1_ROOF + MALL_FLOOR_UP, Z1_ROOF + MALL_FLOOR_UP * 2, Z2_ROOF, Z3_ROOF);
+    let ee = pick(k, 0, 450, 380, 300, 200);
+    let ss = 70 - 10 * k;
+    let hn = select(9, 5, k > 3);
+    var hp = [];
+    for j in 0..hn {
+        var p = at(Z3_FP, 0);
+        if k < 4 {
+            p = pick(j, at(Z3_FP, 0), at(Z3_FP, 1), at(Z3_FP, 2), at(Z2_FP, 5), at(Z2_FP, 0), at(Z2_FP, 1), at(Z2_FP, 2), at(Z2_FP, 3), at(Z3_FP, 4));
+        } else {
+            p = at(Z3_FP, j);
+        }
+        hp = append(hp, p);
+    }
+    var pl = [];
+    pl = append(pl, at(hp, 0));
+    for j in 1..(hn - 1) {
+        let pa = at(hp, j - 1);
+        let pc = at(hp, j);
+        let pb = at(hp, j + 1);
+        let l1 = sqrt((pc.x - pa.x) * (pc.x - pa.x) + (pc.y - pa.y) * (pc.y - pa.y));
+        let l2 = sqrt((pb.x - pc.x) * (pb.x - pc.x) + (pb.y - pc.y) * (pb.y - pc.y));
+        let m1x = (pc.y - pa.y) / l1;
+        let m1y = (pa.x - pc.x) / l1;
+        let m2x = (pb.y - pc.y) / l2;
+        let m2y = (pc.x - pb.x) / l2;
+        let o1 = select(ss, ee, m1x > 0.8);
+        let o2 = select(ss, ee, m2x > 0.8);
+        let det = m1x * m2y - m1y * m2x;
+        var xo = (m1x * o1, m1y * o1);
+        if abs(det) > 0.05 { xo = ((o1 * m2y - m1y * o2) / det, (m1x * o2 - m2x * o1) / det); }
+        pl = append(pl, pc + xo);
+    }
+    pl = append(pl, at(hp, hn - 1));
+    pl = append(pl, (at(Z3_FP, 4).x - 40, at(Z3_FP, 4).y - 40));
+    pl = append(pl, (at(Z3_FP, 0).x - 40, at(Z3_FP, 0).y + 40));
+    plates = merge(plates, translate(extrude(points: pl, height: 52, material: "ICS_SolidGlass"), (0, 0, zl - 60)));
+}
+out.geo = merge(part(RIV_Z1Mass, iters: 2, h: 2010, band: 1),
     extrude(points: Z2_FP, height: Z2_ROOF, material: "ICS_MallGlass"),
     translate(extrude(points: offset_polygon(points: Z2_FP, delta: -30), height: 14, material: "ICS_Paving"), (0, 0, Z2_ROOF - 7)),
     extrude(points: Z3_FP, height: Z3_ROOF, material: "ICS_MallGlass"),
-    translate(extrude(points: offset_polygon(points: Z3_FP, delta: -30), height: 14, material: "ICS_Paving"), (0, 0, Z3_ROOF - 7)));
+    translate(extrude(points: offset_polygon(points: Z3_FP, delta: -30), height: 14, material: "ICS_Paving"), (0, 0, Z3_ROOF - 7)),
+    plates,
+    part(RIV_Drum, lod: 1, iters: 2),
+    part(RIV_Pavilion, iters: 2, spacing: 640, detail: 0));
 #end
 
 #mesh ICS_MallRiverfront collider
-// coarse walk collider: Z1 / Z2 / Z3 zone prisms (OSM footprints) to their roof levels
-out.geo = merge(extrude(points: Z1_FP, height: Z1_ROOF, material: "ICS_Concrete"),
+// walk collider built from the same outlines as the visuals: Z1 smoothed krathong prism grown 60 cm over the shopfronts
+// (top 20.10 m = roof paving), Z2 / Z3 prisms, the drum prism (+65 cm) and the NE pavilion volume
+out.geo = merge(part(RIV_Z1Mass, iters: 2, h: 2020, pave: 0, grow: 60),
     extrude(points: Z2_FP, height: Z2_ROOF, material: "ICS_Concrete"),
-    extrude(points: Z3_FP, height: Z3_ROOF, material: "ICS_Concrete"));
+    extrude(points: Z3_FP, height: Z3_ROOF, material: "ICS_Concrete"),
+    part(RIV_Drum, lod: 2, iters: 2),
+    part(RIV_Pavilion, iters: 2, spacing: 640, detail: 0));
 #end

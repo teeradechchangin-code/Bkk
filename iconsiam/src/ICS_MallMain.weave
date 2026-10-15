@@ -227,7 +227,9 @@ if (lod == 0) + (lod == 1) * L1_PLEATS {
             skin = merge(skin, smooth_shade(paint(tc, material: "ICS_WarmLight", selection: select_faces(tc, normal: (0, 0, -1), angle: 3)), angle: 14));
         }
         if lod == 0 {
-            // 25 cm warm bead on each gold cap's outer edge (top -> mid crease -> bottom): the sawtooth at the glass
+            // 25 cm warm bead on each gold cap's outer edge (top -> mid crease -> bottom): the sawtooth at the glass.
+            // Only above ZG0: below the Z3 terrace deck the u=40 plane is the riverfront crew's Z3 west face, so
+            // nothing is emitted east of the line there (beads are clipped at ZG0, inside the terrace deck).
             for e in 0..2 {
                 let k = select(0, NS - 1, e);
                 let bi = at(IX, k);
@@ -236,14 +238,20 @@ if (lod == 0) + (lod == 1) * L1_PLEATS {
                 let pb = at(pts, bi) + off;
                 let pu = at(pts, bi + 1) + off;
                 var pm = pu;
-                if at(SM, k) > 0 {
-                    pm = at(pts, bi + 4) + off;
-                    let d1 = normalize(pm - pu);
-                    skin = merge(skin, beam_between(start: pu + d1 * 12, end: pm, cross_width: 25, cross_height: 25, height_direction: un, material: "ICS_WarmLight"));
+                if at(SM, k) > 0 { pm = at(pts, bi + 4) + off; }
+                for sgi in 0..2 {
+                    let has = (sgi == 1) + (at(SM, k) > 0);      // the top segment exists only with a mid crease
+                    let sa = select(pu, pm, sgi == 1);
+                    let sb = select(pm, pb, sgi == 1);
+                    if has * (sa.z > ZG0 + 40) {
+                        let dd = normalize(sb - sa);
+                        let t0 = select(0, 12, (sgi == 0) + (at(SM, k) <= 0));
+                        let t1 = select(0, max(12, 14.5 / max(abs(dd.z), 0.1)), sgi == 1);
+                        let cut = sb.z < ZG0;
+                        let sbc = select(sb, sa + (sb - sa) * ((sa.z - ZG0) / (sa.z - sb.z)), cut);
+                        skin = merge(skin, beam_between(start: sa + dd * t0, end: sbc - dd * select(t1, 0, cut), cross_width: 25, cross_height: 25, height_direction: un, material: "ICS_WarmLight"));
+                    }
                 }
-                let d2 = normalize(pb - pm);
-                let tb = max(12, 14.5 / max(abs(d2.z), 0.1));
-                skin = merge(skin, beam_between(start: pm + d2 * select(0, tb, at(SM, k) <= 0), end: pb - d2 * tb, cross_width: 25, cross_height: 25, height_direction: un, material: "ICS_WarmLight"));
             }
         }
     }
