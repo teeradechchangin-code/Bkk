@@ -164,7 +164,7 @@ let Z3_FP = [(4610, -8790), (4870, -8690), (6100, -8680), (5360, 2200), (3860, 2
 let Z4_FP = [(3780, -9100), (4610, -8790), (3860, 2170), (-780, 2090), (-2680, 10410), (-3460, 10740), (-12050, 9100), (-12050, 8260), (-10500, -7750), (-10280, -10460), (2890, -9800)];
 // Gold crown oval (INFERRED, low confidence: calibrate to photos)
 let CROWN_FP = [(3770, -2030), (3540, -1100), (3200, -260), (2780, 470), (2280, 1060), (1730, 1490), (1150, 1730), (560, 1790), (-20, 1650), (-560, 1330), (-1050, 830), (-1460, 180), (-1780, -600), (-2000, -1480), (-2100, -2430), (-2090, -3400), (-1970, -4370), (-1740, -5300), (-1400, -6140), (-980, -6870), (-480, -7460), (70, -7890), (650, -8130), (1240, -8190), (1820, -8050), (2360, -7730), (2850, -7230), (3260, -6580), (3580, -5800), (3800, -4920), (3900, -3970), (3890, -3000)];
-let CROWN_C = (900, -3200, 0);
+let CROWN_C = (-750, -2250, 0);   // rev B (Management D8): as-built crown frame centre; stem axis on the Z4 river face at y ~ -1906
 // Magnolias OSM outline w680736465 (tower envelope incl. balconies/podium)
 let MAG_FP = [(820, 11730), (-1800, 11200), (-470, 4370), (-280, 4170), (-30, 4050), (900, 4070), (2510, 4100), (4580, 6310), (4260, 8060), (4140, 8250), (3990, 8420), (2140, 9750), (1540, 10200), (1360, 10440)];
 // Magnolias INFERRED slender shaft (Doc Control; photo A suggests the real plate is wider, closer to MAG_FP)
@@ -1080,7 +1080,7 @@ let glass = beam_between(start: V1 + NG * -15 + (0, 0, (ZG0 + ZG1) / 2), end: V2
 // crosses the u=40 face, set once Management freezes the crown. While it lies outside the glass span (default)
 // nothing changes; when set, the river-face mullions within +-110 cm of the stem are skipped and the 45.0/50.5/
 // 56.0 m fascias and the coping break there, so they never cut into or coincide with the 2 m stem post.
-let STEM_Y = -99999;
+let STEM_Y = -1906;                // Management D8: crown frozen at CROWN_C rev B (-750,-2250); stem axis y -19.06 m
 let ELEN = length(E2 - E1);
 let TS = (STEM_Y - E1.y) / TG.y;   // stem station along the glass line, measured from E1
 var SEGS = [(0, ELEN)];
@@ -2664,16 +2664,16 @@ out.geo = merge(part(RIV_Z1Mass, iters: 1, h: 2020, pave: 0, grow: 100),
 // Local construction frame inside CROWN_Body: u = along the long axis toward the prow (east), v = across (north),
 // z = world height; rotated by SITE_ROT_DEG about the crown centre at the end. In this frame the river face is the
 // line u = CR_UF (the Z4 east edge runs exactly along the rotated grid).
-// Interface data for #meshdefs rev B (Management): as-built CROWN_C = (-750, -3500, 0); stem axis on the river face at
-// world y = -3156 (MallMain STEM_Y); as-built 32-point CROWN_FP is listed in the crew's round-3 report.
+// Interface data (#meshdefs rev B, Management D8): CROWN_C = (-750, -2250, 0); stem axis on the river face at
+// world y ~ -1906 (MallMain STEM_Y = -1906); the rev A CROWN_FP outline is superseded by this file's rim.
 
 #meshpart CROWN_Body
 param lod = 0;                  // 0 = full detail, 1 = far display, 2 = collider
 param piece = 0;                // 0 rim, 1 drum + kerb + fins, 2 Wisdom Hall bow, 3 canopy, 4 collider
-// ---- calibrated frame: crew calibration. The rev A defs CROWN_C (900,-3200) / CROWN_FP no longer describe the
-// as-built crown; replace these two lines with CROWN_C.x / CROWN_C.y once Management publishes #meshdefs rev B. ----
-let CR_CX = -750;               // crown centre, world x (cm)
-let CR_CY = -2113;              // crown centre, world y (cm)
+// ---- calibrated frame: #meshdefs rev B (Management D8) - crown moved 12.5 m north so the prow/stem sit above the
+// ICONSIAM river logo (stem axis y ~ -19.06 m = MallMain STEM_Y). CROWN_FP (rev A) remains superseded by this file. ----
+let CR_CX = CROWN_C.x;          // crown centre, world x (cm)
+let CR_CY = CROWN_C.y;          // crown centre, world y (cm)
 let CR_CS = cos(SITE_ROT_DEG);
 let CR_SN = sin(SITE_ROT_DEG);
 // river face (Z4_FP edge 1 -> 2) in the crown frame, where it crosses the crown axis (v = 0)

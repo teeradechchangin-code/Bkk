@@ -20,16 +20,16 @@
 // Local construction frame inside CROWN_Body: u = along the long axis toward the prow (east), v = across (north),
 // z = world height; rotated by SITE_ROT_DEG about the crown centre at the end. In this frame the river face is the
 // line u = CR_UF (the Z4 east edge runs exactly along the rotated grid).
-// Interface data for #meshdefs rev B (Management): as-built CROWN_C = (-750, -3500, 0); stem axis on the river face at
-// world y = -3156 (MallMain STEM_Y); as-built 32-point CROWN_FP is listed in the crew's round-3 report.
+// Interface data (#meshdefs rev B, Management D8): CROWN_C = (-750, -2250, 0); stem axis on the river face at
+// world y ~ -1906 (MallMain STEM_Y = -1906); the rev A CROWN_FP outline is superseded by this file's rim.
 
 #meshpart CROWN_Body
 param lod = 0;                  // 0 = full detail, 1 = far display, 2 = collider
 param piece = 0;                // 0 rim, 1 drum + kerb + fins, 2 Wisdom Hall bow, 3 canopy, 4 collider
-// ---- calibrated frame: crew calibration. The rev A defs CROWN_C (900,-3200) / CROWN_FP no longer describe the
-// as-built crown; replace these two lines with CROWN_C.x / CROWN_C.y once Management publishes #meshdefs rev B. ----
-let CR_CX = -750;               // crown centre, world x (cm)
-let CR_CY = -3500;              // crown centre, world y (cm)
+// ---- calibrated frame: #meshdefs rev B (Management D8) - crown moved 12.5 m north so the prow/stem sit above the
+// ICONSIAM river logo (stem axis y ~ -19.06 m = MallMain STEM_Y). CROWN_FP (rev A) remains superseded by this file. ----
+let CR_CX = CROWN_C.x;          // crown centre, world x (cm)
+let CR_CY = CROWN_C.y;          // crown centre, world y (cm)
 let CR_CS = cos(SITE_ROT_DEG);
 let CR_SN = sin(SITE_ROT_DEG);
 // river face (Z4_FP edge 1 -> 2) in the crown frame, where it crosses the crown axis (v = 0)

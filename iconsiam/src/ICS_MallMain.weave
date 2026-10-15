@@ -137,7 +137,7 @@ let glass = beam_between(start: V1 + NG * -15 + (0, 0, (ZG0 + ZG1) / 2), end: V2
 // crosses the u=40 face, set once Management freezes the crown. While it lies outside the glass span (default)
 // nothing changes; when set, the river-face mullions within +-110 cm of the stem are skipped and the 45.0/50.5/
 // 56.0 m fascias and the coping break there, so they never cut into or coincide with the 2 m stem post.
-let STEM_Y = -99999;
+let STEM_Y = -1906;                // Management D8: crown frozen at CROWN_C rev B (-750,-2250); stem axis y -19.06 m
 let ELEN = length(E2 - E1);
 let TS = (STEM_Y - E1.y) / TG.y;   // stem station along the glass line, measured from E1
 var SEGS = [(0, ELEN)];
