@@ -18,7 +18,7 @@
 #meshpart MAG_Massing
 // lod = 1: LOD1 display massing; lod = 0: collider prisms. MIRRORED lets: keep identical to LOD0 below.
 param lod = 1;
-let FH = 420;
+let FH = MAG_FLOOR_H;                // Management D7: true 70-floor pitch 4.0 m (palette ICS_TowerGlass roomH = 4.0)
 let ZP = MAG_PODIUM_TOP;
 let S_PAR = MAG_ROOF + 400;
 let S_PIL = MAG_ROOF + 650;
@@ -141,7 +141,7 @@ sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 32000));
 anchor(mode: "origin");
 
 // ---------- shared numbers (MIRRORED in #meshpart MAG_Massing: keep textually identical) ----------
-let FH = 420;                        // floor pitch = ICS_TowerGlass roomH 4.2 m (logged deviation, see header)
+let FH = MAG_FLOOR_H;                // Management D7: true 70-floor pitch 4.0 m (palette ICS_TowerGlass roomH = 4.0)
 let ZP = MAG_PODIUM_TOP;             // 2700
 let S_PAR = MAG_ROOF + 400;          // south parapet top 285.0 m
 let S_PIL = MAG_ROOF + 650;          // south pilaster tips = sail cap 287.5 m

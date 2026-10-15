@@ -104,8 +104,8 @@ material ICS_White { base = "LibPlaster" roughness = 0.62 }
 material ICS_DarkMetal { base = "LibDarkMetal" metallic = 0.5 roughness = 0.45 }
 material ICS_Concrete { base = "LibConcrete" }
 material ICS_Paving { base = "LibPlazaTile" tileM = 2.4 }
-material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#3E5566" roomH = 4.2 bayW = 1.5 }
-material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#3A5260" roomH = 4.4 bayW = 1.5 }
+material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#3E5566" roomH = 4.0 bayW = 1.5 }
+material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#3A5260" roomH = 4.3 roomOffsetZ = 2.5 bayW = 1.5 }
 material ICS_MallGlass { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#4A5A58" roomH = 6.0 bayW = 2.0 }
 material ICS_SolidGlass { base = "Glass" tint = "#8FA2B0" }
 material ICS_Balustrade { base = "GlassTransparent" tint = "#5E9C98" }
