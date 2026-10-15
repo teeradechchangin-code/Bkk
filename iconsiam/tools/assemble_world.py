@@ -24,9 +24,10 @@ for name in order:
     parts.append(f"// ===== {name} (src/{name}.weave) =====\n" + f.read_text().rstrip() + "\n")
     objs.append(f"object {name} {{\n    model = \"mesh.{name}\"\n    position = (0, 0, 0)\n    collision = mesh\n}}")
 parts.append("// ===== Placement: whole complex at world (0,0,0) =====\n" + "\n".join(objs) + "\n")
-lights = root / "world/10_lights.weave"   # Management-owned engine lights (D9)
-if lights.exists():
-    parts.append(lights.read_text().rstrip() + "\n")
+for extra in ("world/10_lights.weave", "world/20_context.weave"):   # Management-owned: engine lights (D9), context land (D14)
+    f = root / extra
+    if f.exists():
+        parts.append(f.read_text().rstrip() + "\n")
 out = root / "world/ICONSIAM_world.weave"
 out.write_text("\n".join(parts))
 print(out, out.stat().st_size, "bytes,", len(objs), "components")

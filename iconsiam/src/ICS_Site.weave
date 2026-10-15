@@ -258,22 +258,24 @@ out.geo = g;
 // ================================================================ LOD0
 #mesh ICS_Site
 budget(verts: 250000, indices: 750000);
-// Site sim_box exception (D11 conflict ruled by Management D13, rev E): the plain context apron runs to x = -60000 and
+// Management D14 (scene QC r2 integration): the engine clamps a static-collidable object to 500 m per axis, and the
+// 1200 x 1000 m D13 box squashed the whole site. ICS_Site is back inside +/-24000 (480 m); the context land beyond it is
+// Management-owned cube tiles in world/20_context.weave. (Superseded D13 note:) the plain context apron ran to x = -60000 and
 // y = -/+50000. The engine places the sim_box bottom-centre at the instance position (preview placement_reference), so
 // the box stays centred on the origin with min z 0 (template): D13's literal (-60000,-50000,-600)..(24000,50000,1400)
 // puts that point at (-18000,0,-600) and would shift the whole site 180 m east / 6 m up at position (0,0,0).
 // The +x half is reference only; geometry still ends at the river edge (piers to x ~178 m). Top 16 m = emergent crowns.
-sim_box(min: (-60000, -50000, 0), max: (60000, 50000, 1600));
+sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 1600));
 anchor(mode: "origin");
 
 // ---------- land slab: x = XW .. river edge, y = YS .. YN (D11/D13 apron), top z = 0, bottom = RIVER_BED_Z
 // river edge = BANK_S + BANK_LINE (all 21 vertices) + BANK_N: OSM riverbank_west_line v0..v18 south of BANK_LINE and
 // v40, v43..v49 north of it, extrapolated at 356.1 deg from v0 to y -50000 and from v49 to y +50000
-let XW = -60000;
-let YS = -50000;
-let YN = 50000;
-let BANK_S = [(14210, -50000), (13370, -37700), (13430, -36860), (13620, -35550), (13640, -35410), (14220, -32270), (14560, -30310), (14550, -30070), (14640, -29800), (14750, -27730), (14770, -27430), (15550, -27300), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
-let BANK_N = [(12030, 24740), (11800, 25620), (10150, 31790), (10970, 32150), (11270, 33050), (11210, 33900), (10680, 34140), (9250, 38910), (8490, 50000)];
+let XW = -24000;
+let YS = -24000;
+let YN = 24000;
+let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
+let BANK_N = [(12153, 24000)];
 let B1 = at(BANK_LINE, 1);
 let BLAST = at(BANK_LINE, len(BANK_LINE) - 1);
 var BL = [];
@@ -676,7 +678,7 @@ let w1 = at(MALL_FP, 5);
 let kx = (w1.x - w0.x) / (w1.y - w0.y);
 let cth = 1 / sqrt(1 + kx * kx);
 let ROAD_OFF = 3440;
-let RA = [(-15190, YS), (-14470, -39400), (-13850, -30300), (-13440, -24000), (-13260, -20000), (-13370, -15000), (w0.x + (-10500 - w0.y) * kx - ROAD_OFF / cth, -10500), (w0.x + (YN - w0.y) * kx - ROAD_OFF / cth, YN)];
+let RA = [(-13440, YS), (-13260, -20000), (-13370, -15000), (w0.x + (-10500 - w0.y) * kx - ROAD_OFF / cth, -10500), (w0.x + (YN - w0.y) * kx - ROAD_OFF / cth, YN)];
 let nRA = len(RA);
 // RAT = RA with both ends pulled in 30 cm, RAU 45 cm (hole outlines must sit strictly inside their outer ring)
 var RAT = [at(RA, 0) + (at(RA, 1) - at(RA, 0)) * (30 / (at(RA, 1).y - at(RA, 0).y))];
@@ -774,7 +776,7 @@ lane = merge(lane, sweep_box_path(points: [(at(REXQ, 0), SA0.y, 7), (SA1.x, SA1.
 // lot = (road sidewalk, y -242 m, river bank, boundary wall) inset 2 m: drawn 2 m out on the road/edge/wall sides so
 // only the river side ends up 2 m inside the bank; the road side follows RA's vertices at y -150 / -200 m
 var LOT_RAW = [(at(REXQ, 9) - 200 / cth, -24200), (15550, -24200)];
-for i 12..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
+for i 1..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
 for i 0..4 { let p = at(BANK_LINE, i); LOT_RAW = append(LOT_RAW, (p.x, p.y)); }
 LOT_RAW = append(LOT_RAW, (LXE + 200, LYE - 712));
 LOT_RAW = append(LOT_RAW, (SA1.x, SA1.y - 712));
@@ -857,11 +859,11 @@ out.geo = merge(slab_lo, slab_hi, paving, prom, inlays, basin_wall, basin_rim, b
 // ================================================================ LOD1: slab (paving / foliage top), basin, piers, road, lane, lot, lawns
 #mesh ICS_Site lod: 1
 // same land / GREEN / plot outlines as LOD0 (D11/D13 apron to x -60000, y -/+50000)
-let XW = -60000;
-let YS = -50000;
-let YN = 50000;
-let BANK_S = [(14210, -50000), (13370, -37700), (13430, -36860), (13620, -35550), (13640, -35410), (14220, -32270), (14560, -30310), (14550, -30070), (14640, -29800), (14750, -27730), (14770, -27430), (15550, -27300), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
-let BANK_N = [(12030, 24740), (11800, 25620), (10150, 31790), (10970, 32150), (11270, 33050), (11210, 33900), (10680, 34140), (9250, 38910), (8490, 50000)];
+let XW = -24000;
+let YS = -24000;
+let YN = 24000;
+let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
+let BANK_N = [(12153, 24000)];
 var land = [(XW, YS)];
 for p in BANK_S { land = append(land, p); }
 for p in BANK_LINE { land = append(land, (p.x, p.y)); }
@@ -905,7 +907,7 @@ let w1 = at(MALL_FP, 5);
 let kx = (w1.x - w0.x) / (w1.y - w0.y);
 let cth = 1 / sqrt(1 + kx * kx);
 // carriageway = LOD0's asphalt sheet on the same RA polyline
-let RA = [(-15190, YS), (-14470, -39400), (-13850, -30300), (-13440, -24000), (-13260, -20000), (-13370, -15000), (w0.x + (-10500 - w0.y) * kx - 3440 / cth, -10500), (w0.x + (YN - w0.y) * kx - 3440 / cth, YN)];
+let RA = [(-13440, YS), (-13260, -20000), (-13370, -15000), (w0.x + (-10500 - w0.y) * kx - 3440 / cth, -10500), (w0.x + (YN - w0.y) * kx - 3440 / cth, YN)];
 let nRA = len(RA);
 var QL = [];
 var QR = [];
@@ -934,7 +936,7 @@ for yq in QY {
 }
 let lane = extrude(points: [(at(REXQ, 0), SA0.y), (SA1.x, SA1.y), (LXE, LYE), (LXE, LYE - 750), (SA1.x, SA1.y - 750), (at(REXQ, 1), SA0.y - 750)], height: 3, material: "ICS_Asphalt");
 var LOT_RAW = [(at(REXQ, 5) - 200 / cth, -24200), (15550, -24200)];
-for i 12..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
+for i 1..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
 for i 0..4 { let p = at(BANK_LINE, i); LOT_RAW = append(LOT_RAW, (p.x, p.y)); }
 LOT_RAW = append(LOT_RAW, (LXE + 200, LYE - 712));
 LOT_RAW = append(LOT_RAW, (SA1.x, SA1.y - 712));
@@ -954,11 +956,11 @@ out.geo = merge(slab_lo, slab_hi, paving, basin_wall, basin_rim, basin_water, pi
 // the old invisible z 0 floor over the water. The primary variant (slab holed at BSN - 60 cm + basin-floor prism
 // -60..-40) measured 1160 collider verts with the extended apron (> 1000 cap).
 #mesh ICS_Site collider
-let XW = -60000;
-let YS = -50000;
-let YN = 50000;
-let BANK_SC = [(14210, -50000), (13370, -37700), (14770, -27430), (15550, -27300), (15470, -21370), (14570, -21430), (12890, -20930), (12700, -17380)];
-let BANK_NC = [(12030, 24740), (10150, 31790), (10970, 32150), (11210, 33900), (10680, 34140), (9250, 38910), (8490, 50000)];
+let XW = -24000;
+let YS = -24000;
+let YN = 24000;
+let BANK_SC = [(15550, -24000), (15470, -21370), (14570, -21430), (12890, -20930), (12700, -17380)];
+let BANK_NC = [(12153, 24000)];
 let BK = [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 20];
 var BS = [];
 for i in BK { BS = append(BS, at(BANK_LINE, i)); }
