@@ -60,7 +60,7 @@ if band > 0.5 {
 // (Photo A: lower than the maisons, with the pleated glass band above it), chamfered top edge.
 // detail 1 adds (D9 fixtures only) a 16 cm warm strip under the cap and two 8 cm warm floor bands at 4.7 m / 8.6 m
 // (scene QC r1: the NE lobe reads as a lit glass lantern with floor bands), plus slim gold fins 12 x 15 cm at 3.2 m pitch
-// built as one box cage (ENG sub-part budget).
+// baked as small box cages of 6 fins (ENG buried-part lint budget).
 param iters = 3;
 param spacing = 320;
 param detail = 1;
@@ -132,18 +132,21 @@ if detail > 0.5 {
         let B = tt * 12;
         let C = (0, 0, f.z - 72);
         for v in [O, O + A, O + A + B, O + B, O + C, O + A + C, O + A + B + C, O + B + C] { FP = append(FP, v); }
+        if (len(FP) > 47.5) + (i == nf - 1) > 0.5 {
+            var FF = [];
+            for jj in 0..(len(FP) / 8) {
+                let o = jj * 8;
+                FF = append(FF, [o + 4, o + 5, o + 6, o + 7]);
+                FF = append(FF, [o, o + 3, o + 2, o + 1]);
+                FF = append(FF, [o, o + 1, o + 5, o + 4]);
+                FF = append(FF, [o + 1, o + 2, o + 6, o + 5]);
+                FF = append(FF, [o + 2, o + 3, o + 7, o + 6]);
+                FF = append(FF, [o + 3, o, o + 4, o + 7]);
+            }
+            out.geo = merge(out.geo, mesh_cage(points: FP, faces: FF, material: "ICS_Gold"));
+            FP = [];
+        }
     }
-    var FF = [];
-    for j in 0..nf {
-        let o = j * 8;
-        FF = append(FF, [o + 4, o + 5, o + 6, o + 7]);
-        FF = append(FF, [o, o + 3, o + 2, o + 1]);
-        FF = append(FF, [o, o + 1, o + 5, o + 4]);
-        FF = append(FF, [o + 1, o + 2, o + 6, o + 5]);
-        FF = append(FF, [o + 2, o + 3, o + 7, o + 6]);
-        FF = append(FF, [o + 3, o, o + 4, o + 7]);
-    }
-    out.geo = merge(out.geo, mesh_cage(points: FP, faces: FF, material: "ICS_Gold"));
 }
 #end
 
@@ -279,7 +282,7 @@ if lod > 1.5 {
         wb2 = append(wb2, (p.x + n.x * (40 * rp + 32), p.y + n.y * (40 * rp + 32), 946));
         wb3 = append(wb3, (p.x + n.x * (19 + 38 * rp), p.y + n.y * (19 + 38 * rp), 1500));
     }
-    // slim fins at 3.2 m pitch (scene QC r1: 12 x 15 cm instead of 20-26 cm), one box cage per material
+    // slim fins at 3.2 m pitch (scene QC r1: 12 x 15 cm instead of 20-26 cm), baked as small box cages every 6 stations
     var DG = [];
     var DW = [];
     var s = 0;
@@ -311,38 +314,68 @@ if lod > 1.5 {
             let Cw = (0, 0, 896);
             for v in [Ow, Ow + A, Ow + A + B, Ow + B, Ow + Cw, Ow + A + Cw, Ow + A + B + Cw, Ow + B + Cw] { DW = append(DW, v); }
         }
+        if (len(DG) > 47.5) + (i == ndq - 1) * (len(DG) > 0) > 0.5 {
+            var DF = [];
+            for jj in 0..(len(DG) / 8) {
+                let o = jj * 8;
+                DF = append(DF, [o + 4, o + 5, o + 6, o + 7]);
+                DF = append(DF, [o, o + 3, o + 2, o + 1]);
+                DF = append(DF, [o, o + 1, o + 5, o + 4]);
+                DF = append(DF, [o + 1, o + 2, o + 6, o + 5]);
+                DF = append(DF, [o + 2, o + 3, o + 7, o + 6]);
+                DF = append(DF, [o + 3, o, o + 4, o + 7]);
+            }
+            drum = merge(drum, mesh_cage(points: DG, faces: DF, material: "ICS_Gold"));
+            DG = [];
+        }
+        if (len(DW) > 47.5) + (i == ndq - 1) * (len(DW) > 0) > 0.5 {
+            var WF = [];
+            for jj in 0..(len(DW) / 8) {
+                let o = jj * 8;
+                WF = append(WF, [o + 4, o + 5, o + 6, o + 7]);
+                WF = append(WF, [o, o + 3, o + 2, o + 1]);
+                WF = append(WF, [o, o + 1, o + 5, o + 4]);
+                WF = append(WF, [o + 1, o + 2, o + 6, o + 5]);
+                WF = append(WF, [o + 2, o + 3, o + 7, o + 6]);
+                WF = append(WF, [o + 3, o, o + 4, o + 7]);
+            }
+            drum = merge(drum, mesh_cage(points: DW, faces: WF, material: "ICS_White"));
+            DW = [];
+        }
     }
-    var DF = [];
-    for j in 0..(len(DG) / 8) {
-        let o = j * 8;
-        DF = append(DF, [o + 4, o + 5, o + 6, o + 7]);
-        DF = append(DF, [o, o + 3, o + 2, o + 1]);
-        DF = append(DF, [o, o + 1, o + 5, o + 4]);
-        DF = append(DF, [o + 1, o + 2, o + 6, o + 5]);
-        DF = append(DF, [o + 2, o + 3, o + 7, o + 6]);
-        DF = append(DF, [o + 3, o, o + 4, o + 7]);
+    // ShopLit only on the ground-floor shopfront band (0-4.75 m), MallGlass (interior depth) above (scene QC r1).
+    // The skins are swept in chunks of 23 segments sharing their end stations (ENG: the buried-part lint tests every ray
+    // against each part whose bounds it crosses; seven drum-long sweeps made the drum alone exhaust its ray budget).
+    let ngp = len(gp);
+    let nchd = ceil((ngp - 1) / 23);
+    for ch in 0..nchd {
+        let i0 = ch * 23;
+        let i1 = min(i0 + 23, ngp - 1);
+        var cLow = [];
+        var cMid = [];
+        var cBand = [];
+        var cUp = [];
+        var cw1 = [];
+        var cw2 = [];
+        var cw3 = [];
+        for i in i0..(i1 + 1) {
+            cLow = append(cLow, at(dLow, i));
+            cMid = append(cMid, at(dMid, i));
+            cBand = append(cBand, at(dBand, i));
+            cUp = append(cUp, at(dUp, i));
+            cw1 = append(cw1, at(wb1, i));
+            cw2 = append(cw2, at(wb2, i));
+            cw3 = append(cw3, at(wb3, i));
+        }
+        drum = merge(drum,
+            sweep_box_path(points: cLow, width: 8, height: 475, up: (0, 0, 1), material: "ICS_ShopLit"),
+            sweep_box_path(points: cMid, width: 8, height: 475, up: (0, 0, 1), material: "ICS_MallGlass"),
+            sweep_box_path(points: cBand, width: 80, height: 100, up: (0, 0, 1), material: "ICS_White"),
+            sweep_box_path(points: cUp, width: 8, height: 912.5, up: (0, 0, 1), material: "ICS_MallGlass"),
+            sweep_box_path(points: cw1, width: 6, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"),
+            sweep_box_path(points: cw2, width: 10, height: 9, up: (0, 0, 1), material: "ICS_WarmLight"),
+            sweep_box_path(points: cw3, width: 6, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"));
     }
-    var WF = [];
-    for j in 0..(len(DW) / 8) {
-        let o = j * 8;
-        WF = append(WF, [o + 4, o + 5, o + 6, o + 7]);
-        WF = append(WF, [o, o + 3, o + 2, o + 1]);
-        WF = append(WF, [o, o + 1, o + 5, o + 4]);
-        WF = append(WF, [o + 1, o + 2, o + 6, o + 5]);
-        WF = append(WF, [o + 2, o + 3, o + 7, o + 6]);
-        WF = append(WF, [o + 3, o, o + 4, o + 7]);
-    }
-    // ShopLit only on the ground-floor shopfront band (0-4.75 m), MallGlass (interior depth) above (scene QC r1)
-    drum = merge(drum,
-        mesh_cage(points: DG, faces: DF, material: "ICS_Gold"),
-        mesh_cage(points: DW, faces: WF, material: "ICS_White"),
-        sweep_box_path(points: dLow, width: 8, height: 475, up: (0, 0, 1), material: "ICS_ShopLit"),
-        sweep_box_path(points: dMid, width: 8, height: 475, up: (0, 0, 1), material: "ICS_MallGlass"),
-        sweep_box_path(points: dBand, width: 80, height: 100, up: (0, 0, 1), material: "ICS_White"),
-        sweep_box_path(points: dUp, width: 8, height: 912.5, up: (0, 0, 1), material: "ICS_MallGlass"),
-        sweep_box_path(points: wb1, width: 6, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"),
-        sweep_box_path(points: wb2, width: 10, height: 9, up: (0, 0, 1), material: "ICS_WarmLight"),
-        sweep_box_path(points: wb3, width: 6, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"));
     // 20 m south ledge on top of the drum (south faces only, stops at x = Z1_FP[1].x - 80 so it never overlaps the Z1 roof)
     let nsp = len(sp);
     var ls = 0;
@@ -718,13 +751,15 @@ for i in 0..len(kc) {
 }
 
 // ================= 2. Primary masses =================
-let z1core = extrude(points: offset_polygon(points: Z1S, delta: -170), height: 1965, material: "ICS_ShopLit");
-// close the mouth of the 1.7 m core/Z2 slot at Z1_FP[20] (tower-plaza side): panel along the corner bisector into the core
+// core behind the glazed fronts: the Chaikin x1 outline 2.0 m inboard (>= 1.74 m inside the x3 river chains, as before),
+// kept low-poly because the buried-part lint tests every front part whose bounds it contains against its triangles
+let z1core = part(RIV_Z1Mass, iters: 1, h: 1975, pave: 0, grow: -200);
+// close the mouth of the 2.0 m core/Z2 slot at Z1_FP[20] (tower-plaza side): panel along the corner bisector into the core
 let uA = normalize(at(Z1_FP, 20) - at(Z1_FP, 19));
 let uB = normalize(at(Z1_FP, 0) - at(Z1_FP, 20));
 let nA = (0 - uA.y, uA.x);
 let nB = (0 - uB.y, uB.x);
-let cmv = (nA + nB) * (170 / (1 + dot(nA, nB)));
+let cmv = (nA + nB) * (200 / (1 + dot(nA, nB)));
 let p20 = at(Z1_FP, 20);
 let slotcap = beam_between(start: (p20.x, p20.y, 973), end: (p20.x + cmv.x * 1.4, p20.y + cmv.y * 1.4, 973), cross_width: 10, cross_height: 1954, height_direction: (0, 0, 1), material: "ICS_ShopLit");
 // thin white roof edge 19.6-20.0 m, 70 cm proud of the smoothed outline (scene QC r1: replaces the dark 18.8-20 m
@@ -740,7 +775,15 @@ for i in 1..nz1 {
     let p = at(Z1S, i);
     rcv = append(rcv, (p.x + (b.y - a.y) / tl * 64, p.y + (a.x - b.x) / tl * 64, 1956));
 }
-let z1cove = sweep_box_path(points: rcv, width: 8, height: 9, up: (0, 0, 1), material: "ICS_WarmLight");
+var z1cove = empty();
+let nrc = len(rcv);
+for ch in 0..ceil((nrc - 1) / 23) {
+    let j0 = ch * 23;
+    let j1 = min(j0 + 23, nrc - 1);
+    var crc = [];
+    for i in j0..(j1 + 1) { crc = append(crc, at(rcv, i)); }
+    z1cove = merge(z1cove, sweep_box_path(points: crc, width: 8, height: 9, up: (0, 0, 1), material: "ICS_WarmLight"));
+}
 let z1pave = translate(extrude(points: offset_polygon(points: Z1S, delta: -20), height: 14, material: "ICS_Paving"), (0, 0, 1996));
 let z2mass = extrude(points: Z2_FP, height: 3600, material: "ICS_MallGlass");
 let z3mass = extrude(points: Z3_FP, height: 4150, material: "ICS_MallGlass");
@@ -856,12 +899,10 @@ for k in 1..5 {
         // ceiling-line strip on the set-back wall (3..7 cm off the glass, mitred at the corners)
         let uw = (p.x + nxv * 5 * mf - at(Z3_FP, 0).x) * z4n.x + (p.y + nyv * 5 * mf - at(Z3_FP, 0).y) * z4n.y;
         if (k < 4) + (uw >= 90) > 0.5 { wr = append(wr, (p.x + nxv * 5 * mf, p.y + nyv * 5 * mf, 0)); }
-        if k < 3 {
-            if (mod(i, 2) < 0.5) * (d > 280) { pots = append(pots, (p.x + nxv * (d - 170), p.y + nyv * (d - 170), zl + 2)); }
-        } else {
-            // dining roofs: a pot every station (3.4 m), 1.7 m behind the balustrade
-            if se > 0.99 { pots = append(pots, (p.x + nxv * (d - 165), p.y + nyv * (d - 165), zl + 2)); }
-        }
+        // pots on the deep k1/k2 scallops only; the dining levels keep their continuous hedge line (ENG lint budget, QC
+        // scene r1 "thin out the decks")
+        // (pots sit 10 cm into the paving so their bounds never fall inside the balustrade's bounds - buried-part lint)
+        if (k < 3) * (mod(i, 2) < 0.5) * (d > 280) > 0.5 { pots = append(pots, (p.x + nxv * (d - 170), p.y + nyv * (d - 170), zl - 8)); }
         if (se > 0.99) * (d > 100) { hg = append(hg, (p.x + nxv * (d - 75), p.y + nyv * (d - 75), zl + 26)); }
     }
     // Chaikin x2 on the edge, paving, cove, rail and upstand lines (keeps them flowing); the paving edge is built from
@@ -905,13 +946,19 @@ for k in 1..5 {
         r2 = nr;
         u2 = nu;
     }
-    // close the plate with two points inside Z4 (40 cm in from both Z4 faces)
+    // close the plate with two points inside Z4 (40 cm in from both Z4 faces); the plate outlines use every other Chaikin
+    // point (<= 6 cm chord sag on the scallops) so the three big plates stay light for the buried-part lint
+    let ne2 = len(e2);
     var plate = [];
-    for i in 0..len(e2) { plate = append(plate, at(e2, i)); }
+    var pvp = [];
+    for i in 0..ne2 {
+        if (mod(i, 2) < 0.5) + (i == ne2 - 1) > 0.5 {
+            plate = append(plate, at(e2, i));
+            pvp = append(pvp, at(p2, i));
+        }
+    }
     plate = append(plate, (at(Z3_FP, 4).x - 40, at(Z3_FP, 4).y - 40));
     plate = append(plate, (at(Z3_FP, 0).x - 40, at(Z3_FP, 0).y + 40));
-    var pvp = [];
-    for i in 0..len(p2) { pvp = append(pvp, at(p2, i)); }
     pvp = append(pvp, (at(Z3_FP, 4).x - 25, at(Z3_FP, 4).y - 25));
     pvp = append(pvp, (at(Z3_FP, 0).x - 25, at(Z3_FP, 0).y + 25));
     // members sweep the Chaikin arrays directly; at k4 every point closer than 90 cm to the u=40 line is dropped
@@ -934,12 +981,35 @@ for k in 1..5 {
     let slab = translate(extrude(points: plate, height: 46, material: "ICS_SolidGlass"), (0, 0, zl - 54));
     let soff = translate(extrude(points: plate, height: 4, material: "ICS_White"), (0, 0, zl - 58));
     let pave = translate(extrude(points: pvp, height: 14, material: "ICS_Paving"), (0, 0, zl - 12));
-    let rail = sweep_box_path(points: move_points(r3, by: (0, 0, zl + 52)), width: 6, height: 118, up: (0, 0, 1), material: "ICS_Balustrade");
-    let hand = sweep_box_path(points: move_points(r3, by: (0, 0, zl + 113)), width: 7, height: 6, up: (0, 0, 1), material: "ICS_DarkMetal");
-    let upst = sweep_box_path(points: move_points(u3, by: (0, 0, zl + 15.5)), width: 4, height: 49, up: (0, 0, 1), material: "ICS_SolidGlass");
-    let cove = sweep_box_path(points: move_points(b3, by: (0, 0, zl - 60.25)), width: 16, height: 5.5, up: (0, 0, 1), material: "ICS_WarmLight");
-    let wcov = sweep_box_path(points: move_points(wr, by: (0, 0, zl - 64.25)), width: 4, height: 13.5, up: (0, 0, 1), material: "ICS_WarmLight");
-    terr = merge(terr, slab, soff, pave, rail, hand, upst, cove, wcov);
+    terr = merge(terr, slab, soff, pave);
+    // the members are swept in chunks of 23 segments sharing their end stations (ENG buried-part lint: a hull-long sweep
+    // put ~1800 triangles in front of every ray cast from the drum, the river face and the garden)
+    let nr3 = len(r3);
+    for ch in 0..ceil((nr3 - 1) / 23) {
+        let j0 = ch * 23;
+        let j1 = min(j0 + 23, nr3 - 1);
+        var cr = [];
+        var cu = [];
+        var cb = [];
+        for i in j0..(j1 + 1) {
+            cr = append(cr, at(r3, i));
+            cu = append(cu, at(u3, i));
+            cb = append(cb, at(b3, i));
+        }
+        terr = merge(terr,
+            sweep_box_path(points: move_points(cr, by: (0, 0, zl + 52)), width: 6, height: 118, up: (0, 0, 1), material: "ICS_Balustrade"),
+            sweep_box_path(points: move_points(cr, by: (0, 0, zl + 113)), width: 7, height: 6, up: (0, 0, 1), material: "ICS_DarkMetal"),
+            sweep_box_path(points: move_points(cu, by: (0, 0, zl + 15.5)), width: 4, height: 49, up: (0, 0, 1), material: "ICS_SolidGlass"),
+            sweep_box_path(points: move_points(cb, by: (0, 0, zl - 60.25)), width: 16, height: 5.5, up: (0, 0, 1), material: "ICS_WarmLight"));
+    }
+    let nwr = len(wr);
+    for ch in 0..ceil((nwr - 1) / 23) {
+        let j0 = ch * 23;
+        let j1 = min(j0 + 23, nwr - 1);
+        var cwr = [];
+        for i in j0..(j1 + 1) { cwr = append(cwr, at(wr, i)); }
+        terr = merge(terr, sweep_box_path(points: move_points(cwr, by: (0, 0, zl - 64.25)), width: 4, height: 13.5, up: (0, 0, 1), material: "ICS_WarmLight"));
+    }
     if len(hg) > 1 { terr = merge(terr, sweep_box_path(points: hg, width: 55, height: 52, up: (0, 0, 1), material: "ICS_Foliage")); }
     if len(pots) > 0 { terr = merge(terr, copy_to_points(pot, points: pots)); }
 }
@@ -983,17 +1053,14 @@ let saw = mesh_cage(points: SWP, faces: SWF, material: "ICS_DarkMetal");
 // slats) and, thinned for scene QC r1, 10 umbrellas in two staggered lanes along the full ~109 m with 9 warm lantern posts
 // (D9 lamp heads, 13 cm) on the middle lane between them.
 let umb = merge(cylinder_at(radius: 5, height: 240, segments: 6, bottom_center: (0, 0, 0), material: "ICS_DarkMetal"),
-    cylinder_at(r_bot: 165, r_top: 6, height: 55, segments: 12, bottom_center: (0, 0, 228), material: "ICS_White"),
-    cylinder_at(radius: 55, height: 6, segments: 10, bottom_center: (0, 0, 72), material: "ICS_DarkMetal"));
+    cylinder_at(r_bot: 165, r_top: 6, height: 55, segments: 12, bottom_center: (0, 0, 228), material: "ICS_White"));
 let umbA = scale(umb, (0.9, 0.9, 1));
 let umbB = scale(umb, (1.05, 1.05, 1));
 let lamp = merge(cylinder_at(radius: 4, height: 120, segments: 6, bottom_center: (0, 0, -2), material: "ICS_DarkMetal"),
     sphere_center(radius: 13, segments: 8, center: (0, 0, 128), material: "ICS_WarmLight"));
 var dining = empty();
-// pergola slats (white) and posts (dark) of both roofs are collected as boxes into two cages (ENG sub-part budget: an
-// array() of 169 slats per roof counted as 169 sub-parts in the buried-part lint)
-var PSL = [];
-var PPO = [];
+// pergola slats (white, 10 per cage) and posts (dark, 6 per cage) are baked as small box cages (ENG: an array() of 169
+// slats per roof counted as 169 sub-parts, one cage over both roofs made every umbrella / lamp test its 4000 triangles)
 for r in 0..2 {
     let wa = pick(r, at(Z3_FP, 2), at(Z3_FP, 0));
     let wb = pick(r, at(Z3_FP, 3), at(Z3_FP, 4));
@@ -1011,13 +1078,28 @@ for r in 0..2 {
     let se1 = ps0 + (ns - 1) * 60 + 30;
     let wt3 = (wtx, wty, 0);
     let wn3 = (wnx, wny, 0);
+    var PSL = [];
     for j in 0..ns {
-        // slat 8 cm (along the face) x 20 cm, u from ua to ub, z0 + 300..320
+        // slat 8 cm (along the face) x 20 cm, u from ua to ub, z0 + 300..320 (on the edge beams)
         let O = (wa.x, wa.y, z0 + 300) + wt3 * (ps0 + j * 60 - 4) + wn3 * ua;
         let A = wn3 * (ub - ua);
         let B = wt3 * 8;
         let C = (0, 0, 20);
         for v in [O, O + A, O + A + B, O + B, O + C, O + A + C, O + A + B + C, O + B + C] { PSL = append(PSL, v); }
+        if (len(PSL) > 79.5) + (j == ns - 1) > 0.5 {
+            var PSF = [];
+            for jj in 0..(len(PSL) / 8) {
+                let o = jj * 8;
+                PSF = append(PSF, [o + 4, o + 5, o + 6, o + 7]);
+                PSF = append(PSF, [o, o + 3, o + 2, o + 1]);
+                PSF = append(PSF, [o, o + 1, o + 5, o + 4]);
+                PSF = append(PSF, [o + 1, o + 2, o + 6, o + 5]);
+                PSF = append(PSF, [o + 2, o + 3, o + 7, o + 6]);
+                PSF = append(PSF, [o + 3, o, o + 4, o + 7]);
+            }
+            dining = merge(dining, mesh_cage(points: PSL, faces: PSF, material: "ICS_White"));
+            PSL = [];
+        }
     }
     let um = (ua + ub) * 0.5;
     dining = merge(dining, beam_between(start: (wa.x + wtx * se0 + wnx * um, wa.y + wty * se0 + wny * um, z0 + 298), end: (wa.x + wtx * se1 + wnx * um, wa.y + wty * se1 + wny * um, z0 + 298), cross_width: 12, cross_height: 4, height_direction: (0, 0, 1), material: "ICS_WarmLight"));
@@ -1027,6 +1109,7 @@ for r in 0..2 {
         let ue = select(ub - 10, ua + 10, e > 0);
         if (e == 0) + (r > 0) > 0.5 {
             dining = merge(dining, beam_between(start: (wa.x + wtx * se0 + wnx * ue, wa.y + wty * se0 + wny * ue, z0 + 290), end: (wa.x + wtx * se1 + wnx * ue, wa.y + wty * se1 + wny * ue, z0 + 290), cross_width: 16, cross_height: 20, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
+            var PPO = [];
             for j in 0..np {
                 // 15 x 15 cm post, z0 - 2 .. z0 + 282 (2 cm into the edge beam)
                 let O = (wa.x, wa.y, z0 - 2) + wt3 * (se0 + j * pstep - 7.5) + wn3 * (ue - 7.5);
@@ -1034,6 +1117,20 @@ for r in 0..2 {
                 let B = wt3 * 15;
                 let C = (0, 0, 284);
                 for v in [O, O + A, O + A + B, O + B, O + C, O + A + C, O + A + B + C, O + B + C] { PPO = append(PPO, v); }
+                if (len(PPO) > 47.5) + (j == np - 1) > 0.5 {
+                    var PPF = [];
+                    for jj in 0..(len(PPO) / 8) {
+                        let o = jj * 8;
+                        PPF = append(PPF, [o + 4, o + 5, o + 6, o + 7]);
+                        PPF = append(PPF, [o, o + 3, o + 2, o + 1]);
+                        PPF = append(PPF, [o, o + 1, o + 5, o + 4]);
+                        PPF = append(PPF, [o + 1, o + 2, o + 6, o + 5]);
+                        PPF = append(PPF, [o + 2, o + 3, o + 7, o + 6]);
+                        PPF = append(PPF, [o + 3, o, o + 4, o + 7]);
+                    }
+                    dining = merge(dining, mesh_cage(points: PPO, faces: PPF, material: "ICS_DarkMetal"));
+                    PPO = [];
+                }
             }
         }
     }
@@ -1054,27 +1151,7 @@ for r in 0..2 {
     }
     dining = merge(dining, copy_to_points(umbA, points: upa), copy_to_points(umbB, points: upb), copy_to_points(lamp, points: lmp));
 }
-var PSF = [];
-for j in 0..(len(PSL) / 8) {
-    let o = j * 8;
-    PSF = append(PSF, [o + 4, o + 5, o + 6, o + 7]);
-    PSF = append(PSF, [o, o + 3, o + 2, o + 1]);
-    PSF = append(PSF, [o, o + 1, o + 5, o + 4]);
-    PSF = append(PSF, [o + 1, o + 2, o + 6, o + 5]);
-    PSF = append(PSF, [o + 2, o + 3, o + 7, o + 6]);
-    PSF = append(PSF, [o + 3, o, o + 4, o + 7]);
-}
-var PPF = [];
-for j in 0..(len(PPO) / 8) {
-    let o = j * 8;
-    PPF = append(PPF, [o + 4, o + 5, o + 6, o + 7]);
-    PPF = append(PPF, [o, o + 3, o + 2, o + 1]);
-    PPF = append(PPF, [o, o + 1, o + 5, o + 4]);
-    PPF = append(PPF, [o + 1, o + 2, o + 6, o + 5]);
-    PPF = append(PPF, [o + 2, o + 3, o + 7, o + 6]);
-    PPF = append(PPF, [o + 3, o, o + 4, o + 7]);
-}
-dining = merge(dining, mesh_cage(points: PSL, faces: PSF, material: "ICS_White"), mesh_cage(points: PPO, faces: PPF, material: "ICS_DarkMetal"));
+
 
 // ================= 4. South drum + 20 m south ledge + podium wordmark (RIV_Drum) =================
 let drum = part(RIV_Drum);
@@ -1091,16 +1168,13 @@ let drum = part(RIV_Drum);
 // Adjacent bays alternate +2 cm on the whole front/header/canopy/cove stack, the 4.7 m glass split and the transom so their
 // end caps never share a plane; grade-standing members are sunk by type (fronts 2-4 cm, mullions 4-6, bay posts 6,
 // GUCCI posts 8, notch return 12, pavilion fins 3) so no two bottom faces coincide.
-// Vertical members are collected as boxes (8 corners, right-handed edges A, B, C) and baked as one mesh_cage per material
-// (ENG: keeps the buried-part lint inside its sub-part budget).
+// Vertical members are collected as boxes (8 corners, right-handed edges A, B, C) and baked as small mesh_cages: swords +
+// gold noses every 6 stations, mullions / posts / bars once per bay (ENG: few sub-parts for the buried-part lint, and no
+// big-bounds high-triangle part that every small part's rays must be tested against).
 let tdr = normalize(at(Z1_FP, 5) - at(Z1_FP, 4));
 let ndr = (tdr.y, 0 - tdr.x);
 var face = empty();
-var CG = [];
-var CS = [];
-var CD = [];
-var CW = [];
-var CL = [];
+var screen = empty();
 for c in 0..3 {
     let s0 = at(cst, c);
     let cn = at(cst, c + 1) - s0;
@@ -1112,6 +1186,8 @@ for c in 0..3 {
     var bid = [];
     var zz = [];
     var pvz = [];
+    var CS = [];
+    var CG = [];
     for i in 0..nq {
         let a = at(q, max(i - 1, 0));
         let b = at(q, min(i + 1, nq - 1));
@@ -1148,6 +1224,22 @@ for c in 0..3 {
             let Bg = tt * 14;
             let Cg = (0, 0, Z1_FIN_TOP + 4 - zs0);
             for v in [Og, Og + Ag, Og + Ag + Bg, Og + Bg, Og + Cg, Og + Ag + Cg, Og + Ag + Bg + Cg, Og + Bg + Cg] { CG = append(CG, v); }
+        }
+        // flush every 6 swords (and at the chain end); swords and noses share one face list
+        if (len(CS) > 47.5) + (i == nq - 1) * (len(CS) > 0) > 0.5 {
+            var fs = [];
+            for jj in 0..(len(CS) / 8) {
+                let o = jj * 8;
+                fs = append(fs, [o + 4, o + 5, o + 6, o + 7]);
+                fs = append(fs, [o, o + 3, o + 2, o + 1]);
+                fs = append(fs, [o, o + 1, o + 5, o + 4]);
+                fs = append(fs, [o + 1, o + 2, o + 6, o + 5]);
+                fs = append(fs, [o + 2, o + 3, o + 7, o + 6]);
+                fs = append(fs, [o + 3, o, o + 4, o + 7]);
+            }
+            screen = merge(screen, mesh_cage(points: CS, faces: fs, material: "ICS_SolidGlass"), mesh_cage(points: CG, faces: fs, material: "ICS_Gold"));
+            CS = [];
+            CG = [];
         }
     }
     if c > 0 {
@@ -1190,6 +1282,10 @@ for c in 0..3 {
             let dz = 2 * mod(bb, 2);
             // plaza-side (north face) canopies are 1.2 m deep, river-face canopies 1.9 m
             let cw = select(190, 120, bb > 5.5);
+            var CD = [];
+            var CW = [];
+            var CL = [];
+            var CB = [];
             var ix = [];
             var frl = [];
             var fru = [];
@@ -1325,7 +1421,7 @@ for c in 0..3 {
                             let B = tt * 8;
                             let C = (0, 0, 1450);
                             if bt == 2 {
-                                for v in [O, O + A, O + A + B, O + B, O + C, O + A + C, O + A + B + C, O + B + C] { CG = append(CG, v); }
+                                for v in [O, O + A, O + A + B, O + B, O + C, O + A + C, O + A + B + C, O + B + C] { CB = append(CB, v); }
                             } else {
                                 for v in [O, O + A, O + A + B, O + B, O + C, O + A + C, O + A + B + C, O + B + C] { CL = append(CL, v); }
                             }
@@ -1347,65 +1443,62 @@ for c in 0..3 {
                 // (e) two-storey hall: dark transom at 7.6 m (its mullions come from the general grid above)
                 face = merge(face, sweep_box_path(points: move_points(l1, by: (0, 0, 760 + 2 * dz)), width: 10, height: 20, up: (0, 0, 1), material: "ICS_DarkMetal"));
             }
+            // this bay's box cages
+            if len(CD) > 0 {
+                var fd = [];
+                for jj in 0..(len(CD) / 8) {
+                    let o = jj * 8;
+                    fd = append(fd, [o + 4, o + 5, o + 6, o + 7]);
+                    fd = append(fd, [o, o + 3, o + 2, o + 1]);
+                    fd = append(fd, [o, o + 1, o + 5, o + 4]);
+                    fd = append(fd, [o + 1, o + 2, o + 6, o + 5]);
+                    fd = append(fd, [o + 2, o + 3, o + 7, o + 6]);
+                    fd = append(fd, [o + 3, o, o + 4, o + 7]);
+                }
+                screen = merge(screen, mesh_cage(points: CD, faces: fd, material: "ICS_DarkMetal"));
+            }
+            if len(CW) > 0 {
+                var fw = [];
+                for jj in 0..(len(CW) / 8) {
+                    let o = jj * 8;
+                    fw = append(fw, [o + 4, o + 5, o + 6, o + 7]);
+                    fw = append(fw, [o, o + 3, o + 2, o + 1]);
+                    fw = append(fw, [o, o + 1, o + 5, o + 4]);
+                    fw = append(fw, [o + 1, o + 2, o + 6, o + 5]);
+                    fw = append(fw, [o + 2, o + 3, o + 7, o + 6]);
+                    fw = append(fw, [o + 3, o, o + 4, o + 7]);
+                }
+                screen = merge(screen, mesh_cage(points: CW, faces: fw, material: "ICS_White"));
+            }
+            if len(CL) > 0 {
+                var fl2 = [];
+                for jj in 0..(len(CL) / 8) {
+                    let o = jj * 8;
+                    fl2 = append(fl2, [o + 4, o + 5, o + 6, o + 7]);
+                    fl2 = append(fl2, [o, o + 3, o + 2, o + 1]);
+                    fl2 = append(fl2, [o, o + 1, o + 5, o + 4]);
+                    fl2 = append(fl2, [o + 1, o + 2, o + 6, o + 5]);
+                    fl2 = append(fl2, [o + 2, o + 3, o + 7, o + 6]);
+                    fl2 = append(fl2, [o + 3, o, o + 4, o + 7]);
+                }
+                screen = merge(screen, mesh_cage(points: CL, faces: fl2, material: "ICS_WarmLight"));
+            }
+            if len(CB) > 0 {
+                var fb2 = [];
+                for jj in 0..(len(CB) / 8) {
+                    let o = jj * 8;
+                    fb2 = append(fb2, [o + 4, o + 5, o + 6, o + 7]);
+                    fb2 = append(fb2, [o, o + 3, o + 2, o + 1]);
+                    fb2 = append(fb2, [o, o + 1, o + 5, o + 4]);
+                    fb2 = append(fb2, [o + 1, o + 2, o + 6, o + 5]);
+                    fb2 = append(fb2, [o + 2, o + 3, o + 7, o + 6]);
+                    fb2 = append(fb2, [o + 3, o, o + 4, o + 7]);
+                }
+                screen = merge(screen, mesh_cage(points: CB, faces: fb2, material: "ICS_Gold"));
+            }
         }
     }
 }
-// one mesh_cage per material for the collected boxes
-var FG = [];
-for j in 0..(len(CG) / 8) {
-    let o = j * 8;
-    FG = append(FG, [o + 4, o + 5, o + 6, o + 7]);
-    FG = append(FG, [o, o + 3, o + 2, o + 1]);
-    FG = append(FG, [o, o + 1, o + 5, o + 4]);
-    FG = append(FG, [o + 1, o + 2, o + 6, o + 5]);
-    FG = append(FG, [o + 2, o + 3, o + 7, o + 6]);
-    FG = append(FG, [o + 3, o, o + 4, o + 7]);
-}
-var FS = [];
-for j in 0..(len(CS) / 8) {
-    let o = j * 8;
-    FS = append(FS, [o + 4, o + 5, o + 6, o + 7]);
-    FS = append(FS, [o, o + 3, o + 2, o + 1]);
-    FS = append(FS, [o, o + 1, o + 5, o + 4]);
-    FS = append(FS, [o + 1, o + 2, o + 6, o + 5]);
-    FS = append(FS, [o + 2, o + 3, o + 7, o + 6]);
-    FS = append(FS, [o + 3, o, o + 4, o + 7]);
-}
-var FD = [];
-for j in 0..(len(CD) / 8) {
-    let o = j * 8;
-    FD = append(FD, [o + 4, o + 5, o + 6, o + 7]);
-    FD = append(FD, [o, o + 3, o + 2, o + 1]);
-    FD = append(FD, [o, o + 1, o + 5, o + 4]);
-    FD = append(FD, [o + 1, o + 2, o + 6, o + 5]);
-    FD = append(FD, [o + 2, o + 3, o + 7, o + 6]);
-    FD = append(FD, [o + 3, o, o + 4, o + 7]);
-}
-var FW = [];
-for j in 0..(len(CW) / 8) {
-    let o = j * 8;
-    FW = append(FW, [o + 4, o + 5, o + 6, o + 7]);
-    FW = append(FW, [o, o + 3, o + 2, o + 1]);
-    FW = append(FW, [o, o + 1, o + 5, o + 4]);
-    FW = append(FW, [o + 1, o + 2, o + 6, o + 5]);
-    FW = append(FW, [o + 2, o + 3, o + 7, o + 6]);
-    FW = append(FW, [o + 3, o, o + 4, o + 7]);
-}
-var FL = [];
-for j in 0..(len(CL) / 8) {
-    let o = j * 8;
-    FL = append(FL, [o + 4, o + 5, o + 6, o + 7]);
-    FL = append(FL, [o, o + 3, o + 2, o + 1]);
-    FL = append(FL, [o, o + 1, o + 5, o + 4]);
-    FL = append(FL, [o + 1, o + 2, o + 6, o + 5]);
-    FL = append(FL, [o + 2, o + 3, o + 7, o + 6]);
-    FL = append(FL, [o + 3, o, o + 4, o + 7]);
-}
-let screen = merge(mesh_cage(points: CG, faces: FG, material: "ICS_Gold"),
-    mesh_cage(points: CS, faces: FS, material: "ICS_SolidGlass"),
-    mesh_cage(points: CD, faces: FD, material: "ICS_DarkMetal"),
-    mesh_cage(points: CW, faces: FW, material: "ICS_White"),
-    mesh_cage(points: CL, faces: FL, material: "ICS_WarmLight"));
 let pavilion = part(RIV_Pavilion);
 
 // ================= 6. Z1 roof garden (RIV_Garden) =================
