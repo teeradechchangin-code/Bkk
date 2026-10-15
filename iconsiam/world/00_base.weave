@@ -9,26 +9,34 @@ section "Water"
 knob SetWaterEnabled = 1
 knob SetWaterSeaLevelCm = -200
 knob SetWaterAmplitudeCm = 3.75
-knob SetWaterShallowColor = #6b6a4e
-knob SetWaterDeepColor = #2e3a3c
+knob SetWaterShallowColor = #3b3640
+knob SetWaterDeepColor = #1d2230
 knob SetWaterMurkDensity = 1.6
 knob SetWaterTransparency = 0.15
 knob SetWaterReflectionStrength = 1.1
 section "Dusk (match reference photos)"
-knob SetSunRotation = 305
-knob SetSunTilt = 6
-knob SetSunIntensity = 2.2
-knob SetSunColor = #ffb070
-knob SetSkyLightIntensity = 1.1
-knob SetSkyLightColor = #8a90c8
+// Sun just set behind the complex: azimuth is measured from +X toward +Y, so 165 = compass bearing ~285 (W/WNW).
+// River-facing E/SE/S faces get no direct sun; the warm glow sits at the screen-left horizon in Photo A.
+knob SetSunRotation = 165
+knob SetSunTilt = 3
+knob SetSunIntensity = 1
+knob SetSunColor = #ffc690
+knob SetSkyLightIntensity = 2.6
+knob SetSkyLightColor = #a8bce0
 knob SetBloomIntensity = 0.6
-knob SetSkyboxGroundColor = #6a6478
+knob SetSkyboxHaze = 2.5
+knob SetSkyboxGroundColor = #8c86a6
+knob SetSkyboxHorizonTilt = 0
+// Distance fog stays off the complex (~420-570 m from the Photo A camera) and fully fogs the water before the 1000 m far plane.
 knob SetDistanceFogEnabled = 1
-knob SetFogColor = #8c86a6
-knob SetFogStartDistance = 500
-knob SetFogEndDistance = 1400
+knob SetFogColor = #b8a0a6
+knob SetFogStartDistance = 520
+knob SetFogEndDistance = 950
+// Skybox fog stays 0: values of 25 or more turn the whole Photo A sky grey. Height fog removes the black sub-horizon band instead.
 knob SetFogSkyboxAffect = 0
-knob SetSkyboxHorizonTilt = 10
+knob SetHeightFogEnabled = 1
+knob SetHeightFogDensity = 0.02
+knob SetHeightFogBaseHeight = -200
 #end
 
 // imported_material_asset {"asset_id":"material_5dadcd66b9fe0fce92f34c9beaad4ac76956b1d733dfc67dc9cf17f9d1c72b3e","source_digest":"5dadcd66b9fe0fce92f34c9beaad4ac76956b1d733dfc67dc9cf17f9d1c72b3e","catalog_key":null,"local_root":"lib1_NaturalBrush","local_digest":"7cb476554f7f622b67e8d4f4e2264d6b6167aa620d6fa5c70942a6a570e93d93"}
@@ -104,8 +112,8 @@ material ICS_White { base = "LibPlaster" roughness = 0.62 }
 material ICS_DarkMetal { base = "LibDarkMetal" metallic = 0.5 roughness = 0.45 }
 material ICS_Concrete { base = "LibConcrete" }
 material ICS_Paving { base = "LibPlazaTile" tileM = 2.4 }
-material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#3E5566" roomH = 4.0 bayW = 1.5 }
-material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#3A5260" roomH = 4.3 roomOffsetZ = 2.5 bayW = 1.5 }
+material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#8E9CAA" glassTint = "#2C4256" roomH = 4.0 bayW = 1.5 }
+material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#8E9CAA" glassTint = "#2C4256" roomH = 4.3 roomOffsetZ = 2.5 bayW = 1.5 }
 material ICS_MallGlass { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#4A5A58" roomH = 6.0 bayW = 2.0 }
 material ICS_SolidGlass { base = "Glass" tint = "#8FA2B0" }
 material ICS_Balustrade { base = "GlassTransparent" tint = "#5E9C98" }
