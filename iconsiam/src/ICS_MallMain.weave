@@ -364,19 +364,25 @@ if (lod == 0) + (lod == 1) * L1_PLEATS {
         // 40 x 30 cm warm light line along every crease (QC-A/QC-B), 7 cm proud of the ridge: one swept polyline per
         // tier from the sign-zone end S0 (where the tier's reveal light ends 11 cm higher, so the reveal line runs on
         // into the crease line; on the top tier the start is inside the lid) to 30 cm short of the u=40 plane. At the
-        // SE tip the crease is >= 47 cm above the tier bottom, so the line never touches the tier soffit.
+        // SE tip the crease is >= 47 cm above the tier bottom, so the line never touches the tier soffit. LOD1 (10 %
+        // vertex cap) draws the same line as a flat 40 cm ribbon 5 cm in front of the ridge.
+        let co = select(-8, 5, lod == 1);
         var cpath = [];
         for j in 1..MB {
             let c = at(qb, 5 * j + 1);
             if j < MB - 1 {
-                cpath = append(cpath, c + normalize(at(SN, KA + j)) * -8);
+                cpath = append(cpath, c + normalize(at(SN, KA + j)) * co);
             } else {
                 let cp = at(qb, 5 * j - 4);
                 let sd = at(SP, KA + j) - at(SP, KA + j - 1);
-                cpath = append(cpath, c - (c - cp) * (30 / length(c - cp)) + normalize((sd.y, 0 - sd.x, 0)) * -8);
+                cpath = append(cpath, c - (c - cp) * (30 / length(c - cp)) + normalize((sd.y, 0 - sd.x, 0)) * co);
             }
         }
-        skin = merge(skin, sweep_box_path(points: cpath, width: 30, height: 40, up: (0, 0, 1), material: "ICS_WarmLight"));
+        if lod == 0 {
+            skin = merge(skin, sweep_box_path(points: cpath, width: 30, height: 40, up: (0, 0, 1), material: "ICS_WarmLight"));
+        } else {
+            skin = merge(skin, ribbon_path(points: path_with_size(points: cpath, size: 40), normal: at(EN, 9), two_sided: "no", material: "ICS_WarmLight"));
+        }
         if lod == 0 {
             // 25 cm warm bead on the SE gold cap's outer edge (top -> crease tip -> bottom), only above ZG0
             let un = normalize(at(SN, NS - 1));

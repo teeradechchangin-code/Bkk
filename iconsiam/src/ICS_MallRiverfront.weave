@@ -282,7 +282,42 @@ if lod > 1.5 {
         wb2 = append(wb2, (p.x + n.x * (40 * rp + 32), p.y + n.y * (40 * rp + 32), 946));
         wb3 = append(wb3, (p.x + n.x * (19 + 38 * rp), p.y + n.y * (19 + 38 * rp), 1500));
     }
-    // slim fins at 3.2 m pitch (scene QC r1: 12 x 15 cm instead of 20-26 cm), baked as small box cages every 6 stations
+    // ShopLit only on the ground-floor shopfront band (0-4.75 m), MallGlass (interior depth) above (scene QC r1).
+    // The skins are swept in chunks of 23 segments sharing their end stations (ENG: the buried-part lint tests every ray
+    // against each part whose bounds it crosses; seven drum-long sweeps made the drum alone exhaust its ray budget).
+    let ngp = len(gp);
+    let nchd = ceil((ngp - 1) / 23);
+    for ch in 0..nchd {
+        let i0 = ch * 23;
+        let i1 = min(i0 + 23, ngp - 1);
+        var cLow = [];
+        var cMid = [];
+        var cBand = [];
+        var cUp = [];
+        var cw1 = [];
+        var cw2 = [];
+        var cw3 = [];
+        for i in i0..(i1 + 1) {
+            cLow = append(cLow, at(dLow, i));
+            cMid = append(cMid, at(dMid, i));
+            cBand = append(cBand, at(dBand, i));
+            cUp = append(cUp, at(dUp, i));
+            cw1 = append(cw1, at(wb1, i));
+            cw2 = append(cw2, at(wb2, i));
+            cw3 = append(cw3, at(wb3, i));
+        }
+        drum = merge(drum,
+            sweep_box_path(points: cLow, width: 8, height: 475, up: (0, 0, 1), material: "ICS_ShopLit"),
+            sweep_box_path(points: cMid, width: 8, height: 475, up: (0, 0, 1), material: "ICS_MallGlass"),
+            sweep_box_path(points: cBand, width: 80, height: 100, up: (0, 0, 1), material: "ICS_White"),
+            sweep_box_path(points: cUp, width: 8, height: 912.5, up: (0, 0, 1), material: "ICS_MallGlass"),
+            sweep_box_path(points: cw1, width: 6, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"),
+            sweep_box_path(points: cw2, width: 10, height: 9, up: (0, 0, 1), material: "ICS_WarmLight"),
+            sweep_box_path(points: cw3, width: 6, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"));
+    }
+    // slim fins at 3.2 m pitch (scene QC r1: 12 x 15 cm instead of 20-26 cm), baked as small box cages every 6 stations.
+    // The cages are merged only after the skins: merging box cages into an empty accumulator fuses them into one polygon
+    // part, whose drum-wide bounds made the buried-part lint test every drum part against all fins.
     var DG = [];
     var DW = [];
     var s = 0;
@@ -342,39 +377,6 @@ if lod > 1.5 {
             drum = merge(drum, mesh_cage(points: DW, faces: WF, material: "ICS_White"));
             DW = [];
         }
-    }
-    // ShopLit only on the ground-floor shopfront band (0-4.75 m), MallGlass (interior depth) above (scene QC r1).
-    // The skins are swept in chunks of 23 segments sharing their end stations (ENG: the buried-part lint tests every ray
-    // against each part whose bounds it crosses; seven drum-long sweeps made the drum alone exhaust its ray budget).
-    let ngp = len(gp);
-    let nchd = ceil((ngp - 1) / 23);
-    for ch in 0..nchd {
-        let i0 = ch * 23;
-        let i1 = min(i0 + 23, ngp - 1);
-        var cLow = [];
-        var cMid = [];
-        var cBand = [];
-        var cUp = [];
-        var cw1 = [];
-        var cw2 = [];
-        var cw3 = [];
-        for i in i0..(i1 + 1) {
-            cLow = append(cLow, at(dLow, i));
-            cMid = append(cMid, at(dMid, i));
-            cBand = append(cBand, at(dBand, i));
-            cUp = append(cUp, at(dUp, i));
-            cw1 = append(cw1, at(wb1, i));
-            cw2 = append(cw2, at(wb2, i));
-            cw3 = append(cw3, at(wb3, i));
-        }
-        drum = merge(drum,
-            sweep_box_path(points: cLow, width: 8, height: 475, up: (0, 0, 1), material: "ICS_ShopLit"),
-            sweep_box_path(points: cMid, width: 8, height: 475, up: (0, 0, 1), material: "ICS_MallGlass"),
-            sweep_box_path(points: cBand, width: 80, height: 100, up: (0, 0, 1), material: "ICS_White"),
-            sweep_box_path(points: cUp, width: 8, height: 912.5, up: (0, 0, 1), material: "ICS_MallGlass"),
-            sweep_box_path(points: cw1, width: 6, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"),
-            sweep_box_path(points: cw2, width: 10, height: 9, up: (0, 0, 1), material: "ICS_WarmLight"),
-            sweep_box_path(points: cw3, width: 6, height: 8, up: (0, 0, 1), material: "ICS_WarmLight"));
     }
     // 20 m south ledge on top of the drum (south faces only, stops at x = Z1_FP[1].x - 80 so it never overlaps the Z1 roof)
     let nsp = len(sp);
@@ -1078,6 +1080,12 @@ for r in 0..2 {
     let se1 = ps0 + (ns - 1) * 60 + 30;
     let wt3 = (wtx, wty, 0);
     let wn3 = (wnx, wny, 0);
+    // warm strip under the slats first (a swept part), so the slat cages merged after it stay separate parts
+    let um = (ua + ub) * 0.5;
+    var wsp = [];
+    wsp = append(wsp, (wa.x + wtx * se0 + wnx * um, wa.y + wty * se0 + wny * um, z0 + 298));
+    wsp = append(wsp, (wa.x + wtx * se1 + wnx * um, wa.y + wty * se1 + wny * um, z0 + 298));
+    dining = merge(dining, sweep_box_path(points: wsp, width: 12, height: 4, up: (0, 0, 1), material: "ICS_WarmLight"));
     var PSL = [];
     for j in 0..ns {
         // slat 8 cm (along the face) x 20 cm, u from ua to ub, z0 + 300..320 (on the edge beams)
@@ -1101,8 +1109,6 @@ for r in 0..2 {
             PSL = [];
         }
     }
-    let um = (ua + ub) * 0.5;
-    dining = merge(dining, beam_between(start: (wa.x + wtx * se0 + wnx * um, wa.y + wty * se0 + wny * um, z0 + 298), end: (wa.x + wtx * se1 + wnx * um, wa.y + wty * se1 + wny * um, z0 + 298), cross_width: 12, cross_height: 4, height_direction: (0, 0, 1), material: "ICS_WarmLight"));
     let np = floor((se1 - se0) / 400) + 1;
     let pstep = (se1 - se0) / (np - 1);
     for e in 0..2 {
@@ -1174,7 +1180,9 @@ let drum = part(RIV_Drum);
 let tdr = normalize(at(Z1_FP, 5) - at(Z1_FP, 4));
 let ndr = (tdr.y, 0 - tdr.x);
 var face = empty();
-var screen = empty();
+// box cages merged into an empty accumulator fuse into one polygon part (and the lint then tests every river-face part
+// against all of them), so the cage accumulator starts from the swept roof-edge cove and each cage stays its own part
+var screen = z1cove;
 for c in 0..3 {
     let s0 = at(cst, c);
     let cn = at(cst, c + 1) - s0;
@@ -1527,7 +1535,7 @@ for j in 0..4 {
     ent = merge(ent, beam_between(start: (n0.x + (n1.x - n0.x) * f - nnx * 38, n0.y + (n1.y - n0.y) * f - nny * 38, -5), end: (n0.x + (n1.x - n0.x) * f - nnx * 38, n0.y + (n1.y - n0.y) * f - nny * 38, 532), cross_width: 50, cross_height: 80, height_direction: (0 - nnx, 0 - nny, 0), material: "ICS_Gold"));
 }
 
-out.geo = merge(z1core, slotcap, z1slab, z1cove, z1pave, z2mass, z3mass, terr, hall, saw, dining, drum, face, screen, pavilion, garden, ent);
+out.geo = merge(z1core, slotcap, z1slab, z1pave, z2mass, z3mass, terr, hall, saw, dining, drum, face, screen, pavilion, garden, ent);
 #end
 
 #mesh ICS_MallRiverfront lod: 1
