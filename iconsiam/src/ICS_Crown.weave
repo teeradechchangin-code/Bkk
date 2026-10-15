@@ -326,7 +326,7 @@ if piece < 0.5 {
             let sa = at(gbot, j);
             let sb = at(gbot, j + 1);
             let sd = normalize(sb - sa);
-            g = merge(g, beam_between(start: sa + (0, 0, 10) - sd * 10, end: sb + (0, 0, 10) + sd * 10, cross_width: 20, cross_height: 20, height_direction: select((0, 0, 1), (1, 0, 0), abs(sd.z) > 0.9), material: "ICS_DarkMetal"));
+            g = merge(g, beam_between(start: sa + (0, 0, 6) - sd * 10, end: sb + (0, 0, 6) + sd * 10, cross_width: 20, cross_height: 20, height_direction: select((0, 0, 1), (1, 0, 0), abs(sd.z) > 0.9), material: "ICS_DarkMetal"));
         }
         // cable-net mullions in front of the glass, from 10 cm into the sill up into the hypotenuse frame
         for j in 1..8 {
