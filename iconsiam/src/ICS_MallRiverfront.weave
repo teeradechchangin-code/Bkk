@@ -523,37 +523,34 @@ if lod > 0.5 {
             garden = merge(garden, copy_to_points(globe, points: globes));
         }
     }
-    // Main walkway (Photo B: light band sweeping from the drum deck between the planters and the lawn to the NE lobe):
-    // 2.6 m wide, 30 cm inboard of the lawn's inner edge, on the mid chain (local 8..62) and the north chain
-    // (local 1..13). White, z 20.06-20.16 m (6 cm proud of the paving, 4 cm into it).
-    var w1 = [];
-    for c in 1..3 {
-        let la = pick(c - 1, 8, 1);
-        let lb = pick(c - 1, at(cst, 2) - at(cst, 1) - 1, 14);
-        let lk = pick(c - 1, 32, 8);
-        let lc = pick(c - 1, 29, 21);
-        for li in la..lb {
-            let gi = at(cst, c) + li;
-            let a = at(kc, gi - 1);
-            let b = at(kc, gi + 1);
-            let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
-            let nxv = (b.y - a.y) / tl;
-            let nyv = (a.x - b.x) / tl;
-            let p = at(kc, gi);
-            let kk = li - lk;
-            let w = select(LW0, LW0 + LWA * sin(180 * kk / lc), (kk >= 0) * (kk <= lc));
-            let dd = 420 + w + 30 + 130;
-            w1 = append(w1, (p.x - nxv * dd, p.y - nyv * dd, 2011));
-        }
-    }
-    garden = merge(garden, sweep_box_path(points: w1, width: 260, height: 10, up: (0, 0, 1), material: "ICS_White"));
-    // terrace-foot walkway along the Z2 east face (0.3-2.8 m out), and the circular planters in one clean row 6.5 m
-    // out (Photo B: planters between the terrace foot and the main walkway)
+    // terrace-foot frame: s along the Z2 east face (Z2_FP[1] -> Z2_FP[2]), u out of it (east, over the Z1 deck)
     let za = at(Z2_FP, 1);
     let zb = at(Z2_FP, 2);
     let zlen = sqrt((zb.x - za.x) * (zb.x - za.x) + (zb.y - za.y) * (zb.y - za.y));
     let ztx = (zb.x - za.x) / zlen;
     let zty = (zb.y - za.y) / zlen;
+    // Main walkway (Photo B: light band sweeping from the drum deck between the planters and the lawn to the NE lobe):
+    // 2.6 m wide, 13 (s, u) control points smoothed by Chaikin x3 (>= 0.65 m clear of the lawn, planters and globes).
+    // White, z 20.06-20.16 m (6 cm proud of the paving, 4 cm into it).
+    var w1 = [];
+    for j in 0..13 {
+        let s = pick(j, 2150, 2300, 2800, 3500, 4300, 5000, 6000, 7300, 8300, 9300, 10200, 10900, 11650);
+        let u = pick(j, 2050, 1350, 850, 700, 880, 1180, 1170, 1130, 1170, 1280, 1560, 2150, 2900);
+        w1 = append(w1, (za.x + ztx * s + zty * u, za.y + zty * s - ztx * u, 2011));
+    }
+    for it in 0..3 {
+        var nx = [];
+        nx = append(nx, at(w1, 0));
+        for i in 0..(len(w1) - 1) {
+            nx = append(nx, at(w1, i) * 0.75 + at(w1, i + 1) * 0.25);
+            nx = append(nx, at(w1, i) * 0.25 + at(w1, i + 1) * 0.75);
+        }
+        nx = append(nx, at(w1, len(w1) - 1));
+        w1 = nx;
+    }
+    garden = merge(garden, sweep_box_path(points: w1, width: 260, height: 10, up: (0, 0, 1), material: "ICS_White"));
+    // terrace-foot walkway along the Z2 east face (0.3-2.8 m out), and the circular planters in one clean row 6.5 m
+    // out (Photo B: planters between the terrace foot and the main walkway)
     var w2 = [];
     w2 = append(w2, (za.x + ztx * 700 + zty * 155, za.y + zty * 700 - ztx * 155, 2011));
     w2 = append(w2, (za.x + ztx * (zlen - 750) + zty * 155, za.y + zty * (zlen - 750) - ztx * 155, 2011));
@@ -698,6 +695,7 @@ for k in 1..5 {
     var br = [];
     var rr = [];
     var ur = [];
+    var pr = [];
     var pots = [];
     var hg = [];
     for i in 0..nq {
@@ -717,6 +715,7 @@ for k in 1..5 {
         br = append(br, (p.x + nxv * (d - 30), p.y + nyv * (d - 30), 0));
         rr = append(rr, (p.x + nxv * (d + 5), p.y + nyv * (d + 5), 0));
         ur = append(ur, (p.x + nxv * (d - 3), p.y + nyv * (d - 3), 0));
+        pr = append(pr, (p.x + nxv * (d - 25), p.y + nyv * (d - 25)));
         if k < 3 {
             if (mod(i, 2) < 0.5) * (d > 280) { pots = append(pots, (p.x + nxv * (d - 170), p.y + nyv * (d - 170), zl + 2)); }
         } else {
@@ -725,23 +724,29 @@ for k in 1..5 {
         }
         if (se > 0.99) * (d > 100) { hg = append(hg, (p.x + nxv * (d - 75), p.y + nyv * (d - 75), zl + 26)); }
     }
-    // Chaikin x2 on the edge, cove, rail and upstand lines (keeps them flowing)
+    // Chaikin x2 on the edge, paving, cove, rail and upstand lines (keeps them flowing); the paving edge is built from
+    // the same stations 25 cm inboard (no polygon inset, which can collapse at the tight corner points)
     var e2 = er;
+    var p2 = pr;
     var b2 = br;
     var r2 = rr;
     var u2 = ur;
     for it in 0..2 {
         var ne = [];
+        var np = [];
         var nb = [];
         var nr = [];
         var nu = [];
         ne = append(ne, at(e2, 0));
+        np = append(np, at(p2, 0));
         nb = append(nb, at(b2, 0));
         nr = append(nr, at(r2, 0));
         nu = append(nu, at(u2, 0));
         for i in 0..(len(e2) - 1) {
             ne = append(ne, at(e2, i) * 0.75 + at(e2, i + 1) * 0.25);
             ne = append(ne, at(e2, i) * 0.25 + at(e2, i + 1) * 0.75);
+            np = append(np, at(p2, i) * 0.75 + at(p2, i + 1) * 0.25);
+            np = append(np, at(p2, i) * 0.25 + at(p2, i + 1) * 0.75);
             nb = append(nb, at(b2, i) * 0.75 + at(b2, i + 1) * 0.25);
             nb = append(nb, at(b2, i) * 0.25 + at(b2, i + 1) * 0.75);
             nr = append(nr, at(r2, i) * 0.75 + at(r2, i + 1) * 0.25);
@@ -750,10 +755,12 @@ for k in 1..5 {
             nu = append(nu, at(u2, i) * 0.25 + at(u2, i + 1) * 0.75);
         }
         ne = append(ne, at(e2, len(e2) - 1));
+        np = append(np, at(p2, len(p2) - 1));
         nb = append(nb, at(b2, len(b2) - 1));
         nr = append(nr, at(r2, len(r2) - 1));
         nu = append(nu, at(u2, len(u2) - 1));
         e2 = ne;
+        p2 = np;
         b2 = nb;
         r2 = nr;
         u2 = nu;
@@ -763,11 +770,15 @@ for k in 1..5 {
     for i in 0..len(e2) { plate = append(plate, at(e2, i)); }
     plate = append(plate, (at(Z3_FP, 4).x - 40, at(Z3_FP, 4).y - 40));
     plate = append(plate, (at(Z3_FP, 0).x - 40, at(Z3_FP, 0).y + 40));
+    var pvp = [];
+    for i in 0..len(p2) { pvp = append(pvp, at(p2, i)); }
+    pvp = append(pvp, (at(Z3_FP, 4).x - 40, at(Z3_FP, 4).y - 40));
+    pvp = append(pvp, (at(Z3_FP, 0).x - 40, at(Z3_FP, 0).y + 40));
     // dark teal glass slab edge + 4 cm white soffit; one 1.69 m teal glass ribbon on the slab edge (Photo B), backed over
     // its lower 1 m by a 4 cm blue-grey glass upstand 8 cm behind it so the band reads solid teal at distance
     let slab = translate(extrude(points: plate, height: 46, material: "ICS_SolidGlass"), (0, 0, zl - 54));
     let soff = translate(extrude(points: plate, height: 4, material: "ICS_White"), (0, 0, zl - 58));
-    let pave = translate(extrude(points: offset_polygon(points: plate, delta: -25), height: 14, material: "ICS_Paving"), (0, 0, zl - 12));
+    let pave = translate(extrude(points: pvp, height: 14, material: "ICS_Paving"), (0, 0, zl - 12));
     let r3 = resample_path(r2, spacing: 250);
     let b3 = resample_path(b2, spacing: 250);
     let u3 = resample_path(u2, spacing: 250);

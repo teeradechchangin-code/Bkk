@@ -1,25 +1,31 @@
-// ICS_Crown - gold "krathong" crown on the Z4 roof (CROWN_BASE 58 m -> CROWN_TOP 75 m)      [rework round 1]
+// ICS_Crown - gold "krathong" crown on the Z4 roof (CROWN_BASE 58 m -> CROWN_TOP 75 m)      [rework round 3]
 // Crown crew. World cm, Z up, authored in WORLD coordinates (object placed at 0,0,0).
 // Parts (top-level bindings in every #mesh, so parts_log reports each one):
-//   CROWN_Rim    gold rim band (ICS_GoldRoof) with a rolled outer lip, champagne coping (ICS_Gold), warm cove strip
+//   CROWN_Rim    gold rim band (ICS_GoldRoof) rolling into a C-lip hook at the prow, champagne coping (ICS_Gold),
+//                warm cove strip in the soffit (ICS_WarmLight) that widens to 1.4 m on the hook's underside
 //   CROWN_Drum   drum glazing (ICS_ShopLit, warm) behind ~230 deep white fins (30 x 120 cm @ 88 cm), white kerb
-//   CROWN_Gable  Wisdom Hall bow on the river face: white stem post under the hook, right-triangle glass
-//                (ICS_SolidGlass, DarkMetal cable-net mullions, WarmLight floor lines), white raked rib sail
-//   CROWN_Canopy white canopy deck + 3 stepped tiers on gold fascias, all following the rim's sweep
-// Calibration vs Photos A/B: boat-shaped oval, long axis on the site grid (SITE_ROT_DEG), 93.5 m tip-to-stern
-// (96.3 m over the lip) x 46 m (50 m over the lip). Prow semi-length is DERIVED from Z4_FP (river face edge 1->2):
-// the outline tip stands 1.2 m proud of the river face and lands on the stem post. Rim top 69.5 m at the stern
-// sweeping to CROWN_TOP 75.0 m at the prow tip (q^2.5 + 1.5 m flick), band 3.5 -> 4.0 m deep, then a 5 m hook
-// over the last 10 m. The Wisdom Hall glass hangs on the river face from 51.5 m to 71.0 m (D5 interface item:
-// the crown owns the stem, glass and sail on the Z4 east face from 51 m up; MallMain must not duplicate there).
+//   CROWN_Gable  Wisdom Hall bow on the river face: white stem post, narrowed right-triangle glass (ICS_SolidGlass,
+//                DarkMetal cable net, WarmLight floor lines + vertical strips), white louvre band (frame + 4 blades
+//                parallel to the hypotenuse, SolidGlass behind) raking back to the rim soffit, then lit raked
+//                glazing (ICS_ShopLit + DarkMetal mullions) back to the drum along the south flank
+//   CROWN_Canopy white canopy deck + 3 stepped tiers on 1 m gold fascias (three gold rings), following the sweep
+// Calibration vs Photos A/B: boat-shaped oval, long axis on the site grid (SITE_ROT_DEG), stern semi-axis 42.4 m,
+// prow semi-axis DERIVED from Z4_FP (river face edge 1->2). Rim top 69.5 m at the stern sweeping to CROWN_TOP 75.0 m
+// at the prow tip, band 3.5 -> 4.0 m deep, then a 5 m hook over the last 10 m.
+// Bow zone (ENG tolerance, pending a Management ruling on D5): every crown surface stays within CR_UF+40 .. CR_UF+100
+// east of the Z4 river face (QC D4: the prow stands >= 40 cm proud). Below 58.8 m nothing of the crown lies inside
+// Z4_FP; the band and glazing stay >= 30 cm clear of MallMain's coping (57.8-58.8 m) and its +45 cm facade members.
 // Local construction frame inside CROWN_Body: u = along the long axis toward the prow (east), v = across (north),
 // z = world height; rotated by SITE_ROT_DEG about the crown centre at the end. In this frame the river face is the
 // line u = CR_UF (the Z4 east edge runs exactly along the rotated grid).
+// Interface data for #meshdefs rev B (Management): as-built CROWN_C = (-750, -3500, 0); stem axis on the river face at
+// world y = -3156 (MallMain STEM_Y); as-built 32-point CROWN_FP is listed in the crew's round-3 report.
 
 #meshpart CROWN_Body
 param lod = 0;                  // 0 = full detail, 1 = far display, 2 = collider
 param piece = 0;                // 0 rim, 1 drum + kerb + fins, 2 Wisdom Hall bow, 3 canopy, 4 collider
-// ---- calibrated frame: crew calibration, to be replaced by CROWN_C once Management republishes #meshdefs rev B ----
+// ---- calibrated frame: crew calibration. The rev A defs CROWN_C (900,-3200) / CROWN_FP no longer describe the
+// as-built crown; replace these two lines with CROWN_C.x / CROWN_C.y once Management publishes #meshdefs rev B. ----
 let CR_CX = -750;               // crown centre, world x (cm)
 let CR_CY = -3500;              // crown centre, world y (cm)
 let CR_CS = cos(SITE_ROT_DEG);
@@ -34,25 +40,28 @@ let CR_F2V = (CR_F2.y - CR_CY) * CR_CS - (CR_F2.x - CR_CX) * CR_SN;
 let CR_UF = CR_F1U + (CR_F2U - CR_F1U) * (0 - CR_F1V) / (CR_F2V - CR_F1V);
 // ---- plan, sheer, band ----
 let CR_AS = 4240;               // centre -> stern tip (rim lip stays east of world x -52 m: clear of MallMain's AHU row)
-let CR_AP = CR_UF + 120;        // centre -> prow tip (derived): 1.2 m proud of the river face, over the stem post
+let CR_AP = CR_UF + 40;         // centre -> prow tip (derived): outline tip 40 cm proud of the river face
 let CR_B = 2300;                // half width
 let CR_P = 0.68;                // prow pinch -> ~1 m tip radius (sharp prow)
 let CR_ZST = 6950;              // rim top at the stern (west end)
 let CR_ZPR = CROWN_TOP;         // rim top at the prow tip (75 m)
 let CR_FLICK = 150;             // upward flick of the sheer over the last 6 m
-let CR_BEAK = 500;              // hook: the band rolls down 5 m more over the last 10 m and lands on the stem post
+let CR_BEAK = 500;              // hook: the band rolls down 5 m more over the last 10 m
 let CR_IB = 150;                // band soffit width (drum glazing and fins tuck under it)
+let CR_CRL = 100;               // C-lip: over the hook the soffit's inner edge pulls back and up by up to 1 m
 let CR_ZB0 = CROWN_BASE - 10;   // drum foot, embedded 10 cm into the Z4 roof
 // ---- Wisdom Hall bow on the river face ----
-let CR_UCUT = CR_UF - 120;      // the oval drum ends on this plane behind the bow (kerb clears MallMain's coping)
-let CR_UG = CR_UF + 90;         // glass plane: 45 cm clear of MallMain's curtain-wall fascias (they reach +45 cm)
-let CR_US0 = CR_UF + 40;        // stem post back face
-let CR_US1 = CR_UF + 160;       // stem post front face
+let CR_UCUT = CR_UF - 120;      // the oval drum ends on this plane behind the bow
+let CR_UG = CR_UF + 65;         // glass front face (pane 55..65 cm east of the face: clear of MallMain's +45 cm members)
+let CR_UR = CR_UF + 80;         // louvre band plane below the knee (backing 75..85, blades 81..99 cm: >= 30 cm off the coping)
+let CR_US0 = CR_UF + 50;        // stem post back face (5 cm clear of MallMain's +45 cm fascias and coping)
+let CR_US1 = CR_UF + 100;       // stem post front face = outermost bow surface (ENG tolerance)
 let CR_HS = 100;                // stem post half width (2 m post)
-let CR_ZGF = 5150;              // glass foot (below the Z4 roof: hangs on the river face)
-let CR_ZGA = 7100;              // glass apex, just under the hook
-let CR_LG = 1700;               // glass base along the river face, south of the stem
-let CR_USAIL = CR_UF - 1400;    // west end of the raked sail on the south flank
+let CR_ZGF = 5150;              // glass foot (hangs on the river face below the Z4 roof)
+let CR_LG = 1150;               // glass base along the river face, south of the stem (narrowed, QC round 2)
+let CR_WB = 550;                // louvre band width, measured horizontally along the facade
+let CR_ZK = 5920;               // band knee: 40 cm above the coping top (58.8 m); above it the band rakes back
+let CR_USAIL = CR_UF - 1400;    // west end of the lit raked glazing on the south flank
 let n = select(160, 36, lod > 0.5);
 let CR_DW = select(60, 150, lod > 0.5);   // drum wall thickness, larger than the worst quad fold (25 cm @ n=160, 95 cm @ n=36) so the walls never cross
 
@@ -81,51 +90,63 @@ for i in 0..n {
     let hk = smoothstep(CR_AP - 1000, CR_AP, u);
     let bk = pow(hk, 1.5);
     let zb = zt - (350 + 50 * q * q + CR_BEAK * bk);     // band 3.5 m stern -> 4.0 m bow, hook to 9 m at the tip
-    let fl = 200 + 80 * pow(q, 4) - 180 * hk;            // outward lean of the band top (small at the tip: lands on the stem)
+    let fl = 200 + 80 * pow(q, 4) - 240 * hk;            // outward lean of the band top (40 cm at the tip)
     let th = 70 + 80 * smoothstep(CR_AP - 1600, CR_AP - 600, u);   // band thickness: 70 cm, 150 cm rolled lip in the hook
-    let bu = 30 + 70 * bk;                               // outer bulge at mid-depth (rolled C-hook profile)
+    let bu = 30 + 10 * bk;                               // outer bulge at mid-depth (40 cm at the tip: crisp lip)
+    let rr = CR_CRL * bk;                                // C-lip: soffit inner edge rises by rr ...
+    let dd = CR_IB + CR_CRL * bk;                        // ... and pulls back to dd (1.5 m -> 2.5 m at the tip)
+    // inward offsets near the sharp tip (radius ~1 m) fade their sideways part so no ring folds over itself
+    let gh = 1 - smoothstep(CR_AP - 800, CR_AP - 200, u);
+    let kit = fl - th;
+    let vit = select(1, gh, kit < 0);
+    let kc = fl - th - 6;
+    let vc = select(1, gh, kc < 0);
+    let lw = 60 + 90 * bk;                               // cove strip inner edge: 60 cm, 150 cm under the hook
     ou = append(ou, u); ov = append(ov, v); onx = append(onx, nx); ony = append(ony, ny);
     ozt = append(ozt, zt); ozb = append(ozb, zb);
-    // rim band rings (outer face bulges through r_om)
+    // rim band rings (outer face bulges through r_om; soffit r_ob -> r_ib rises inward over the hook)
     r_ob = append(r_ob, (u, v, zb));
     r_om = append(r_om, (u + nx * (fl * 0.5 + bu), v + ny * (fl * 0.5 + bu), (zb + zt) * 0.5));
     r_ot = append(r_ot, (u + nx * fl, v + ny * fl, zt - 6));
-    r_it = append(r_it, (u + nx * (fl - th), v + ny * (fl - th), zt - 6));
-    r_ib = append(r_ib, (u - nx * CR_IB, v - ny * CR_IB, zb));
+    r_it = append(r_it, (u + nx * kit, v + ny * kit * vit, zt - 6));
+    r_ib = append(r_ib, (u - nx * dd, v - ny * dd * gh, zb + rr));
     // champagne-gold coping on the lip (14 cm, tops out at the sheer line, 6 cm proud outside)
     c_ot = append(c_ot, (u + nx * (fl + 6), v + ny * (fl + 6), zt));
     c_ob = append(c_ob, (u + nx * (fl + 6), v + ny * (fl + 6), zt - 14));
-    c_ib = append(c_ib, (u + nx * (fl - th - 6), v + ny * (fl - th - 6), zt - 14));
-    c_it = append(c_it, (u + nx * (fl - th - 6), v + ny * (fl - th - 6), zt));
-    // warm cove light strip in the band soffit (embedded 3 cm, 7 cm proud below)
-    l_ot = append(l_ot, (u - nx * 10, v - ny * 10, zb + 3));
-    l_ob = append(l_ob, (u - nx * 10, v - ny * 10, zb - 7));
-    l_ib = append(l_ib, (u - nx * 60, v - ny * 60, zb - 7));
-    l_it = append(l_it, (u - nx * 60, v - ny * 60, zb + 3));
+    c_ib = append(c_ib, (u + nx * kc, v + ny * kc * vc, zt - 14));
+    c_it = append(c_it, (u + nx * kc, v + ny * kc * vc, zt));
+    // warm cove light strip on the (sloped) soffit: embedded 3 cm, 7 cm proud below; 1.4 m wide under the hook
+    l_ot = append(l_ot, (u - nx * 10, v - ny * 10 * gh, zb + rr * 10 / dd + 3));
+    l_ob = append(l_ob, (u - nx * 10, v - ny * 10 * gh, zb + rr * 10 / dd - 7));
+    l_ib = append(l_ib, (u - nx * lw, v - ny * lw * gh, zb + rr * lw / dd - 7));
+    l_it = append(l_it, (u - nx * lw, v - ny * lw * gh, zb + rr * lw / dd + 3));
     // drum: foot inset by the taper (5.5 m stern -> 1.8 m river half), head under the soffit; both end on CR_UCUT.
     // v offsets fade out toward the prow so the clamped points stay monotone (no swallowtail at the sharp tip).
     let taper = 550 - 370 * smoothstep(-1500, 1500, u);
     let gw = 1 - smoothstep(CR_AP - 1600, CR_AP - 400, u);
-    let gh = 1 - smoothstep(CR_AP - 800, CR_AP - 200, u);
     let fu = u - nx * taper;
     let fv = v - ny * taper * gw;
     let hu = u - nx * 130;
     let hv = v - ny * 130 * gh;
     d_b = append(d_b, (min(fu, CR_UCUT), fv, CR_ZB0));
-    d_t = append(d_t, (min(hu, CR_UCUT), hv, zb + 15));
-    d_ti = append(d_ti, (min(hu - nx * CR_DW, CR_UCUT - CR_DW), hv - ny * CR_DW * gh, zb + 15));
+    d_t = append(d_t, (min(hu, CR_UCUT), hv, zb + 15 + rr));
+    d_ti = append(d_ti, (min(hu - nx * CR_DW, CR_UCUT - CR_DW), hv - ny * CR_DW * gh, zb + 15 + rr));
     d_bi = append(d_bi, (min(fu - nx * CR_DW, CR_UCUT - CR_DW), fv - ny * CR_DW * gw, CR_ZB0));
     kerb = append(kerb, (min(fu + nx * 45, CR_UCUT + 45), fv + ny * 45 * gw));
     ocl = append(ocl, step(CR_UCUT, fu));
-    shead = append(shead, (hu, hv, zb + 15));
+    shead = append(shead, (hu, hv, zb + 15 + rr * 130 / dd));    // 15 cm into the soffit, 130 cm in from the lip
     sfoot = append(sfoot, (fu, fv, CR_ZB0));
-    // canopy deck edge: 25 cm into the band's inner face at deck level (deck 1.5 m below the sheer line)
-    let zd = zt - 150;
-    let e = 0 - CR_IB + (fl - th + CR_IB) * (zd - zb) / (zt - zb) + 25;
+    // canopy deck edge: 25 cm into the band's inner face at deck level (deck 2.5 m below the sheer line)
+    let zd = zt - 250;
+    let e = 0 - dd + (kit + dd) * (zd - zb - rr) / (zt - 6 - zb - rr) + 25;
     let gd = 1 - smoothstep(CR_AP - 800, CR_AP - 200, u);
     deck = append(deck, (u + nx * e, v + ny * e * gd, 0));
     odz = append(odz, zd);
 }
+// glass triangle apex just under the hook soffit at the stem (Photo A: the apex meets the rim's underside)
+let CR_ZGA = at(ozb, 0) + 40;
+let CR_H = CR_ZGA - CR_ZGF;
+let CR_SL = CR_LG / CR_H;      // hypotenuse elevation slope: cm of v per cm of z; every band line is parallel to it
 
 var g = empty();
 
@@ -144,7 +165,9 @@ if piece < 0.5 {
     g = merge(g, translate(extrude(points: kerb, height: 55, material: "ICS_White"), (0, 0, CR_ZB0 + 5)));
     if lod < 0.5 {
         // white fins: 30 cm wide x 120 cm deep at 88 cm pitch (arc length), glazing 120 cm behind their faces.
-        // None on the drum's end plane (plain) or on the south flank behind the sail.
+        // None on the drum's end plane (plain) or on the south flank behind the bow glazing.
+        // Feet start 15 cm into the roof deck, heads end 30 cm (+ the C-lip rise) into the band: the square end
+        // faces of the leaning fins never float above the roof or hang below the soffit.
         var acc = 0;
         var pu = 0;
         var pv = 0;
@@ -179,7 +202,7 @@ if piece < 0.5 {
                 let hv = v - ny * 130;
                 let ok = (fu < CR_UCUT - 80) * (hu < CR_UCUT - 80) * (1 - (v < 0) * (u > CR_USAIL - 100));
                 if ok > 0.5 {
-                    g = merge(g, beam_between(start: (fu + nx * 60, fv + ny * 60, CR_ZB0 + 40), end: (hu + nx * 60, hv + ny * 60, zb + 8), cross_width: 30, cross_height: 120, height_direction: (nx, ny, 0), material: "ICS_White"));
+                    g = merge(g, beam_between(start: (fu + nx * 60, fv + ny * 60, CR_ZB0 - 5), end: (hu + nx * 60, hv + ny * 60, zb + 30 + CR_CRL * bk), cross_width: 30, cross_height: 120, height_direction: (nx, ny, 0), material: "ICS_White"));
                 }
             }
         }
@@ -187,62 +210,149 @@ if piece < 0.5 {
 } else if piece < 2.5 {
     // ================= CROWN_Gable: Wisdom Hall bow =================
     let ztip = at(ozb, 0);
-    // white stem post on the river face, from below the glass sill up into the hook
-    g = merge(g, box_bounds(min: (CR_US0, 0 - CR_HS, CR_ZGF - 60), max: (CR_US1, CR_HS, ztip + 40), material: "ICS_White"));
-    // right-triangle glass on the river face: vertical edge on the stem, base running south, apex under the hook
+    // white stem post on the river face, from below the glass sill up into the hook's lip
+    g = merge(g, box_bounds(min: (CR_US0, 0 - CR_HS, CR_ZGF - 70), max: (CR_US1, CR_HS, ztip + 120), material: "ICS_White"));
+    // narrowed right-triangle glass on the river face: vertical edge on the stem, 11.5 m base, apex under the hook
     let pa = (CR_UG, 0 - CR_HS, CR_ZGA);
     let pf = (CR_UG, 0 - CR_HS, CR_ZGF);
     let pe = (CR_UG, 0 - CR_HS - CR_LG, CR_ZGF);
     g = merge(g, extrude_loop(points: [pf, pa, pe], offset: (-10, 0, 0), material: "ICS_SolidGlass"));
-    // white sill under the glass (closes the gap to MallMain's curtain wall)
-    g = merge(g, box_bounds(min: (CR_UF + 50, 0 - CR_HS - CR_LG - 60, CR_ZGF - 60), max: (CR_UG + 30, 0 - CR_HS + 10, CR_ZGF + 5), material: "ICS_White"));
-    // raked sail: top edge = glass apex + band soffit along the south flank back to CR_USAIL,
-    // bottom edge = straight line from the glass foot corner to the drum foot there
-    var top = [pa];
-    var lastf = pe;
-    for k in 0..(n / 2) {
-        let i = n - 1 - k;
-        if at(ou, i) >= CR_USAIL {
-            if at(ov, i) < 0 - CR_HS - 60 {
-                top = append(top, at(shead, i));
-                lastf = at(sfoot, i);
+    // white sill under the glass and the band's foot (stops at the stem post's side face; bottom 15 cm above the post's)
+    g = merge(g, box_bounds(min: (CR_US0, 0 - CR_HS - CR_LG - CR_WB - 50, CR_ZGF - 55), max: (CR_US1, 0 - CR_HS, CR_ZGF + 5), material: "ICS_White"));
+    // ---- white louvre band: every line is parallel to the hypotenuse in the east elevation. Below the knee (59.2 m)
+    // it stands on the face plane CR_UR; above the knee each line rakes back to the point where it meets the rim
+    // soffit (searched along the south flank), so the band tucks under the rim like the photos. The inner edge
+    // (d = 0) stays on the face up to the apex. LOD0: SolidGlass backing; LOD1: one white band. ----
+    let nb = select(11, 1, lod > 0.5);
+    var bsec = [];
+    var tout = pa;
+    var kx = 0;
+    for jb in 0..(nb + 1) {
+        let d = CR_WB * jb / nb;
+        let vf = 0 - CR_HS - CR_LG - d;
+        var tp = (CR_UR, 0 - CR_HS, CR_ZGA);
+        if jb > 0.5 {
+            var found = 0;
+            var prv = at(shead, n - 1);
+            var pf0 = 0;
+            for k in 0..(n / 2) {
+                let i = n - 1 - k;
+                let sh = at(shead, i);
+                let f = sh.y - (vf + CR_SL * (sh.z - CR_ZGF));
+                let hit = (found < 0.5) * (k > 0.5) * (pf0 >= 0) * (f < 0);
+                if hit > 0.5 {
+                    tp = prv + (sh - prv) * (pf0 / (pf0 - f));
+                    found = 1;
+                    kx = k;
+                }
+                prv = sh;
+                pf0 = f;
             }
         }
+        bsec = append(bsec, [(CR_UR, vf, CR_ZGF), (CR_UR, vf + CR_SL * (CR_ZK - CR_ZGF), CR_ZK), tp]);
+        tout = tp;
     }
-    let m = len(top);
-    var bot = [];
-    for j in 0..m {
-        bot = append(bot, pe + (lastf - pe) * (j / (m - 1)));
-    }
-    g = merge(g, solidify(loft_sections(sections: [top, bot], closed: "no", material: "ICS_SolidGlass"), thickness: 20, offset: 0));
-    // white sail ribs (40 x 100 cm), fanning from the glass hypotenuse (rib 0 = the thick white frame) to the drum
-    let nr = select(12, 2, lod > 0.5);
-    for j in 0..(nr + 1) {
-        let f = j / nr;
-        let tp = at(top, round(f * (m - 1)));
-        let bp = pe + (lastf - pe) * f;
-        let ns0 = cross(tp - bp, lastf - pe);
-        let hd = normalize(ns0) * select(-1, 1, dot(ns0, (1, -1, 0)) > 0);
-        g = merge(g, beam_between(start: bp + hd * 30, end: tp + hd * 30, cross_width: select(40, 60, j < 0.5), cross_height: 100, height_direction: hd, material: "ICS_White"));
-    }
+    g = merge(g, solidify(loft_sections(sections: bsec, closed: "no", material: select("ICS_SolidGlass", "ICS_White", lod > 0.5)), thickness: select(10, 20, lod > 0.5), offset: 0));
     if lod < 0.5 {
-        // cable-net mullions in front of the glass (12 cm clear of the warm lines: no coplanar faces)
+        // 60 cm white frame on the hypotenuse (the band's inner edge, covers the glass/band seam; top lands on the post)
+        let fv0 = 0 - CR_HS - CR_LG - 30;
+        g = merge(g, beam_between(start: (CR_UF + 77, fv0 - 5 * CR_SL, CR_ZGF - 5), end: (CR_UF + 77, fv0 + CR_SL * (CR_H + 25), CR_ZGA + 25), cross_width: 60, cross_height: 42, height_direction: (1, 0, 0), material: "ICS_White"));
+        // 4 white blades (85 cm wide along the facade, 18 cm thick, 35 cm gaps), each a face part + a raked part
+        for jw in 1..5 {
+            let dc = 22.5 + 120 * jw;
+            let vf = 0 - CR_HS - CR_LG - dc;
+            var tp = (CR_UR, 0 - CR_HS, CR_ZGA);
+            var found = 0;
+            var prv = at(shead, n - 1);
+            var pf0 = 0;
+            for k in 0..(n / 2) {
+                let i = n - 1 - k;
+                let sh = at(shead, i);
+                let f = sh.y - (vf + CR_SL * (sh.z - CR_ZGF));
+                let hit = (found < 0.5) * (k > 0.5) * (pf0 >= 0) * (f < 0);
+                if hit > 0.5 {
+                    tp = prv + (sh - prv) * (pf0 / (pf0 - f));
+                    found = 1;
+                }
+                prv = sh;
+                pf0 = f;
+            }
+            let ft = (CR_UR + 10, vf - 5 * CR_SL, CR_ZGF - 5);
+            let kn = (CR_UR, vf + CR_SL * (CR_ZK - CR_ZGF), CR_ZK);
+            let ax = normalize(tp - kn);
+            let nu = normalize((ax.z, 0, 0 - ax.x));
+            let nm = normalize((1, 0, 0) + nu);
+            let km = kn + nm * (10 / nm.x);
+            let al = normalize(km - ft);
+            g = merge(g, beam_between(start: ft, end: km + al * 8, cross_width: 67, cross_height: 18, height_direction: (1, 0, 0), material: "ICS_White"));
+            g = merge(g, beam_between(start: km - ax * 8, end: tp + nu * 10 + ax * 30, cross_width: 67, cross_height: 18, height_direction: nu, material: "ICS_White"));
+        }
+    }
+    // ---- lit raked glazing between the band and the drum (Photo A's warm panels under the rim): top along the rim
+    // soffit (= drum head) back to CR_USAIL, bottom over the coping at the knee height, then down behind the coping
+    // (>= 30 cm clear) and along the roof to the drum foot. Nothing below 58 m inside Z4_FP. ----
+    let kout = (CR_UR, 0 - CR_HS - CR_LG - CR_WB + CR_SL * (CR_ZK - CR_ZGF), CR_ZK);
+    var gt = [tout];
+    var lastf = kout;
+    for k in 0..(n / 2) {
+        let i = n - 1 - k;
+        let ok = (k >= kx) * (at(ou, i) >= CR_USAIL) * (at(ov, i) < 0 - CR_HS - 60);
+        if ok > 0.5 {
+            gt = append(gt, at(shead, i));
+            lastf = at(sfoot, i);
+        }
+    }
+    let mg = select(9, 5, lod > 0.5);
+    let gtop = resample_path(gt, count: mg);
+    let c1 = kout + (lastf - kout) * ((kout.x - (CR_UF - 100)) / (kout.x - lastf.x));
+    let c2 = kout + (lastf - kout) * ((kout.x - (CR_UF - 105)) / (kout.x - lastf.x));
+    let c2r = (c2.x, c2.y, CR_ZB0);
+    var gbot = [kout, (c1.x, c1.y, CR_ZK), c2r];
+    for j in 3..mg {
+        gbot = append(gbot, c2r + (lastf - c2r) * ((j - 2) / (mg - 3)));
+    }
+    g = merge(g, solidify(loft_sections(sections: [gtop, gbot], closed: "no", material: "ICS_ShopLit"), thickness: 10, offset: 0));
+    if lod < 0.5 {
+        // raked DarkMetal mullions (20 cm) on the glazing rulings, and a bottom rail along its stepped foot
+        for j in 1..(mg - 1) {
+            let tq = at(gtop, j);
+            let bq = at(gbot, j);
+            let ax = normalize(tq - bq);
+            let n0 = cross(at(gbot, j + 1) - at(gbot, j - 1), ax);
+            let hd = normalize(n0) * select(-1, 1, dot(n0, (0.3, -1, 0.3)) > 0);
+            g = merge(g, beam_between(start: bq + hd * 10, end: tq + hd * 10 + ax * 20, cross_width: 20, cross_height: 14, height_direction: hd, material: "ICS_DarkMetal"));
+        }
+        for j in 0..(mg - 1) {
+            let sa = at(gbot, j);
+            let sb = at(gbot, j + 1);
+            let sd = normalize(sb - sa);
+            g = merge(g, beam_between(start: sa + (0, 0, 10) - sd * 10, end: sb + (0, 0, 10) + sd * 10, cross_width: 20, cross_height: 20, height_direction: select((0, 0, 1), (1, 0, 0), abs(sd.z) > 0.9), material: "ICS_DarkMetal"));
+        }
+        // cable-net mullions in front of the glass, from 10 cm into the sill up into the hypotenuse frame
         for j in 1..8 {
             let fj = j / 8;
             let mv = 0 - CR_HS - CR_LG * fj;
-            let mz = CR_ZGF + (CR_ZGA - CR_ZGF) * (1 - fj) - 25;
-            g = merge(g, beam_between(start: (CR_UG + 20, mv, CR_ZGF + 5), end: (CR_UG + 20, mv, mz), cross_width: 12, cross_height: 16, height_direction: (1, 0, 0), material: "ICS_DarkMetal"));
+            let mz = CR_ZGF + CR_H * (1 - fj) + 20;
+            g = merge(g, beam_between(start: (CR_UG + 20, mv, CR_ZGF - 5), end: (CR_UG + 20, mv, mz), cross_width: 12, cross_height: 16, height_direction: (1, 0, 0), material: "ICS_DarkMetal"));
         }
-        // warm floor-edge lines behind the cable net
-        for k in 1..5 {
+        // warm floor-edge lines (38 cm tall: read at 300 m), 2 cm into the glass, 5 cm into the post, ending under the frame
+        for k in 1..4 {
             let lz = CR_ZGF + 420 * k;
-            let fr = (lz - CR_ZGF) / (CR_ZGA - CR_ZGF);
-            let lv = 0 - CR_HS - CR_LG * (1 - fr) + 60;
-            g = merge(g, beam_between(start: (CR_UG + 5, 0 - CR_HS - 10, lz), end: (CR_UG + 5, lv, lz), cross_width: 6, cross_height: 16, height_direction: (0, 0, 1), material: "ICS_WarmLight"));
+            let lv = 0 - CR_HS - CR_LG + CR_SL * (lz - CR_ZGF) - 15;
+            g = merge(g, beam_between(start: (CR_UG + 6, 0 - CR_HS + 5, lz), end: (CR_UG + 6, lv, lz), cross_width: 16, cross_height: 38, height_direction: (0, 0, 1), material: "ICS_WarmLight"));
+        }
+        // three vertical warm strips (25 cm) beside the cable-net mullions
+        for j in 1..4 {
+            let fj = j / 4;
+            let sv = 0 - CR_HS - CR_LG * fj - 20;
+            let sz = CR_ZGF + (sv + CR_HS + CR_LG) / CR_SL + 10;
+            g = merge(g, beam_between(start: (CR_UG + 4, sv, CR_ZGF - 5), end: (CR_UG + 4, sv, sz), cross_width: 25, cross_height: 12, height_direction: (1, 0, 0), material: "ICS_WarmLight"));
         }
     }
 } else if piece < 3.5 {
     // ================= CROWN_Canopy: white deck + stepped tiers following the sweep =================
+    // deck top 2.5 m below the sheer line, tiers step up 1.0 m on 1.1 m gold fascias (1 m visible each = ~1/4 of the
+    // rim band, Photo B's bold rings); the top tier peaks ~0.5-0.9 m above the local rim top at the centre line
     let ns = select(7, 5, lod > 0.5);
     let nt = select(4, 2, lod > 0.5);
     let u0 = -300;
@@ -261,29 +371,39 @@ if piece < 0.5 {
             for j in 0..ns {
                 let fj = j / (ns - 1);
                 let cv = (2 * fj - 1);
-                sec = append(sec, (uu, (ps.y + (pn.y - ps.y) * fj) * sv, zt - 150 + k * 55 + cmb * (1 - cv * cv) - select(20, 30, k > 0.5)));
+                sec = append(sec, (uu, (ps.y + (pn.y - ps.y) * fj) * sv, zt - 250 + k * 100 + cmb * (1 - cv * cv) - select(20, 55, k > 0.5)));
             }
             secs = append(secs, sec);
         }
         let sheet = loft_sections(sections: secs, closed: "no", material: "ICS_White");
-        g = merge(g, solidify(sheet, thickness: select(40, 60, k > 0.5), offset: 0, side_material: select("ICS_White", "ICS_GoldRoof", k > 0.5)));
+        g = merge(g, solidify(sheet, thickness: select(40, 110, k > 0.5), offset: 0, side_material: select("ICS_White", "ICS_GoldRoof", k > 0.5)));
     }
 } else {
-    // ================= collider: drum foot prism + deck prisms + bow wedge =================
+    // ================= collider: drum foot prism + 4 stepped deck prisms + bow slab + stem post =================
+    // (the canopy is not a walkable roof; the stepped prisms keep the collider within ~1 m of the deck/tiers)
     var kp = [];
-    var dp = [];
-    var fp = [];
     for i in 0..n {
         kp = append(kp, at(kerb, i));
-        let p = at(deck, i);
-        dp = append(dp, (p.x, p.y));
-        if p.x > 1500 { fp = append(fp, (p.x, p.y)); }
     }
     g = merge(g, translate(extrude(points: kp, height: 6600 - CR_ZB0, material: "ICS_White"), (0, 0, CR_ZB0)));
-    g = merge(g, translate(extrude(points: dp, height: 220, material: "ICS_White"), (0, 0, 6590)));
-    g = merge(g, translate(extrude(points: fp, height: 420, material: "ICS_White"), (0, 0, 6800)));
-    g = merge(g, extrude_loop(points: [(CR_UG, 0 - CR_HS, CR_ZGF), (CR_UG, 0 - CR_HS, CR_ZGA), (CR_UG, 0 - CR_HS - CR_LG, CR_ZGF)], offset: (-130, 0, 0), material: "ICS_White"));
-    g = merge(g, box_bounds(min: (CR_US0, 0 - CR_HS, CR_ZGF - 60), max: (CR_US1, CR_HS, at(ozb, 0) + 40), material: "ICS_White"));
+    for b in 0..4 {
+        let ua = pick(b, 0 - CR_AS - 100, -1500, 1000, 3000);
+        let ub = pick(b, -1500, 1000, 3000, CR_AP + 100);
+        var bp = [];
+        for i in 0..n {
+            let p = at(deck, i);
+            let inb = (p.x >= ua - 300) * (p.x <= ub + 300);
+            if inb > 0.5 {
+                bp = append(bp, (p.x, p.y));
+            }
+        }
+        let qb = clamp((min(ub, CR_AP) + CR_AS) / (CR_AS + CR_AP), 0, 1);
+        let ztb = CR_ZST + (CR_ZPR - CR_FLICK - CR_ZST) * pow(qb, 2.5);
+        g = merge(g, translate(extrude(points: bp, height: ztb - 150 - 6550, material: "ICS_White"), (0, 0, 6550)));
+    }
+    let k0v = 0 - CR_HS - CR_LG + CR_SL * (CR_ZK - CR_ZGF);
+    g = merge(g, extrude_loop(points: [(CR_US1, 0 - CR_HS, CR_ZGF - 55), (CR_US1, 0 - CR_HS, CR_ZGA), (CR_US1, k0v, CR_ZK), (CR_US1, k0v - CR_WB, CR_ZK), (CR_US1, 0 - CR_HS - CR_LG - CR_WB, CR_ZGF - 55)], offset: (-50, 0, 0), material: "ICS_White"));
+    g = merge(g, box_bounds(min: (CR_US0, 0 - CR_HS, CR_ZGF - 70), max: (CR_US1, CR_HS, at(ozb, 0) + 120), material: "ICS_White"));
 }
 out.geo = translate(rotate_z(g, degrees: SITE_ROT_DEG, pivot: (0, 0, 0)), (CR_CX, CR_CY, 0));
 #end

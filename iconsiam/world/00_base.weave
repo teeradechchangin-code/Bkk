@@ -1,7 +1,7 @@
 object grid {
     is_locked = true
     model = "grid"
-    position = (0, 0, -100)
+    position = (0, 0, -110)
     size = (10000, 10000, 100)
 }
 #adjuster
