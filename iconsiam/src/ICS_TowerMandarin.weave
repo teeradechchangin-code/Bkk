@@ -1,0 +1,535 @@
+// ICS_TowerMandarin - The Residences at Mandarin Oriental, Bangkok (north tower)
+// North-tower crew. World cm, Z up, +X east, +Y north; every outline derived from #meshdefs (MO_FP, MO_C, MO_*).
+// Local frame: u along the 46 deg long axis (toward the river/NE), v toward the NW, origin MO_C.
+// Massing (Photo A/B calibrated): golden podium box on MO_FP to MO_PODIUM_TOP over a recessed glass lobby;
+// shaft = MO_FP inset 5 m, split by a gold spine blade at u = U_SP into a taller SW block (248 m) and a
+// lower NE block (MO_ROOF 232 m); the narrow NE "bow" of MO_FP beyond u = U_NE stays podium roof garden.
+// Blade rises into a sail-shaped crown with a mast to MO_ARCH_TOP and a rod to MO_TIP.
+
+#meshpart MO_Tower
+param lodq = 0 range 0..2;
+// ---------------- frame + controls ----------------
+let AX = 46;
+let CU = cos(AX);
+let SU = sin(AX);
+let CX = MO_C.x;
+let CY = MO_C.y;
+let U_SP = 1200;
+let U_NE = 2900;
+let INSET = 450;
+let Z_LOB = 450;
+let Z_BOX = MO_PODIUM_TOP;
+let SW_ROOF = 24800;
+let NE_ROOF = MO_ROOF;
+let FH = MO_FLOOR_H;
+let BT = 300;
+let ZS0 = Z_BOX - 10;
+let SAIL_HI = 25900;
+let SAIL_LO = 24000;
+let DW = 300;
+let DH = 390;
+let LR = DW / DH;
+let LAT_H = Z_BOX - Z_LOB;
+let BAL_D = 110;
+let BULGE = 170;
+let SAIL_W = 420;
+let NFP = len(MO_FP);
+
+// ---------------- plan polygons ----------------
+// P1: MO_FP without its narrow N bow tip (beyond U_NE + 6 m); P2: drop vertices whose two edges are both < 4 m
+var P1 = [];
+for i in 0..NFP {
+  let p = at(MO_FP, i);
+  let q = at(MO_FP, mod(i + 1, NFP));
+  let sp = U_NE + 600 - ((p.x - CX) * CU + (p.y - CY) * SU);
+  let sq = U_NE + 600 - ((q.x - CX) * CU + (q.y - CY) * SU);
+  if sp >= 0 { P1 = append(P1, (p.x, p.y)); }
+  if sp * sq < 0 {
+    let t = sp / (sp - sq);
+    P1 = append(P1, (p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t));
+  }
+}
+let N1 = len(P1);
+var P2 = [];
+for i in 0..N1 {
+  let a = at(P1, mod(i + N1 - 1, N1));
+  let p = at(P1, i);
+  let q = at(P1, mod(i + 1, N1));
+  let la = sqrt((p.x - a.x) * (p.x - a.x) + (p.y - a.y) * (p.y - a.y));
+  let lq = sqrt((q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y));
+  if max(la, lq) >= 400 { P2 = append(P2, (p.x, p.y)); }
+}
+let SH = offset_polygon(points: P2, delta: 0 - INSET);
+let NSH = len(SH);
+// split at the spine plane u = U_SP; record the blade's v extent (VSE = river face, VNW = back face)
+var SWP = [];
+var NE1 = [];
+var VSE = 100000;
+var VNW = -100000;
+for i in 0..NSH {
+  let p = at(SH, i);
+  let q = at(SH, mod(i + 1, NSH));
+  let sp = U_SP - ((p.x - CX) * CU + (p.y - CY) * SU);
+  let sq = U_SP - ((q.x - CX) * CU + (q.y - CY) * SU);
+  if sp >= 0 { SWP = append(SWP, (p.x, p.y)); }
+  if sp <= 0 { NE1 = append(NE1, (p.x, p.y)); }
+  if sp * sq < 0 {
+    let t = sp / (sp - sq);
+    let ix = p.x + (q.x - p.x) * t;
+    let iy = p.y + (q.y - p.y) * t;
+    SWP = append(SWP, (ix, iy));
+    NE1 = append(NE1, (ix, iy));
+    let iv = (iy - CY) * CU - (ix - CX) * SU;
+    VSE = min(VSE, iv);
+    VNW = max(VNW, iv);
+  }
+}
+let NN1 = len(NE1);
+var NEP = [];
+for i in 0..NN1 {
+  let p = at(NE1, i);
+  let q = at(NE1, mod(i + 1, NN1));
+  let sp = U_NE - ((p.x - CX) * CU + (p.y - CY) * SU);
+  let sq = U_NE - ((q.x - CX) * CU + (q.y - CY) * SU);
+  if sp >= 0 { NEP = append(NEP, (p.x, p.y)); }
+  if sp * sq < 0 {
+    let t = sp / (sp - sq);
+    NEP = append(NEP, (p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t));
+  }
+}
+// podium edges of interest: ISE = long river (SE) face, IE = east-facing NE end face
+var ISE = 0;
+var ISE_L = 0;
+var IE = 0;
+var IE_X = -2;
+for i in 0..NFP {
+  let a = at(MO_FP, i);
+  let b = at(MO_FP, mod(i + 1, NFP));
+  let el = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+  let ox = (b.y - a.y) / el;
+  let oy = (a.x - b.x) / el;
+  let onv = oy * CU - ox * SU;
+  if (onv < -0.9) * (el > ISE_L) > 0 { ISE = i; ISE_L = el; }
+  if (el > 1000) * (ox > IE_X) > 0 { IE = i; IE_X = ox; }
+}
+let SEA = at(MO_FP, ISE);
+let SEB = at(MO_FP, mod(ISE + 1, NFP));
+let SEX = (SEB.x - SEA.x) / ISE_L;
+let SEY = (SEB.y - SEA.y) / ISE_L;
+let SE_IX = 0 - SEY;
+let SE_IY = SEX;
+let SE_UA = (SEA.x - CX) * CU + (SEA.y - CY) * SU;
+let SE_DU = SEX * CU + SEY * SU;
+let POOL_S0 = 350;
+let POOL_S1 = (U_SP - 520 - SE_UA) / SE_DU;
+let BLADE_S1 = (U_SP + 420 - SE_UA) / SE_DU;
+let NSWF = floor((SW_ROOF - Z_BOX - 100) / FH);
+let NNEF = floor((NE_ROOF - Z_BOX - 100) / FH);
+
+// ---------------- shaft massing (all levels) ----------------
+let glass_sw = translate(extrude(points: SWP, height: SW_ROOF - ZS0, material: "ICS_TowerGlass2"), (0, 0, ZS0));
+let glass_ne = translate(extrude(points: NEP, height: NE_ROOF - ZS0, material: "ICS_TowerGlass2"), (0, 0, ZS0));
+let roof_sw = translate(extrude(points: offset_polygon(points: SWP, delta: -20), height: 60, material: "ICS_DarkMetal"), (0, 0, SW_ROOF - 20));
+let roof_ne = translate(extrude(points: offset_polygon(points: NEP, delta: -20), height: 60, material: "ICS_DarkMetal"), (0, 0, NE_ROOF - 20));
+let par_sw = translate(extrude_shape(outer: offset_polygon(points: SWP, delta: 40), holes: [offset_polygon(points: SWP, delta: -50)], height: 200, material: "ICS_Gold"), (0, 0, SW_ROOF - 30));
+let par_ne = translate(extrude_shape(outer: offset_polygon(points: NEP, delta: 40), holes: [offset_polygon(points: NEP, delta: -50)], height: 200, material: "ICS_Gold"), (0, 0, NE_ROOF - 30));
+
+// gold spine blade: profile in (v, z), extruded BT along u; sail crown + mast + flared foot
+var BP = [];
+BP = append(BP, (VSE - 450, ZS0));
+BP = append(BP, (VNW + 350, ZS0));
+BP = append(BP, (VNW + 350, SAIL_LO));
+for j in 1..10 {
+  let th = j * 9;
+  BP = append(BP, (VSE + 450 + (VNW + 350 - VSE - 450) * cos(th), SAIL_LO + (SAIL_HI - SAIL_LO) * sin(th)));
+}
+BP = append(BP, (VSE + 450, SAIL_HI));
+BP = append(BP, (VSE + 150, MO_ARCH_TOP));
+BP = append(BP, (VSE - 50, MO_ARCH_TOP));
+BP = append(BP, (VSE - 200, MO_ARCH_TOP - 900));
+BP = append(BP, (VSE - 200, ZS0 + 3000));
+for j in 1..9 {
+  let ph = j * 10;
+  BP = append(BP, (VSE - 450 + 250 * cos(ph), ZS0 + 3000 - 3000 * sin(ph)));
+}
+let BX0 = CX + CU * (U_SP - BT / 2);
+let BY0 = CY + SU * (U_SP - BT / 2);
+let blade = translate(rotate_z(rotate_x(extrude(points: BP, height: BT, material: "ICS_Gold"), degrees: 90, pivot: (0, 0, 0)), degrees: AX + 90, pivot: (0, 0, 0)), (BX0, BY0, 0));
+let TIPX = CX + CU * U_SP - SU * (VSE + 50);
+let TIPY = CY + SU * U_SP + CU * (VSE + 50);
+let rod = cylinder_at(radius: 22, height: MO_TIP - MO_ARCH_TOP + 120, bottom_center: (TIPX, TIPY, MO_ARCH_TOP - 120), segments: 10, material: "ICS_Gold");
+// sail crown on the NE block: convex curve in the (u, z) river-face plane rising from the NE roof into the spine (Photo A),
+// trimmed by the blade's descending (v, z) profile and by the NE block outline
+var UPF = [];
+UPF = append(UPF, (U_SP - 10, NE_ROOF - 30));
+UPF = append(UPF, (U_SP + BT / 2 + SAIL_W, NE_ROOF - 30));
+for j in 0..9 {
+  let th = j * 10;
+  UPF = append(UPF, (U_SP + BT / 2 + SAIL_W * cos(th), NE_ROOF + 170 + (SAIL_HI - NE_ROOF - 170) * sin(th)));
+}
+UPF = append(UPF, (U_SP + BT / 2, SAIL_HI));
+UPF = append(UPF, (U_SP - 10, SAIL_HI));
+let SDEP = VNW - VSE + 700;
+let crown_u = translate(rotate_z(rotate_x(extrude(points: UPF, height: SDEP, material: "ICS_Gold"), degrees: 90, pivot: (0, 0, 0)), degrees: AX, pivot: (0, 0, 0)), (CX - SU * (VNW + 400), CY + CU * (VNW + 400), 0));
+let crown_v = translate(rotate_z(rotate_x(extrude(points: BP, height: BT / 2 + SAIL_W + 230, material: "ICS_Gold"), degrees: 90, pivot: (0, 0, 0)), degrees: AX + 90, pivot: (0, 0, 0)), (CX + CU * (U_SP - 10), CY + SU * (U_SP - 10), 0));
+let crown_xy = extrude(points: offset_polygon(points: NEP, delta: 40), height: MO_ARCH_TOP, material: "ICS_Gold");
+let sail = boolean(boolean(crown_u, crown_v, op: "intersect", solver: "exact"), crown_xy, op: "intersect", solver: "exact");
+
+// ---------------- LOD0 detail ----------------
+var podium = empty();
+var tower_detail = empty();
+var balconies = empty();
+var terrace = empty();
+var trees = empty();
+if lodq == 0 {
+  // ---- golden podium box over recessed lobby ----
+  let fp_in = offset_polygon(points: MO_FP, delta: -250);
+  let lobby = translate(extrude(points: fp_in, height: Z_LOB + 20, material: "ICS_SolidGlass"), (0, 0, -10));
+  let gbox = translate(extrude(points: MO_FP, height: LAT_H, material: "ICS_GoldPanel"), (0, 0, Z_LOB));
+  let coping = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: 15), holes: [offset_polygon(points: MO_FP, delta: -60)], height: 65, material: "ICS_Gold"), (0, 0, Z_BOX - 20));
+  let soffit_light = translate(extrude_shape(outer: offset_polygon(points: MO_FP, delta: -30), holes: [offset_polygon(points: MO_FP, delta: -90)], height: 15, material: "ICS_WarmLight"), (0, 0, Z_LOB - 10));
+  var PL = [];
+  for i in 0..NFP {
+    let a = at(MO_FP, i);
+    let b = at(MO_FP, mod(i + 1, NFP));
+    let el = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+    let ex = (b.x - a.x) / el;
+    let ey = (b.y - a.y) / el;
+    let ox = ey;
+    let oy = 0 - ex;
+    // diamond relief: two families of diagonal strips, clipped to the face
+    let sl = el - 30;
+    let ph = (sl - DW * floor(sl / DW)) * 0.5;
+    let kmax = select(-1, floor((sl + LAT_H * LR) / DW) + 1, el > 450);
+    for k in 0..26 {
+      if k <= kmax {
+        let ca = ph + k * DW - LAT_H * LR;
+        let zla = max(Z_LOB + 12, Z_LOB - ca / LR);
+        let zha = min(Z_BOX - 5, Z_LOB + (sl - ca) / LR);
+        if zha - zla > 40 {
+          let sa0 = 15 + ca + (zla - Z_LOB) * LR;
+          let sa1 = 15 + ca + (zha - Z_LOB) * LR;
+          PL = append(PL, beam_between(start: (a.x + ex * sa0 + ox * 4, a.y + ey * sa0 + oy * 4, zla), end: (a.x + ex * sa1 + ox * 4, a.y + ey * sa1 + oy * 4, zha), cross_width: 18, cross_height: 12, height_direction: (ox, oy, 0), material: "ICS_GoldPanel"));
+        }
+        let cb = ph + k * DW;
+        let zlb = max(Z_LOB + 12, Z_LOB + (cb - sl) / LR);
+        let zhb = min(Z_BOX - 5, Z_LOB + cb / LR);
+        if zhb - zlb > 40 {
+          let sb0 = 15 + cb - (zlb - Z_LOB) * LR;
+          let sb1 = 15 + cb - (zhb - Z_LOB) * LR;
+          PL = append(PL, beam_between(start: (a.x + ex * sb0 + ox * 4, a.y + ey * sb0 + oy * 4, zlb), end: (a.x + ex * sb1 + ox * 4, a.y + ey * sb1 + oy * 4, zhb), cross_width: 18, cross_height: 12, height_direction: (ox, oy, 0), material: "ICS_GoldPanel"));
+        }
+      }
+    }
+    // lobby columns under the box edge
+    if el > 700 {
+      let ncol = floor(el / 850);
+      for j in 0..12 {
+        if j < ncol {
+          let sc = (j + 0.5) * el / ncol;
+          PL = append(PL, cylinder_at(radius: 40, height: Z_LOB + 20, bottom_center: (a.x + ex * sc - ox * 130, a.y + ey * sc - oy * 130, -10), segments: 12, material: "ICS_DarkMetal"));
+        }
+      }
+    }
+    // river face: warm light studs on the diamond nodes (inverted triangle toward the NE end, Photo A)
+    if i == ISE {
+      for n in 5..10 {
+        let zn = Z_LOB + n * DH / 2;
+        let sbase = mod(ph + (n - 5) * DW / 2 - LAT_H * LR / 2, DW);
+        let half = (n - 4) * 260;
+        for kk in 0..20 {
+          let sn = 15 + sbase + kk * DW;
+          if (abs(sn - el * 0.8) < half) * (sn > 120) * (sn < el - 120) > 0 {
+            PL = append(PL, sphere_center(radius: 16, segments: 6, center: (a.x + ex * sn + ox * 14, a.y + ey * sn + oy * 14, zn), material: "ICS_WarmLight"));
+          }
+        }
+      }
+    }
+    // east (river) end face: round porthole window (Photo B)
+    if i == IE {
+      let pcx = a.x + ex * el * 0.5;
+      let pcy = a.y + ey * el * 0.5;
+      let pz = Z_LOB + LAT_H * 0.62;
+      let pring = align_z_to(torus_center(major_radius: 235, tube_radius: 24, segments: 32, tube_segments: 8, center: (0, 0, 0), material: "ICS_Gold"), direction: (ox, oy, 0), pivot: (0, 0, 0));
+      let disc = align_z_to(cylinder_center(radius: 225, height: 10, segments: 32, center: (0, 0, 0), material: "ICS_SolidGlass"), direction: (ox, oy, 0), pivot: (0, 0, 0));
+      PL = append(PL, translate(pring, (pcx + ox * 16, pcy + oy * 16, pz)));
+      PL = append(PL, translate(disc, (pcx + ox * 14, pcy + oy * 14, pz)));
+    }
+  }
+  podium = merge(lobby, gbox, coping, soffit_light, merge(PL));
+
+  // ---- tower facade: corner piers, bay piers, champagne fins, floor bands ----
+  var FL = [];
+  var BL = [];
+  for bb in 0..2 {
+    let PP = pick(bb, SWP, NEP);
+    let RF = pick(bb, SW_ROOF, NE_ROOF);
+    let NFLB = pick(bb, NSWF, NNEF);
+    let np = len(PP);
+    FL = append(FL, array(translate(extrude(points: offset_polygon(points: PP, delta: 35), height: 30, material: "ICS_Gold"), (0, 0, Z_BOX + FH - 15)), count: NFLB, offset: (0, 0, FH)));
+    for i in 0..np {
+      let pa = at(PP, i);
+      let pb = at(PP, mod(i + 1, np));
+      let el = sqrt((pb.x - pa.x) * (pb.x - pa.x) + (pb.y - pa.y) * (pb.y - pa.y));
+      let ex = (pb.x - pa.x) / el;
+      let ey = (pb.y - pa.y) / el;
+      let ox = ey;
+      let oy = 0 - ex;
+      let ua = (pa.x - CX) * CU + (pa.y - CY) * SU;
+      let ub = (pb.x - CX) * CU + (pb.y - CY) * SU;
+      let a_sp = abs(ua - U_SP) < 5;
+      let on_sp = a_sp * (abs(ub - U_SP) < 5);
+      let onu = ox * CU + oy * SU;
+      let onv = oy * CU - ox * SU;
+      if a_sp < 0.5 {
+        FL = append(FL, beam_between(start: (pa.x, pa.y, ZS0), end: (pa.x, pa.y, RF + 450), cross_width: 150, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_Gold"));
+      }
+      if on_sp < 0.5 {
+        let nb = max(1, round(el / 1100));
+        let bw = el / nb;
+        let gold_s = (bb == 1) * (onv < -0.9) * (BT / 2 + SAIL_W);
+        for j in 1..8 {
+          if j < nb {
+            let sj = j * bw;
+            FL = append(FL, beam_between(start: (pa.x + ex * sj + ox * 50, pa.y + ey * sj + oy * 50, ZS0), end: (pa.x + ex * sj + ox * 50, pa.y + ey * sj + oy * 50, RF + 320), cross_width: 110, cross_height: 150, height_direction: (ox, oy, 0), material: "ICS_Gold"));
+          }
+        }
+        let nf = floor(el / 225);
+        for j in 1..48 {
+          if j < nf {
+            let sf = j * el / nf;
+            let fr = sf / bw;
+            let dpier = abs(fr - round(fr)) * bw;
+            if (dpier > 100) * (sf > gold_s + 60) > 0 {
+              FL = append(FL, beam_between(start: (pa.x + ex * sf + ox * 20, pa.y + ey * sf + oy * 20, ZS0), end: (pa.x + ex * sf + ox * 20, pa.y + ey * sf + oy * 20, RF - 30), cross_width: 20, cross_height: 50, height_direction: (ox, oy, 0), material: "ICS_Gold"));
+            }
+          }
+        }
+        // gold cladding strip beside the blade on the NE block river face (wide gold spine zone, Photo A/B)
+        if gold_s > 1 {
+          let gm = gold_s * 0.5;
+          FL = append(FL, beam_between(start: (pa.x + ex * gm + ox * 6, pa.y + ey * gm + oy * 6, ZS0), end: (pa.x + ex * gm + ox * 6, pa.y + ey * gm + oy * 6, RF - 30), cross_width: gold_s, cross_height: 20, height_direction: (ox, oy, 0), material: "ICS_GoldPanel"));
+        }
+        // balconies: 0 none, 1 straight, 2 curved
+        for j in 0..8 {
+          if (j < nb) * (el > 800) > 0 {
+            let is_se = onv < -0.9;
+            let is_sw = onu < -0.9;
+            let is_nw = onv > 0.5;
+            let t_se0 = (bb == 0) * is_se * select(select(1, 2, j == nb - 2), 3, j == nb - 1);
+            let t_se1 = (bb == 1) * is_se;
+            let btype = t_se0 + t_se1 + (is_sw + is_nw > 0.5) * (is_se < 0.5);
+            let b_sp = abs(ub - U_SP) < 5;
+            let st_off = select(53, select(120, 300, a_sp), j == 0);
+            let en_off = select(53, select(120, 300, b_sp), j == nb - 1);
+            let s0 = max(j * bw + st_off, gold_s - 2);
+            let s1 = (j + 1) * bw - en_off;
+            let zk = Z_BOX + 2 * FH;
+            if (btype == 1) * (s1 - s0 > 200) > 0 {
+              let x0 = pa.x + ex * s0;
+              let y0 = pa.y + ey * s0;
+              let x1 = pa.x + ex * s1;
+              let y1 = pa.y + ey * s1;
+              let slab = beam_between(start: (x0 + ox * (BAL_D / 2 - 5), y0 + oy * (BAL_D / 2 - 5), zk - 5), end: (x1 + ox * (BAL_D / 2 - 5), y1 + oy * (BAL_D / 2 - 5), zk - 5), cross_width: BAL_D + 10, cross_height: 30, height_direction: (0, 0, 1), material: "ICS_White");
+              let gl = beam_between(start: (x0 + ox * (BAL_D - 6), y0 + oy * (BAL_D - 6), zk + 61), end: (x1 + ox * (BAL_D - 6), y1 + oy * (BAL_D - 6), zk + 61), cross_width: 3, cross_height: 106, height_direction: (0, 0, 1), material: "ICS_Balustrade");
+              let rl = beam_between(start: (x0 + ox * (BAL_D - 6), y0 + oy * (BAL_D - 6), zk + 118), end: (x1 + ox * (BAL_D - 6), y1 + oy * (BAL_D - 6), zk + 118), cross_width: 8, cross_height: 8, height_direction: (0, 0, 1), material: "ICS_Gold");
+              BL = append(BL, array(merge(slab, gl, rl), count: NFLB - 1, offset: (0, 0, FH)));
+            }
+            if (btype == 3) * (s1 - s0 > 200) > 0 {
+              let x0 = pa.x + ex * s0;
+              let y0 = pa.y + ey * s0;
+              let x1 = pa.x + ex * s1;
+              let y1 = pa.y + ey * s1;
+              BL = append(BL, array(beam_between(start: (x0 + ox * 25, y0 + oy * 25, zk - 5), end: (x1 + ox * 25, y1 + oy * 25, zk - 5), cross_width: 70, cross_height: 30, height_direction: (0, 0, 1), material: "ICS_White"), count: NFLB - 1, offset: (0, 0, FH)));
+            }
+            if (btype == 2) * (s1 - s0 > 200) > 0 {
+              var cp = [];
+              var gp = [];
+              var rp = [];
+              cp = append(cp, (pa.x + ex * s0 - ox * 10, pa.y + ey * s0 - oy * 10));
+              cp = append(cp, (pa.x + ex * s1 - ox * 10, pa.y + ey * s1 - oy * 10));
+              for m in 0..13 {
+                let sm = s1 - (s1 - s0) * m / 12;
+                let wm = BULGE * sin(180 * m / 12);
+                cp = append(cp, (pa.x + ex * sm + ox * wm, pa.y + ey * sm + oy * wm));
+                gp = append(gp, (pa.x + ex * sm + ox * (wm - 6), pa.y + ey * sm + oy * (wm - 6), zk + 61));
+                rp = append(rp, (pa.x + ex * sm + ox * (wm - 6), pa.y + ey * sm + oy * (wm - 6), zk + 118));
+              }
+              let cslab = translate(extrude(points: cp, height: 30, material: "ICS_White"), (0, 0, zk - 20));
+              let cgl = sweep_box_path(points: gp, width: 3, height: 106, up: (0, 0, 1), material: "ICS_Balustrade");
+              let crl = sweep_box_path(points: rp, width: 8, height: 8, up: (0, 0, 1), material: "ICS_Gold");
+              BL = append(BL, array(merge(cslab, cgl, crl), count: NFLB - 1, offset: (0, 0, FH)));
+            }
+          }
+        }
+      }
+    }
+  }
+  // rooftop plant + BMU on the SW block, plant box on the NE block
+  let rp_u = -600;
+  let rp_v = 600;
+  let rpx = CX + CU * rp_u - SU * rp_v;
+  let rpy = CY + SU * rp_u + CU * rp_v;
+  let plant_sw = rotate_z(box_at(size: (1400, 900, 520), bottom_center: (0, 0, 0), material: "ICS_DarkMetal"), degrees: AX, pivot: (0, 0, 0));
+  let bmu_x = CX + CU * 500 - SU * 0;
+  let bmu_y = CY + SU * 500 + CU * 0;
+  let bmu_mast = cylinder_at(radius: 60, height: 700, bottom_center: (bmu_x, bmu_y, SW_ROOF + 30), segments: 12, material: "ICS_White");
+  let bmu_boom = beam_between(start: (bmu_x + CU * 250, bmu_y + SU * 250, SW_ROOF + 680), end: (bmu_x - CU * 1300 - SU * 250, bmu_y - SU * 1300 + CU * 250, SW_ROOF + 640), cross_width: 70, cross_height: 90, height_direction: (0, 0, 1), material: "ICS_White");
+  let ne_u = 2000;
+  let ne_v = -350;
+  let plant_ne = rotate_z(box_at(size: (600, 450, 350), bottom_center: (0, 0, 0), material: "ICS_DarkMetal"), degrees: AX, pivot: (0, 0, 0));
+  tower_detail = merge(merge(FL), translate(plant_sw, (rpx, rpy, SW_ROOF + 30)), bmu_mast, bmu_boom, translate(plant_ne, (CX + CU * ne_u - SU * ne_v, CY + SU * ne_u + CU * ne_v, NE_ROOF + 30)));
+  balconies = merge(BL);
+
+  // ---- podium roof terrace: paving, glass balustrade, planters, infinity pool, bow lawn ----
+  var TL = [];
+  let paving = translate(extrude(points: offset_polygon(points: MO_FP, delta: -55), height: 25, material: "ICS_Paving"), (0, 0, Z_BOX - 5));
+  for i in 0..NFP {
+    let a = at(MO_FP, i);
+    let b = at(MO_FP, mod(i + 1, NFP));
+    let el = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+    let ex = (b.x - a.x) / el;
+    let ey = (b.y - a.y) / el;
+    let ix = 0 - ey;
+    let iy = ex;
+    let pse = i == ISE;
+    for sg in 0..2 {
+      let g0 = select(0, select(POOL_S1 + 60, 0, sg == 1), pse);
+      let g1 = select(el, select(el, POOL_S0 - 60, sg == 1), pse);
+      let gdo = (sg == 0) + pse * (sg == 1);
+      if (gdo > 0.5) * (g1 - g0 > 60) > 0 {
+        TL = append(TL, beam_between(start: (a.x + ex * g0 + ix * 22, a.y + ey * g0 + iy * 22, Z_BOX + 96), end: (a.x + ex * g1 + ix * 22, a.y + ey * g1 + iy * 22, Z_BOX + 96), cross_width: 4, cross_height: 106, height_direction: (0, 0, 1), material: "ICS_Balustrade"));
+        TL = append(TL, beam_between(start: (a.x + ex * g0 + ix * 22, a.y + ey * g0 + iy * 22, Z_BOX + 152), end: (a.x + ex * g1 + ix * 22, a.y + ey * g1 + iy * 22, Z_BOX + 152), cross_width: 7, cross_height: 7, height_direction: (0, 0, 1), material: "ICS_Gold"));
+      }
+    }
+    // planter hedge along the balustrade (not along the pool / blade foot)
+    let h0 = select(30, BLADE_S1, pse);
+    let h1 = el - 30;
+    if h1 - h0 > 150 {
+      TL = append(TL, beam_between(start: (a.x + ex * h0 + ix * 118, a.y + ey * h0 + iy * 118, Z_BOX + 45), end: (a.x + ex * h1 + ix * 118, a.y + ey * h1 + iy * 118, Z_BOX + 45), cross_width: 110, cross_height: 60, height_direction: (0, 0, 1), material: "ICS_Foliage"));
+    }
+  }
+  // infinity pool on the river edge in front of the SW block (Photo B)
+  let pw0 = 75;
+  let pw1 = 380;
+  let pr = [(SEA.x + SEX * POOL_S0 + SE_IX * pw0, SEA.y + SEY * POOL_S0 + SE_IY * pw0), (SEA.x + SEX * POOL_S1 + SE_IX * pw0, SEA.y + SEY * POOL_S1 + SE_IY * pw0), (SEA.x + SEX * POOL_S1 + SE_IX * pw1, SEA.y + SEY * POOL_S1 + SE_IY * pw1), (SEA.x + SEX * POOL_S0 + SE_IX * pw1, SEA.y + SEY * POOL_S0 + SE_IY * pw1)];
+  let pinner = [(SEA.x + SEX * (POOL_S0 + 30) + SE_IX * (pw0 + 25), SEA.y + SEY * (POOL_S0 + 30) + SE_IY * (pw0 + 25)), (SEA.x + SEX * (POOL_S1 - 30) + SE_IX * (pw0 + 25), SEA.y + SEY * (POOL_S1 - 30) + SE_IY * (pw0 + 25)), (SEA.x + SEX * (POOL_S1 - 30) + SE_IX * (pw1 - 30), SEA.y + SEY * (POOL_S1 - 30) + SE_IY * (pw1 - 30)), (SEA.x + SEX * (POOL_S0 + 30) + SE_IX * (pw1 - 30), SEA.y + SEY * (POOL_S0 + 30) + SE_IY * (pw1 - 30))];
+  let pool_rim = translate(extrude_shape(outer: pr, holes: [pinner], height: 45, material: "ICS_White"), (0, 0, Z_BOX + 5));
+  let pool_water = translate(extrude(points: pinner, height: 40, material: "ICS_Water"), (0, 0, Z_BOX));
+  // bow lawn beyond the shaft NE end
+  let LW = offset_polygon(points: MO_FP, delta: -60);
+  let NLW = len(LW);
+  var BOWP = [];
+  for i in 0..NLW {
+    let p = at(LW, i);
+    let q = at(LW, mod(i + 1, NLW));
+    let sp = ((p.x - CX) * CU + (p.y - CY) * SU) - (U_NE + 80);
+    let sq = ((q.x - CX) * CU + (q.y - CY) * SU) - (U_NE + 80);
+    if sp >= 0 { BOWP = append(BOWP, (p.x, p.y)); }
+    if sp * sq < 0 {
+      let t = sp / (sp - sq);
+      BOWP = append(BOWP, (p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t));
+    }
+  }
+  let lawn = translate(extrude(points: BOWP, height: 25, material: "ICS_Foliage"), (0, 0, Z_BOX + 15));
+  terrace = merge(paving, merge(TL), pool_rim, pool_water, lawn);
+
+  // ---- trees: along the 5 m terrace ring and a grove on the bow ----
+  var TR = [];
+  for i in 0..NFP {
+    let a = at(MO_FP, i);
+    let b = at(MO_FP, mod(i + 1, NFP));
+    let el = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+    let ex = (b.x - a.x) / el;
+    let ey = (b.y - a.y) / el;
+    if el > 900 {
+      let nt = floor((el - 400) / 760);
+      for j in 0..12 {
+        if j <= nt {
+          let st = 200 + (el - 400) * (j + 0.5) / (nt + 1);
+          let px = a.x + ex * st - ey * 235;
+          let py = a.y + ey * st + ex * 235;
+          let pu = (px - CX) * CU + (py - CY) * SU;
+          let skip = (i == ISE) * (st < BLADE_S1 + 150) + (abs(pu - U_SP) < 650) + (pu > U_NE - 100);
+          if skip < 0.5 {
+            let r = 135 + 45 * hash(i * 17 + j, seed: 3);
+            let crown = noise_displace(scale(sphere_center(radius: r, segments: 10, center: (0, 0, 0), material: "ICS_Foliage"), (1, 1, 0.82), pivot: (0, 0, 0)), amount: 30, scale: 110, seed: i * 17 + j);
+            TR = append(TR, cylinder_at(radius: 13, height: 230, bottom_center: (px, py, Z_BOX + 15), segments: 8, material: "ICS_DarkMetal"));
+            TR = append(TR, translate(crown, (px, py, Z_BOX + 215 + r * 0.7)));
+          }
+        }
+      }
+    }
+  }
+  let GROVE = [(3250, -550, 220), (3250, 300, 200), (3580, -150, 240), (3920, -280, 170)];
+  for i, g in GROVE {
+    let gx = CX + CU * g.x - SU * g.y;
+    let gy = CY + SU * g.x + CU * g.y;
+    let crown = noise_displace(scale(sphere_center(radius: g.z, segments: 12, center: (0, 0, 0), material: "ICS_Foliage"), (1, 1, 0.85), pivot: (0, 0, 0)), amount: 40, scale: 130, seed: 50 + i);
+    TR = append(TR, cylinder_at(radius: 18, height: 300, bottom_center: (gx, gy, Z_BOX + 30), segments: 8, material: "ICS_DarkMetal"));
+    TR = append(TR, translate(crown, (gx, gy, Z_BOX + 300 + g.z * 0.75)));
+  }
+  trees = merge(TR);
+}
+
+// ---------------- far LOD ----------------
+var far = empty();
+if lodq == 1 {
+  let fbox = translate(extrude(points: MO_FP, height: LAT_H + 45, material: "ICS_GoldPanel"), (0, 0, Z_LOB));
+  let flob = translate(extrude(points: offset_polygon(points: MO_FP, delta: -250), height: Z_LOB + 20, material: "ICS_SolidGlass"), (0, 0, -10));
+  let fgreen = translate(extrude(points: offset_polygon(points: MO_FP, delta: -80), height: 40, material: "ICS_Foliage"), (0, 0, Z_BOX + 20));
+  let fb_sw = array(translate(extrude(points: offset_polygon(points: SWP, delta: 35), height: 40, material: "ICS_Gold"), (0, 0, Z_BOX + 3 * FH - 20)), count: floor(NSWF / 3), offset: (0, 0, 3 * FH));
+  let fb_ne = array(translate(extrude(points: offset_polygon(points: NEP, delta: 35), height: 40, material: "ICS_Gold"), (0, 0, Z_BOX + 3 * FH - 20)), count: floor(NNEF / 3), offset: (0, 0, 3 * FH));
+  var FP = [];
+  for bb in 0..2 {
+    let PP = pick(bb, SWP, NEP);
+    let RF = pick(bb, SW_ROOF, NE_ROOF);
+    let np = len(PP);
+    for i in 0..np {
+      let pa = at(PP, i);
+      let pb = at(PP, mod(i + 1, np));
+      let ua = (pa.x - CX) * CU + (pa.y - CY) * SU;
+      if abs(ua - U_SP) > 5 {
+        let el = sqrt((pb.x - pa.x) * (pb.x - pa.x) + (pb.y - pa.y) * (pb.y - pa.y));
+        FP = append(FP, beam_between(start: (pa.x, pa.y, ZS0), end: (pa.x, pa.y, RF + 450), cross_width: 150, cross_height: 150, height_direction: ((pb.y - pa.y) / el, (pa.x - pb.x) / el, 0), material: "ICS_Gold"));
+      }
+    }
+  }
+  far = merge(fbox, flob, fgreen, fb_sw, fb_ne, merge(FP));
+}
+
+// ---------------- collider ----------------
+var coll = empty();
+if lodq == 2 {
+  let cbp = [(VSE - 450, ZS0), (VNW + 350, ZS0), (VNW + 350, SAIL_LO), (VSE + 450, SAIL_HI), (VSE + 150, MO_ARCH_TOP), (VSE - 200, MO_ARCH_TOP - 900)];
+  let cblade = translate(rotate_z(rotate_x(extrude(points: cbp, height: BT, material: "ICS_Gold"), degrees: 90, pivot: (0, 0, 0)), degrees: AX + 90, pivot: (0, 0, 0)), (BX0, BY0, 0));
+  coll = merge(extrude(points: MO_FP, height: Z_BOX + 45, material: "ICS_GoldPanel"), translate(extrude(points: SWP, height: SW_ROOF + 170 - ZS0, material: "ICS_TowerGlass2"), (0, 0, ZS0)), translate(extrude(points: NEP, height: NE_ROOF + 170 - ZS0, material: "ICS_TowerGlass2"), (0, 0, ZS0)), cblade);
+}
+
+var OUTG = empty();
+if lodq == 0 {
+  OUTG = merge(podium, terrace, trees, glass_sw, glass_ne, roof_sw, roof_ne, par_sw, par_ne, blade, rod, sail, tower_detail, balconies);
+}
+if lodq == 1 {
+  OUTG = merge(far, glass_sw, glass_ne, roof_sw, roof_ne, par_sw, par_ne, blade, rod, sail);
+}
+if lodq == 2 {
+  OUTG = coll;
+}
+out.geo = OUTG;
+#end
+
+#mesh ICS_TowerMandarin
+budget(verts: 250000, indices: 750000);
+sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 28000));
+anchor(mode: "origin");
+out.geo = part(MO_Tower, lodq: 0);
+#end
+
+#mesh ICS_TowerMandarin lod: 1
+out.geo = part(MO_Tower, lodq: 1);
+#end
+
+#mesh ICS_TowerMandarin collider
+out.geo = part(MO_Tower, lodq: 2);
+#end

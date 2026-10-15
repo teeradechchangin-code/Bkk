@@ -1,0 +1,306 @@
+// ICS_MallMain - Z4 main block of ICONSIAM (Main-block crew)
+// World cm, Z up, +X east, +Y north, placed at (0,0,0). Everything is derived from the shared #meshdefs.
+// White pleated skin on the S/W/N + notch faces (Z4_FP edges 2->3 ... 0->1, rounded SW corner),
+// glass curtain wall on the river face (edge 1->2 = the u=40 line), roof plant clear of CROWN_FP.
+
+#meshpart MALL_Shell
+param lod = 0;
+let NV = len(Z4_FP);
+let CORE_IN = 350;                 // core face inset from the OSM outline on the white sides
+let BACK = 0 - CORE_IN - 25;       // band back face, embedded 25 cm in the core
+let RECESS = 290;                  // max soffit recess at a band bottom (Photo B east-end steps)
+let N_TIER = 7;                    // pleated tiers between canopy and parapet top (photo count)
+let Z_BAND0 = MALL_FLOOR_G + 50;   // top of the ground-storey canopy
+let TIER_H = (WHITE_PARAPET_TOP - Z_BAND0) / N_TIER;
+let GAP = 40;                      // reveal between tiers
+let R_SW = 1200;                   // rounded SW corner radius
+let ARC_N = 8;
+
+// ---- polygon frame: vertices, edge tangents, outward normals (Z4_FP is CCW) ----
+var P3 = [];
+for i in 0..NV { let p = at(Z4_FP, i); P3 = append(P3, (p.x, p.y, 0)); }
+var ET = [];
+var EN = [];
+for i in 0..NV {
+    let a = at(P3, i);
+    let b = at(P3, mod(i + 1, NV));
+    let t = normalize(b - a);
+    ET = append(ET, t);
+    EN = append(EN, (t.y, 0 - t.x, 0));
+}
+let TG = at(ET, 1);                // glass edge 1->2 tangent (u = 40 line)
+let NG = (TG.y, 0 - TG.x, 0);      // its outward normal (east)
+
+// ---- white-run stations: (vertex, mode, soffit recess fraction) ----
+// mode -3 = end on the glass line, -1 = mitred vertex, -2 = rounded corner, 0..1 = point along edge
+let ROWS = [(2, -3, 1), (3, -1, 0), (4, -1, 1), (5, -1, 1), (6, -1, 0), (7, -1, 0), (7, 0.5, 1), (8, -1, 0.15), (9, -2, 0), (10, -1, 1), (0, -1, 1), (1, -3, 1)];
+var SP = [];
+var SN = [];
+var SR = [];
+for row in ROWS {
+    let vi = row.x;
+    let mode = row.y;
+    let rf = row.z;
+    let p = at(P3, vi);
+    let nin = at(EN, mod(vi + NV - 1, NV));
+    let nout = at(EN, vi);
+    if mode == -3 {
+        let nw = select(nout, nin, vi == 1);
+        SP = append(SP, p);
+        SN = append(SN, TG / dot(TG, nw));
+        SR = append(SR, rf);
+    } else if mode == -1 {
+        let m = normalize(nin + nout);
+        SP = append(SP, p);
+        SN = append(SN, m / dot(m, nin));
+        SR = append(SR, rf);
+    } else if mode == -2 {
+        let tin = at(ET, mod(vi + NV - 1, NV));
+        let tout = at(ET, vi);
+        let half = acos(clamp(dot(tin * -1, tout), -1, 1)) / 2;
+        let tl = R_SW / tan(half);
+        let cc = p - tin * tl - nin * R_SW;
+        let a0 = atan2(nin.y, nin.x);
+        var a1 = atan2(nout.y, nout.x);
+        if a1 < a0 { a1 = a1 + 360; }
+        for j in 0..(ARC_N + 1) {
+            let al = a0 + (a1 - a0) * j / ARC_N;
+            let dir = (cos(al), sin(al), 0);
+            SP = append(SP, cc + dir * R_SW);
+            SN = append(SN, dir);
+            SR = append(SR, rf);
+        }
+    } else {
+        let q = at(P3, mod(vi + 1, NV));
+        SP = append(SP, p + (q - p) * mode);
+        SN = append(SN, nout);
+        SR = append(SR, rf);
+    }
+}
+let NS = len(SR);
+
+// ---- core: Z4 outline with the white sides inset by CORE_IN (east face stays on the u=40 line) ----
+var CP = [];
+for k in 0..NS {
+    // end stations sit on the glass line: pull the core face 15 cm behind it (hidden by the glazing slab)
+    let qe = select(0, 1, (k == 0) + (k == NS - 1));
+    let q = at(SP, k) + at(SN, k) * (0 - CORE_IN) + NG * (-15 * qe);
+    CP = append(CP, (q.x, q.y));
+}
+// roof deck top lands exactly on Z4_ROOF (crown base datum); the core stops 20 cm below it
+let core = extrude(points: CP, height: Z4_ROOF - 20, material: "ICS_White");
+let deck = translate(extrude(points: offset_polygon(points: CP, delta: -20), height: 30, material: "ICS_Concrete"), (0, 0, Z4_ROOF - 30));
+
+// ---- east glass curtain wall on the u=40 line (V1 south end, V2 north end) ----
+let V2 = at(SP, 0) + at(SN, 0) * (0 - CORE_IN);
+let V1 = at(SP, NS - 1) + at(SN, NS - 1) * (0 - CORE_IN);
+let E1 = V1 + TG * 6;              // trimmed ends for curtain-wall members (no flush end caps)
+let E2 = V2 - TG * 6;
+let GLEN = length(V2 - V1);
+let glass = beam_between(start: V1 + NG * -15 + (0, 0, (Z4_ROOF - 8) / 2), end: V2 + NG * -15 + (0, 0, (Z4_ROOF - 8) / 2), cross_width: 50, cross_height: Z4_ROOF - 12, height_direction: (0, 0, 1), material: "ICS_MallGlass");
+
+var skin = empty();
+if lod == 0 {
+    // ---- pleated tiers: one closed cage per tier; vertical upper facet + down-facing folded soffit ----
+    // station k contributes 4 points: 4k bottom-out (recessed by RECESS*f), 4k+1 top-out (on the outline),
+    // 4k+2 bottom-back, 4k+3 top-back. The fold diagonal runs from the less-recessed bottom to the other top.
+    for i in 0..N_TIER {
+        let zb = Z_BAND0 + i * TIER_H + GAP;
+        let zt = Z_BAND0 + (i + 1) * TIER_H;
+        var pts = [];
+        var fcs = [];
+        for k in 0..NS {
+            let p = at(SP, k);
+            let n = at(SN, k);
+            pts = append(pts, p + n * (0 - RECESS * at(SR, k)) + (0, 0, zb));
+            pts = append(pts, p + (0, 0, zt));
+            pts = append(pts, p + n * BACK + (0, 0, zb));
+            pts = append(pts, p + n * BACK + (0, 0, zt));
+        }
+        for k in 0..(NS - 1) {
+            let b0 = 4 * k;
+            let b1 = b0 + 4;
+            let fa = at(SR, k);
+            let fb = at(SR, k + 1);
+            if fa <= fb {
+                fcs = append(fcs, [b0, b1 + 1, b0 + 1]);
+                fcs = append(fcs, [b0, b1, b1 + 1]);
+            } else {
+                fcs = append(fcs, [b0, b1, b0 + 1]);
+                fcs = append(fcs, [b0 + 1, b1, b1 + 1]);
+            }
+            // warm light line along the diagonal fold crease (only where the soffit actually twists)
+            if abs(fa - fb) > 0.01 {
+                let nf = normalize(at(SN, k) + at(SN, k + 1));
+                let cs = select(at(pts, b0 + 1), at(pts, b0), fa <= fb);
+                let ce = select(at(pts, b1), at(pts, b1 + 1), fa <= fb);
+                skin = merge(skin, beam_between(start: cs + nf * -4, end: ce + nf * -4, cross_width: 16, cross_height: 16, height_direction: nf, material: "ICS_WarmLight"));
+            }
+            fcs = append(fcs, [b0 + 1, b1 + 1, b1 + 3, b0 + 3]);
+            fcs = append(fcs, [b0, b0 + 2, b1 + 2, b1]);
+            fcs = append(fcs, [b0 + 2, b0 + 3, b1 + 3, b1 + 2]);
+        }
+        let LL = 4 * (NS - 1);
+        fcs = append(fcs, [0, 1, 3, 2]);
+        fcs = append(fcs, [LL, LL + 2, LL + 3, LL + 1]);
+        skin = merge(skin, smooth_shade(mesh_cage(points: pts, faces: fcs, material: "ICS_White"), angle: 14));
+    }
+}
+// ---- constant-section rings along the white run: reveal light lines (7), canopy, ground glazing; LOD1 band ----
+// ring r: 0-6 reveal lines, 7 canopy, 8 ground glazing, 9 canopy-soffit light line (LOD0); 10 = LOD1 flat band
+let R0 = select(0, 10, lod > 0);
+let R1 = select(10, 11, lod > 0);
+for r in R0..R1 {
+    let ty = pick(r, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4, 3);
+    let zl = Z_BAND0 + r * TIER_H;
+    let o0 = pick(ty, -55, BACK, 0 - CORE_IN - 10, BACK, -135);
+    let o1 = pick(ty, -15, 0, 30 - CORE_IN, 0, -100);
+    let z0 = pick(ty, zl, MALL_FLOOR_G, 5, MALL_FLOOR_G, MALL_FLOOR_G - 12);
+    let z1 = pick(ty, zl + 18, Z_BAND0, MALL_FLOOR_G, WHITE_PARAPET_TOP, MALL_FLOOR_G);
+    var pts = [];
+    var fcs = [];
+    for k in 0..NS {
+        let p = at(SP, k);
+        let n = at(SN, k);
+        pts = append(pts, p + n * o1 + (0, 0, z0));
+        pts = append(pts, p + n * o1 + (0, 0, z1));
+        pts = append(pts, p + n * o0 + (0, 0, z0));
+        pts = append(pts, p + n * o0 + (0, 0, z1));
+    }
+    for k in 0..(NS - 1) {
+        let b0 = 4 * k;
+        let b1 = b0 + 4;
+        fcs = append(fcs, [b0, b1, b1 + 1, b0 + 1]);
+        fcs = append(fcs, [b0 + 1, b1 + 1, b1 + 3, b0 + 3]);
+        fcs = append(fcs, [b0, b0 + 2, b1 + 2, b1]);
+        fcs = append(fcs, [b0 + 2, b0 + 3, b1 + 3, b1 + 2]);
+    }
+    let LL = 4 * (NS - 1);
+    fcs = append(fcs, [0, 1, 3, 2]);
+    fcs = append(fcs, [LL, LL + 2, LL + 3, LL + 1]);
+    skin = merge(skin, smooth_shade(mesh_cage(points: pts, faces: fcs, material: pick(ty, "ICS_WarmLight", "ICS_White", "ICS_MallGlass", "ICS_White", "ICS_WarmLight")), angle: 14));
+}
+if lod == 0 {
+    // ---- ground storey mullions ----
+    for k in 0..(NS - 1) {
+        let p0 = at(SP, k);
+        let n0 = at(SN, k);
+        let p1 = at(SP, k + 1);
+        let n1 = at(SN, k + 1);
+        let qa = p0 + n0 * (40 - CORE_IN);
+        let qb = p1 + n1 * (40 - CORE_IN);
+        let sd = qb - qa;
+        let sn = normalize((sd.y, 0 - sd.x, 0));
+        let nm = max(1, floor(length(sd) / 450));
+        for j in 0..nm {
+            let q = qa + sd * (j / nm);
+            skin = merge(skin, beam_between(start: q + (0, 0, 2), end: q + (0, 0, MALL_FLOOR_G + 5), cross_width: 14, cross_height: 30, height_direction: sn, material: "ICS_DarkMetal"));
+        }
+    }
+    // ---- entrances: lit glazing bay + gold canopy fascia (S face, W face, N face, NE notch) ----
+    let ENT = [(16, 0.45, 1), (6, 0.08, 1), (3, 0.5, 1), (1, 0.55, 1)];
+    for e in ENT {
+        let k = e.x;
+        let pa = at(SP, k);
+        let pb = at(SP, k + 1);
+        let d = normalize(pb - pa);
+        let nrm = (d.y, 0 - d.x, 0);
+        let q = pa + (pb - pa) * e.y;
+        skin = merge(skin, beam_between(start: q - d * 700 + nrm * (40 - CORE_IN) + (0, 0, 306), end: q + d * 700 + nrm * (40 - CORE_IN) + (0, 0, 306), cross_width: 20, cross_height: 600, height_direction: (0, 0, 1), material: "ICS_ShopLit"));
+        skin = merge(skin, beam_between(start: q - d * 900 + nrm * -4 + (0, 0, 676), end: q + d * 900 + nrm * -4 + (0, 0, 676), cross_width: 32, cross_height: 76, height_direction: (0, 0, 1), material: "ICS_Gold"));
+        skin = merge(skin, beam_between(start: q - d * 720 + nrm * (55 - CORE_IN) + (0, 0, 1), end: q - d * 720 + nrm * (55 - CORE_IN) + (0, 0, MALL_FLOOR_G + 5), cross_width: 40, cross_height: 40, height_direction: nrm, material: "ICS_Gold"));
+        skin = merge(skin, beam_between(start: q + d * 720 + nrm * (55 - CORE_IN) + (0, 0, 1), end: q + d * 720 + nrm * (55 - CORE_IN) + (0, 0, MALL_FLOOR_G + 5), cross_width: 40, cross_height: 40, height_direction: nrm, material: "ICS_Gold"));
+    }
+    // ---- east curtain wall: slab-edge fascias every floor, dark mullions, roof coping ----
+    for f in 0..10 {
+        let zf = MALL_FLOOR_G + f * MALL_FLOOR_UP;
+        skin = merge(skin, beam_between(start: E1 + NG * 17.5 + (0, 0, zf), end: E2 + NG * 17.5 + (0, 0, zf), cross_width: 55, cross_height: 70, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
+    }
+    let nmu = floor(GLEN / 300);
+    for j in 1..nmu {
+        let q = V1 + (V2 - V1) * (j / nmu) + NG * 25;
+        skin = merge(skin, beam_between(start: q + (0, 0, 2), end: q + (0, 0, Z4_ROOF - 15), cross_width: 12, cross_height: 30, height_direction: NG, material: "ICS_DarkMetal"));
+    }
+    skin = merge(skin, beam_between(start: E1 + NG * -7.5 + (0, 0, Z4_ROOF + 30), end: E2 + NG * -7.5 + (0, 0, Z4_ROOF + 30), cross_width: 105, cross_height: 100, height_direction: (0, 0, 1), material: "ICS_White"));
+    // vertical warm light lines where the white pleats meet the river glass (Photo A, right edge of the white block)
+    for jv in [V1, V2] {
+        skin = merge(skin, beam_between(start: jv + NG * 7 + (0, 0, Z_BAND0), end: jv + NG * 7 + (0, 0, WHITE_PARAPET_TOP - 10), cross_width: 30, cross_height: 30, height_direction: NG, material: "ICS_WarmLight"));
+    }
+}
+out.geo = merge(core, deck, glass, skin);
+#end
+
+#mesh ICS_MallMain
+budget(verts: 250000, indices: 750000);
+sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 6500));
+anchor(mode: "origin");
+let shell = part(MALL_Shell, lod: 0);
+
+// ---- south-face signage near the rounded SW corner (Photo A top-left) ----
+let R_SW_M = 1200;
+let w8 = at(Z4_FP, 8);
+let w9 = at(Z4_FP, 9);
+let w10 = at(Z4_FP, 10);
+let T9 = normalize((w10.x - w9.x, w10.y - w9.y, 0));
+let T8 = normalize((w9.x - w8.x, w9.y - w8.y, 0));
+let N9 = (T9.y, 0 - T9.x, 0);
+let HALF9 = acos(clamp(dot(T8 * -1, T9), -1, 1)) / 2;
+let ARC_END = (w9.x, w9.y, 0) + T9 * (R_SW_M / tan(HALF9));
+let ANG9 = atan2(T9.y, T9.x);
+let logoS0 = text_mesh(text: "ICONSIAM", font: "font.google.Cinzel", height: 400, depth: 30, material: "ICS_SignWhite");
+let ks = 300 / bounds_size(logoS0).z;
+let logoS = translate(rotate_z(scale(logoS0, (ks, 1, ks)), degrees: ANG9), ARC_END + T9 * 450 + N9 * -2 + (0, 0, 5680));
+let taka0 = text_mesh(text: "Siam Takashimaya", font: "font.google.Playfair_Display", height: 400, depth: 14, material: "ICS_SignRed");
+let kt = 1900 / bounds_size(taka0).x;
+let taka = translate(rotate_z(scale(taka0, (kt, 1, kt)), degrees: ANG9), ARC_END + T9 * 450 + N9 * -2 + (0, 0, 4180));
+
+// ---- river-face ICONSIAM logo on the glass above the terraces (faces east, centred near y = -10 m) ----
+let g1 = at(Z4_FP, 1);
+let g2 = at(Z4_FP, 2);
+let TGm = normalize((g2.x - g1.x, g2.y - g1.y, 0));
+let NGm = (TGm.y, 0 - TGm.x, 0);
+let GLOGO = (g1.x, g1.y, 0) + TGm * ((-1000 - g1.y) / TGm.y);
+let logoE0 = text_mesh(text: "ICONSIAM", font: "font.google.Cinzel", height: 500, depth: 25, material: "ICS_SignWhite");
+let ke = 380 / bounds_size(logoE0).z;
+let WE = bounds_size(logoE0).x * ke;
+let logoE = translate(rotate_z(scale(logoE0, (ke, 1, ke)), degrees: atan2(TGm.y, TGm.x)), GLOGO - TGm * (WE / 2) + NGm * 47 + (0, 0, 4430));
+let railE = merge(
+    beam_between(start: GLOGO - TGm * (WE / 2 + 60) + NGm * 29.5 + (0, 0, 4520), end: GLOGO + TGm * (WE / 2 + 60) + NGm * 29.5 + (0, 0, 4520), cross_width: 39, cross_height: 12, height_direction: (0, 0, 1), material: "ICS_DarkMetal"),
+    beam_between(start: GLOGO - TGm * (WE / 2 + 60) + NGm * 29.5 + (0, 0, 4720), end: GLOGO + TGm * (WE / 2 + 60) + NGm * 29.5 + (0, 0, 4720), cross_width: 39, cross_height: 12, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
+
+// ---- roof plant (west part and north wing only; the crown crew owns CROWN_FP) ----
+let RZ = Z4_ROOF + 3;              // plant bases sit 2 cm into the roof deck
+var plant = empty();
+let AHUS = [(-6200, -6800, 0), (-6200, -5400, 0), (-6200, -4000, 0), (-6000, 7000, 0)];
+for c in AHUS {
+    plant = merge(plant, box_at(size: (1900, 900, 30), bottom_center: (c.x, c.y, RZ - 5), material: "ICS_Concrete"));
+    plant = merge(plant, box_at(size: (1800, 800, 340), bottom_center: (c.x, c.y, RZ + 20), material: "ICS_White"));
+    plant = merge(plant, box_at(size: (1500, 20, 220), bottom_center: (c.x, c.y - 405, RZ + 80), material: "ICS_DarkMetal"));
+    plant = merge(plant, grid_array(cylinder_at(radius: 160, height: 60, segments: 16, bottom_center: (c.x - 600, c.y, RZ + 355), material: "ICS_DarkMetal"), count: (3, 1, 1), offset: (600, 0, 0)));
+}
+plant = merge(plant, box_at(size: (1300, 1300, 450), bottom_center: (-8200, 3000, RZ - 5), material: "ICS_Concrete"));
+plant = merge(plant, grid_array(cylinder_at(radius: 250, height: 140, segments: 20, bottom_center: (-8500, 2700, RZ + 440), material: "ICS_DarkMetal"), count: (2, 2, 1), offset: (600, 600, 0)));
+let CORES = [(-9000, 7600, 0), (-3400, 4200, 0), (-9200, -2500, 0)];
+for c in CORES {
+    plant = merge(plant, box_at(size: (700, 900, 450), bottom_center: (c.x, c.y, RZ - 5), material: "ICS_White"));
+    plant = merge(plant, box_at(size: (760, 960, 25), bottom_center: (c.x, c.y, RZ + 445), material: "ICS_DarkMetal"));
+}
+plant = merge(plant, box_at(size: (1200, 700, 400), bottom_center: (-4000, 9300, RZ - 5), material: "ICS_White"));
+// atrium skylights: dark metal curb + pitched glass lantern
+let SKY = [(-6000, -8750, 5600), (-6500, 500, 4200)];
+for s in SKY {
+    plant = merge(plant, box_at(size: (s.z, 1300, 70), bottom_center: (s.x, s.y, RZ - 5), material: "ICS_DarkMetal"));
+}
+plant = merge(plant, gable_roof(size: (5500, 1200, 12), bottom_center: (-6000, -8750, RZ + 60), roof_height: 260, overhang: 0, ridge_axis: "x", material: "ICS_SolidGlass"));
+plant = merge(plant, gable_roof(size: (4100, 1200, 12), bottom_center: (-6500, 500, RZ + 60), roof_height: 260, overhang: 0, ridge_axis: "x", material: "ICS_SolidGlass"));
+
+out.geo = merge(shell, logoS, taka, logoE, railE, plant);
+#end
+
+#mesh ICS_MallMain lod: 1
+out.geo = part(MALL_Shell, lod: 1);
+#end
+
+#mesh ICS_MallMain collider
+out.geo = extrude(points: Z4_FP, height: Z4_ROOF, material: "ICS_White");
+#end
