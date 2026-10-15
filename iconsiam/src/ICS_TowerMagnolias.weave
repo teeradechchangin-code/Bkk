@@ -209,6 +209,7 @@ let s_par = translate(extrude_shape(outer: S_F, holes: [offset_polygon(points: S
 let s_cop = translate(extrude_shape(outer: offset_polygon(points: S_F, delta: 25), holes: [offset_polygon(points: S_F, delta: -55)], height: 40, material: "ICS_GoldPanel"), (0, 0, S_PAR));
 let s_roof = translate(extrude(points: offset_polygon(points: S_F, delta: -25), height: 50, material: "ICS_Paving"), (0, 0, MAG_ROOF - 10));
 let s_plant = box_bounds(min: (U1 - 1800, WF + 1300, MAG_ROOF + 30), max: (U1 - 400, WF + 3200, MAG_ROOF + 550), material: "ICS_GoldPanel");
+let s_bmu = merge(box_bounds(min: (U1 - 1450, WF + 1700, MAG_ROOF + 545), max: (U1 - 750, WF + 2400, MAG_ROOF + 800), material: "ICS_DarkMetal"), beam_between(start: (U1 - 1100, WF + 2050, MAG_ROOF + 780), end: (U1 - 1100, WF + 600, MAG_ROOF + 780), cross_width: 45, cross_height: 70, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
 
 // ---------- north crown: glass screen with a slanted top + gold sloped lid (faces_solid) ----------
 var CAPF = [];
@@ -245,6 +246,22 @@ for i in 0..NRO {
     LIDF = append(LIDF, [(n1.x, n1.y, zn1 - 10), (n0.x, n0.y, zn0 - 10), (n0.x, n0.y, zn0 + 35), (n1.x, n1.y, zn1 + 35)]);
 }
 let r_lid = faces_solid(faces: LIDF, material: "ICS_GoldPanel");
+let NRI = len(RI);
+var RSF = [];
+var rsb = [];
+var rst = [];
+for p in RI {
+    rsb = append(rsb, (p.x, p.y, CAP_HI - (p.x - U2) * CAP_SLOPE - 5));
+    rst = append(rst, (p.x, p.y, CAP_HI - (p.x - U2) * CAP_SLOPE + 15));
+}
+RSF = append(RSF, reverse_points(rsb));
+RSF = append(RSF, rst);
+for i in 0..NRI {
+    let p = at(RI, i);
+    let q = at(RI, mod(i + 1, NRI));
+    RSF = append(RSF, [(p.x, p.y, CAP_HI - (p.x - U2) * CAP_SLOPE - 5), (q.x, q.y, CAP_HI - (q.x - U2) * CAP_SLOPE - 5), (q.x, q.y, CAP_HI - (q.x - U2) * CAP_SLOPE + 15), (p.x, p.y, CAP_HI - (p.x - U2) * CAP_SLOPE + 15)]);
+}
+let r_roof = faces_solid(faces: RSF, material: "ICS_DarkMetal");
 
 // ---------- gold slot: cladding, punched windows, sky-garden bridges ----------
 let slot_l = box_bounds(min: (U1 - 40, WF, ZP), max: (U1 + 30, WB + 40, ZRN + 10), material: "ICS_GoldPanel");
@@ -285,7 +302,7 @@ let SY = WF - 60;
 let sail_curve = bezier_points(start: (U2 + 30, SY, 26800), control1: (U2 + 30, SY, 28000), control2: (U1 + 700, SY, 28850), end: (U1 + 100, SY, 28850), count: 16);
 let sail = extrude_loop(points: concat_points([(U1 + 100, SY, 57 * FH - 10), (U2 + 30, SY, 57 * FH - 10)], sail_curve), offset: (0, 160, 0), material: "ICS_Gold");
 
-let tower_local = merge(core_s, core_r, bands, PIL, PAN, BALC, s_par, s_cop, s_roof, s_plant, r_cap, r_lid, slot_l, slot_b, slot_r, slot_top, slot_glow, SWIN, BRG, spine, mast, rod, sail);
+let tower_local = merge(core_s, core_r, bands, PIL, PAN, BALC, s_par, s_cop, s_roof, s_plant, s_bmu, r_cap, r_lid, r_roof, slot_l, slot_b, slot_r, slot_top, slot_glow, SWIN, BRG, spine, mast, rod, sail);
 let tower = rotate_z(tower_local, degrees: TH, pivot: (0, 0, 0));
 
 // ---------- podium on the full MAG_FP outline (world coords) ----------
