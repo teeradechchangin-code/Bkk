@@ -24,20 +24,28 @@ knob SetSunColor = #ffc690
 knob SetSkyLightIntensity = 2.6
 knob SetSkyLightColor = #a8bce0
 knob SetBloomIntensity = 0.6
-knob SetSkyboxHaze = 2.5
+// Scene QC r2 (QC-A/QC-B): Photo A is blue hour, not night. Brighter sky dome (bright blue zenith, lilac mid sky),
+// thin wisps of cloud only, no sun disc (the sun still lights the scene and keeps the warm left-horizon glow).
+knob SetSkyboxExposure = 0.8
+knob SetSkyboxHaze = 1.2
+knob SetSkyboxCloudCoverage = 0.2
+knob SetSkyboxSunVisible = 0
 // Bangkok dusk: city glow hides the stars (stage r2 capture: the starfield read like snow).
 knob SetSkyboxStarIntensity = 0
-knob SetSkyboxGroundColor = #8c86a6
+// Sub-horizon (beyond the 1000 m far plane, dominant in the aerial cameras): dark dusk city haze, not a white/lilac "snow field".
+knob SetSkyboxGroundColor = #302f3c
 knob SetSkyboxHorizonTilt = 0
-// Distance fog stays off the complex (~420-570 m from the Photo A camera) and fully fogs the water before the 1000 m far plane.
+// Distance fog: the complex stays clear from camera A (visible faces ~420-570 m away) and A2/B (<450 m);
+// everything beyond 850 m (water, apron edge) fades to a dark, warm blue-violet haze that meets the dark sky ground.
 knob SetDistanceFogEnabled = 1
-knob SetFogColor = #b8a0a6
-knob SetFogStartDistance = 520
-knob SetFogEndDistance = 950
-// Skybox fog stays 0: values of 25 or more turn the whole Photo A sky grey. Height fog removes the black sub-horizon band instead.
+knob SetFogColor = #584f5f
+knob SetFogStartDistance = 560
+knob SetFogEndDistance = 850
+// Skybox fog stays 0: values of 25 or more turn the whole Photo A sky grey. Light height fog softens the water/far-shore line
+// at the horizon (it was added in r1 against a black sub-horizon band); halved now that fog and ground are dark.
 knob SetFogSkyboxAffect = 0
 knob SetHeightFogEnabled = 1
-knob SetHeightFogDensity = 0.02
+knob SetHeightFogDensity = 0.01
 knob SetHeightFogBaseHeight = -200
 #end
 

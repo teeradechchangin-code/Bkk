@@ -24,20 +24,28 @@ knob SetSunColor = #ffc690
 knob SetSkyLightIntensity = 2.6
 knob SetSkyLightColor = #a8bce0
 knob SetBloomIntensity = 0.6
-knob SetSkyboxHaze = 2.5
+// Scene QC r2 (QC-A/QC-B): Photo A is blue hour, not night. Brighter sky dome (bright blue zenith, lilac mid sky),
+// thin wisps of cloud only, no sun disc (the sun still lights the scene and keeps the warm left-horizon glow).
+knob SetSkyboxExposure = 0.8
+knob SetSkyboxHaze = 1.2
+knob SetSkyboxCloudCoverage = 0.2
+knob SetSkyboxSunVisible = 0
 // Bangkok dusk: city glow hides the stars (stage r2 capture: the starfield read like snow).
 knob SetSkyboxStarIntensity = 0
-knob SetSkyboxGroundColor = #8c86a6
+// Sub-horizon (beyond the 1000 m far plane, dominant in the aerial cameras): dark dusk city haze, not a white/lilac "snow field".
+knob SetSkyboxGroundColor = #302f3c
 knob SetSkyboxHorizonTilt = 0
-// Distance fog stays off the complex (~420-570 m from the Photo A camera) and fully fogs the water before the 1000 m far plane.
+// Distance fog: the complex stays clear from camera A (visible faces ~420-570 m away) and A2/B (<450 m);
+// everything beyond 850 m (water, apron edge) fades to a dark, warm blue-violet haze that meets the dark sky ground.
 knob SetDistanceFogEnabled = 1
-knob SetFogColor = #b8a0a6
-knob SetFogStartDistance = 520
-knob SetFogEndDistance = 950
-// Skybox fog stays 0: values of 25 or more turn the whole Photo A sky grey. Height fog removes the black sub-horizon band instead.
+knob SetFogColor = #584f5f
+knob SetFogStartDistance = 560
+knob SetFogEndDistance = 850
+// Skybox fog stays 0: values of 25 or more turn the whole Photo A sky grey. Light height fog softens the water/far-shore line
+// at the horizon (it was added in r1 against a black sub-horizon band); halved now that fog and ground are dark.
 knob SetFogSkyboxAffect = 0
 knob SetHeightFogEnabled = 1
-knob SetHeightFogDensity = 0.02
+knob SetHeightFogDensity = 0.01
 knob SetHeightFogBaseHeight = -200
 #end
 
@@ -213,14 +221,15 @@ let PIER_SHELTER2_FP = [(16040, -7970), (15140, -8010), (15250, -10620), (16160,
 // World cm, Z up, +X east, +Y north, origin = Google pin. Placed by Management at (0,0,0).
 // Ground slab + river embankment/railing, River Park paving, fountain basin, ground-level beds/groves/trees,
 // 4 floating piers + Pontoon 1B + gangways + shelters (+ OSM footbridge Pier 4 <-> Pier 2), Charoen Nakhon Road,
-// south service lane, overgrown south lot and the D11 context ground apron (west bank only, inside the sim_box).
+// south service lane, overgrown south lot and the D11 context ground apron (west bank only).
 // All footprints come from the shared #meshdefs (src/ICS_defs.weave).
 // Rev B (Management directives D1/D2): nothing on or inside a building footprint (the Z1 roof planter row is
 // Riverfront's); ground hardscape is ICS_Paving, lawns ICS_Foliage, ICS_Concrete only for embankment, kerbs, hulls.
-// Scene QC r1 (D11): the land runs to the sim_box limits (x = -24000, y = -/+24000) along the OSM riverbank;
-// ICS_Paving only inside SITE_A_FP + TOWER_PLOT_FP, ICS_Foliage ground everywhere else; nothing east of the river edge.
-// OSM riverbank_west_line (r14038959, footprints_local_m.json) beyond the #meshdefs BANK_LINE is mirrored locally as
-// BANK_S (y -240.0 .. -173.8 m) and BANK_N (y 240.0 m, on the 195.5 -> 247.4 m edge) until Management promotes it to defs.
+// Scene QC r2 (D11 + D13 Site sim_box exception): the plain apron (land slab, ICS_Foliage top, concrete context bank)
+// runs to x = -60000 and y = -/+50000 along the OSM riverbank (r14038959, footprints_local_m.json) mirrored locally as
+// BANK_S / BANK_N and extrapolated at BANK_BEARING_DEG past the OSM ends; ICS_Paving only inside SITE_A_FP +
+// TOWER_PLOT_FP; nothing east of the river edge. Walking decks (pontoons, gangways, link plate, footbridge) are
+// ICS_Concrete (QC-A r2: white decks glowed lilac at dusk); ICS_White stays on the shelter roofs.
 
 // ---------------------------------------------------------------- tree (trunk + 3-5 overlapping rounded crown lobes)
 #meshpart SITE_Tree
@@ -313,15 +322,22 @@ for i 0..n {
 let top = -150;
 var g = empty();
 if mode == 2 {
-    g = translate(extrude(points: C, height: 80, material: "ICS_Concrete"), (0, 0, top - 80));
+    // collider prism: near-collinear outline vertices dropped (PIER2 (15490,420), PIER4 (15210,5370): < 4 cm off line)
+    var C2 = [];
+    let nc = len(C);
+    for i 0..nc {
+        let u = at(C, i) - at(C, mod(i + nc - 1, nc));
+        let v = at(C, mod(i + 1, nc)) - at(C, i);
+        if abs((u.x * v.y - u.y * v.x) / (length(u) * length(v))) > 0.02 { C2 = append(C2, at(C, i)); }
+    }
+    g = translate(extrude(points: C2, height: 80, material: "ICS_Concrete"), (0, 0, top - 80));
 } else {
-    // concrete hull -230..-155; pale deck -156..-150 (Photo B: pontoon decks read light grey-white, D2)
+    // concrete hull -230..-155; light-grey concrete walking deck -156..-150, 15 cm inside the hull edge
+    // (D2 allows ICS_Concrete/ICS_White; QC-A r2: the white decks read as glowing lilac slabs at dusk)
     let Cin = offset_polygon(points: C, delta: -45);
     g = translate(extrude(points: C, height: 75, material: "ICS_Concrete"), (0, 0, top - 80));
-    g = merge(g, translate(extrude(points: Cin, height: 6, material: "ICS_White"), (0, 0, top - 6)));
+    g = merge(g, translate(extrude(points: offset_polygon(points: C, delta: -15), height: 6, material: "ICS_Concrete"), (0, 0, top - 6)));
     if mode == 0 {
-        // 30 cm concrete kerb band framing the deck (abuts the white deck, no overlap)
-        g = merge(g, translate(extrude_shape(outer: offset_polygon(points: C, delta: -15), holes: [Cin], height: 6, material: "ICS_Concrete"), (0, 0, top - 6)));
         // rubber fender band and mooring bollards on the river-side vertices
         g = merge(g, translate(extrude(points: offset_polygon(points: C, delta: 12), height: 24, material: "ICS_DarkMetal"), (0, 0, top - 32)));
         for p in Cin {
@@ -422,7 +438,7 @@ let zs = z0 + 3;
 let zt = -147;
 let run = x_end - x0;
 let slope = (zs - zt) / run;
-var g = beam_between(start: (x0, gy, zs - 10), end: (x_end, gy, zt - 10), cross_width: w, cross_height: 20, height_direction: (0, 0, 1), material: "ICS_White");
+var g = beam_between(start: (x0, gy, zs - 10), end: (x_end, gy, zt - 10), cross_width: w, cross_height: 20, height_direction: (0, 0, 1), material: "ICS_Concrete");
 if mode == 0 {
     for si 0..2 {
         let ys = gy + (si * 2 - 1) * (w * 0.5 + 6);
@@ -461,35 +477,44 @@ out.geo = g;
 // ================================================================ LOD0
 #mesh ICS_Site
 budget(verts: 250000, indices: 750000);
-sim_box(min: (-24000, -24000, 0), max: (24000, 24000, 1400));
+// Site sim_box exception (D11 conflict ruled by Management D13, rev E): the plain context apron runs to x = -60000 and
+// y = -/+50000. The engine places the sim_box bottom-centre at the instance position (preview placement_reference), so
+// the box stays centred on the origin with min z 0 (template): D13's literal (-60000,-50000,-600)..(24000,50000,1400)
+// puts that point at (-18000,0,-600) and would shift the whole site 180 m east / 6 m up at position (0,0,0).
+// The +x half is reference only; geometry still ends at the river edge (piers to x ~178 m). Top 16 m = emergent crowns.
+sim_box(min: (-60000, -50000, 0), max: (60000, 50000, 1600));
 anchor(mode: "origin");
 
-// ---------- land slab: x = -24000 .. river edge, y = -24000 .. 24000 (sim_box limits, D11), top z = 0, bottom = RIVER_BED_Z
-// river edge = OSM riverbank: BANK_S (south) + BANK_LINE (all 21 vertices) + BANK_N (north)
-let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
-let BNX = 12153;                                   // OSM bank x at y = 24000 (edge 195.5 -> 247.4 m)
+// ---------- land slab: x = XW .. river edge, y = YS .. YN (D11/D13 apron), top z = 0, bottom = RIVER_BED_Z
+// river edge = BANK_S + BANK_LINE (all 21 vertices) + BANK_N: OSM riverbank_west_line v0..v18 south of BANK_LINE and
+// v40, v43..v49 north of it, extrapolated at 356.1 deg from v0 to y -50000 and from v49 to y +50000
+let XW = -60000;
+let YS = -50000;
+let YN = 50000;
+let BANK_S = [(14210, -50000), (13370, -37700), (13430, -36860), (13620, -35550), (13640, -35410), (14220, -32270), (14560, -30310), (14550, -30070), (14640, -29800), (14750, -27730), (14770, -27430), (15550, -27300), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
+let BANK_N = [(12030, 24740), (11800, 25620), (10150, 31790), (10970, 32150), (11270, 33050), (11210, 33900), (10680, 34140), (9250, 38910), (8490, 50000)];
 let B1 = at(BANK_LINE, 1);
 let BLAST = at(BANK_LINE, len(BANK_LINE) - 1);
 var BL = [];
 for i 1..len(BANK_LINE) { BL = append(BL, at(BANK_LINE, i)); }
-var land = [(-24000, -24000)];
+var land = [(XW, YS)];
 for p in BANK_S { land = append(land, p); }
 for p in BANK_LINE { land = append(land, (p.x, p.y)); }
-land = append(land, (BNX, 24000));
-land = append(land, (-24000, 24000));
+for p in BANK_N { land = append(land, p); }
+land = append(land, (XW, YN));
 // the two plots (ICS_Paving top) = SITE_A_FP v2..v16 + TOWER_PLOT_FP v12..v20 (their shared edge dropped)
 var PLOTS = [];
 for i 2..17 { PLOTS = append(PLOTS, at(SITE_A_FP, i)); }
 for i 12..21 { PLOTS = append(PLOTS, at(TOWER_PLOT_FP, i)); }
 // everything else on the west bank (ICS_Foliage top): one C-shaped polygon wrapping the plots on the S, W and N
-var GREEN = [(-24000, -24000)];
+var GREEN = [(XW, YS)];
 for p in BANK_S { GREEN = append(GREEN, p); }
 for i 0..6 { let p = at(BANK_LINE, i); GREEN = append(GREEN, (p.x, p.y)); }
 for i 0..5 { GREEN = append(GREEN, at(SITE_A_FP, 6 - i)); }
 for i 0..6 { GREEN = append(GREEN, at(TOWER_PLOT_FP, 20 - i)); }
 for i 17..21 { let p = at(BANK_LINE, i); GREEN = append(GREEN, (p.x, p.y)); }
-GREEN = append(GREEN, (BNX, 24000));
-GREEN = append(GREEN, (-24000, 24000));
+for p in BANK_N { GREEN = append(GREEN, p); }
+GREEN = append(GREEN, (XW, YN));
 // concrete core -600..-60 (its top is the fountain floor); top layer -60..0: ICS_Paving on the plots (D2),
 // ICS_Foliage ground cover on the rest of the land (SiteOps: no paved apron outside the plots)
 let slab_lo = translate(extrude(points: land, height: 0 - 60 - RIVER_BED_Z, material: "ICS_Concrete"), (0, 0, RIVER_BED_Z));
@@ -739,13 +764,14 @@ for k 0..len(subs) {
     bank = merge(bank, sweep_box_path(points: move_points(sp, by: (0, 0, 70)), width: 2, height: 70, up: (0, 0, 1), material: "ICS_Balustrade"));
     bank = merge(bank, sweep_box_path(points: move_points(sp, by: (0, 0, 106)), width: 9, height: 8, up: (0, 0, 1), material: "ICS_DarkMetal"));
 }
-// context bank beyond the ICONSIAM frontage (D11): plain concrete embankment face + 30 cm kerb (-63..+30) and the
-// tide band, continuing the river edge along the OSM bank south (BANK_S -> BANK_LINE[0] -> B1) and north (-> y 24000)
+// context bank beyond the ICONSIAM frontage (D11/D13): plain concrete embankment face + 30 cm kerb (-63..+30) and the
+// tide band, continuing the river edge along the OSM bank south (BANK_S -> BANK_LINE[0] -> B1) and north (BANK_N)
 var BSX = [];
 for p in BANK_S { BSX = append(BSX, (p.x, p.y, 0)); }
 BSX = append(BSX, at(BANK_LINE, 0));
 BSX = append(BSX, B1);
-let BNXP = [BLAST, (BNX, 24000, 0)];
+var BNXP = [BLAST];
+for p in BANK_N { BNXP = append(BNXP, (p.x, p.y, 0)); }
 bank = merge(bank, sweep_box_path(points: move_points(BSX, by: (0, 0, -16.5)), width: 66, height: 93, up: (0, 0, 1), material: "ICS_Concrete"));
 bank = merge(bank, sweep_box_path(points: move_points(BSX, by: (0, 0, -195)), width: 12, height: 54, up: (0, 0, 1), material: "ICS_DarkMetal"));
 bank = merge(bank, sweep_box_path(points: move_points(BNXP, by: (0, 0, -16.5)), width: 66, height: 93, up: (0, 0, 1), material: "ICS_Concrete"));
@@ -768,7 +794,7 @@ let gangways = merge(
 );
 // Pontoon 1B -> Pier 1 link plate (3 m wide, deck +2 cm, laps 40 cm onto 1B and 25 cm onto the Pier 1 deck) with
 // two handrails, so Pier 1 stays reachable now that its mid-pier gangway is gone
-var link1b = box_bounds(min: (16450, -7340, -156), max: (16750, -7060, -148), material: "ICS_White");
+var link1b = box_bounds(min: (16450, -7340, -156), max: (16750, -7060, -148), material: "ICS_Concrete");
 for si 0..2 {
     let lx = 16456 + si * 288;
     link1b = merge(link1b, beam_between(start: (lx, -7060, -50), end: (lx, -7340, -50), cross_width: 8, cross_height: 7, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
@@ -784,7 +810,7 @@ let fb_b = (15490, 440, 0);
 let fb_d = (fb_b - fb_a) * (1 / length(fb_b - fb_a));
 let fb_n = (0 - fb_d.y, fb_d.x, 0);
 var fbridge = beam_between(start: fb_a + (0, 0, -192), end: fb_b + (0, 0, -192), cross_width: 300, cross_height: 76, height_direction: (0, 0, 1), material: "ICS_Concrete");
-fbridge = merge(fbridge, beam_between(start: fb_a + fb_d * 25 + (0, 0, -153), end: fb_b - fb_d * 15 + (0, 0, -153), cross_width: 270, cross_height: 6, height_direction: (0, 0, 1), material: "ICS_White"));
+fbridge = merge(fbridge, beam_between(start: fb_a + fb_d * 25 + (0, 0, -153), end: fb_b - fb_d * 15 + (0, 0, -153), cross_width: 270, cross_height: 6, height_direction: (0, 0, 1), material: "ICS_Concrete"));
 for si 0..2 {
     let off = fb_n * ((si * 2 - 1) * 140);
     fbridge = merge(fbridge, beam_between(start: fb_a + off + (0, 0, -45), end: fb_b + off + (0, 0, -45), cross_width: 7, cross_height: 7, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
@@ -822,10 +848,11 @@ for k 0..3 {
 
 // ---------- trees (crowns: 3-5 overlapping rounded lobes, 8-14 m tall)
 // grove trees (x, y, crown radius): jittered ~10 m grid, crowns overlap into one canopy
-let TREES_GROVE = [(7540, 6000, 450), (8530, 5910, 500), (9280, 6140, 550), (6760, 6880, 500), (7920, 6870, 450), (9030, 6900, 600), (10110, 6810, 550), (11020, 7060, 550), (7610, 7520, 550), (7520, 9120, 550), (8420, 8860, 600), (9560, 8910, 450), (10760, 8920, 700), (11340, 9050, 550), (7880, 9760, 700), (8930, 10040, 550), (9860, 9630, 450), (10910, 9710, 700), (11940, 9760, 600), (8680, 10590, 600), (9760, 10800, 600), (10770, 10530, 500), (11390, 10780, 450), (10130, 11600, 650), (11130, 11710, 600), (10320, 12230, 500), (11580, 12700, 650), (10200, 13610, 600), (11040, 13270, 500), (10720, 14350, 550), (11570, 14460, 550)];
+let TREES_GROVE = [(7540, 6000, 450), (8530, 5910, 500), (9280, 6140, 550), (6760, 6880, 500), (7920, 6870, 450), (9030, 6900, 600), (10110, 6810, 550), (11020, 7060, 550), (7610, 7520, 550), (7520, 9120, 550), (8420, 8860, 600), (9560, 8910, 450), (10760, 8920, 700), (11340, 9050, 550), (7880, 9760, 700), (8930, 10040, 550), (9860, 9630, 450), (10910, 9710, 700), (11940, 9760, 600), (8680, 10590, 600), (9760, 10800, 600), (10770, 10530, 500), (11390, 10780, 450), (10130, 11600, 650), (11130, 11710, 600), (10320, 12230, 500), (11580, 12700, 650), (10200, 13610, 600), (11040, 13270, 500), (10720, 14350, 550), (11545, 14415, 550)];
 // riverside canopy band (Photo B: unbroken canopy on the tower plot by the river): large trees ~7.8 m apart,
 // 2.2-3.8 m inside the grove kerbs along their river edges, >= 3 m from the grove trunks; crowns overhang the promenade
-let TREES_BAND = [(10555, 6921, 620), (11219, 7331, 600), (11754, 7661, 660), (11985, 8646, 660), (11931, 9420, 620), (11874, 10198, 680), (11816, 10976, 640), (11759, 11752, 680), (11820, 12380, 620), (11654, 13348, 680), (11676, 14127, 640), (11640, 14760, 600)];
+// (scene QC r2: TREES_BAND #5 / #12 and TREES_GROVE #31 nudged ~1 m apart so no crown lobe sits inside a neighbour)
+let TREES_BAND = [(10555, 6921, 620), (11219, 7331, 600), (11754, 7661, 660), (11985, 8646, 660), (11938, 9320, 620), (11874, 10198, 680), (11816, 10976, 640), (11759, 11752, 680), (11820, 12380, 620), (11654, 13348, 680), (11676, 14127, 640), (11640, 14840, 600)];
 // Magnolias base ring (x, y, crown radius): >= r + 1.5 m off MAG_FP, >= r + 4 m off the mall
 let TREES_MAG = [(-150, 3300, 450), (950, 3350, 500), (2050, 3250, 450), (3700, 4300, 500), (4950, 5350, 550), (5400, 6600, 500), (5250, 7600, 450), (1050, 12900, 450)];
 // north strip bed (BED_D) trees
@@ -859,41 +886,70 @@ for i, q in TREES_LANE {
     trees = merge(trees, translate(part(SITE_RoundPlanter, r: 150, h: 45, lit: 0, seed: 170 + i, tree_trunk: 450 + 150 * hash(i, seed: 53), tree_r: q.z), (q.x, q.y, select(0, 3, q.x > 2000))));
 }
 
-// ---------- Charoen Nakhon Road: 4 lanes + median + 3 m sidewalks, parallel to the mall west edge,
-// run to the sim_box limits (y -24000 .. 24000) over the context ground
+// ---------- Charoen Nakhon Road: 4 lanes + median + 3 m sidewalks on the OSM carriageway midline (SiteOps r2).
+// RA = axis polyline: Gold Line viaduct midline - 2.2 m (OSM w1185513184/w852021475; y -500 .. -240 m, extrapolated),
+// OSM carriageway midpoints (y -240 .. -105 m), then the accepted 95.5 deg axis 34.4 m west of the mall west edge
+// (matches OSM within ~0.6 m from y -150 to +77 m) north to the apron edge. Strip edges = RA shifted in x by offset / cth.
 let w0 = at(MALL_FP, 2);
 let w1 = at(MALL_FP, 5);
 let kx = (w1.x - w0.x) / (w1.y - w0.y);
 let cth = 1 / sqrt(1 + kx * kx);
-let ROAD_OFF = 3440;                       // axis 34.4 m west of the mall west edge (OSM carriageway centrelines)
-let RY0 = -24000;
-let RY1 = 24000;
-let ax0 = w0.x + (RY0 - w0.y) * kx - ROAD_OFF / cth;
-let ax1 = w0.x + (RY1 - w0.y) * kx - ROAD_OFF / cth;
-// strips (perpendicular offset from..to, z bottom..top): sidewalk W, one asphalt sheet for both carriageways,
-// raised median sitting on the asphalt (Gold Line viaduct runs above it), sidewalk E
+let ROAD_OFF = 3440;
+let RA = [(-15190, YS), (-14470, -39400), (-13850, -30300), (-13440, -24000), (-13260, -20000), (-13370, -15000), (w0.x + (-10500 - w0.y) * kx - ROAD_OFF / cth, -10500), (w0.x + (YN - w0.y) * kx - ROAD_OFF / cth, YN)];
+let nRA = len(RA);
+// RAT = RA with both ends pulled in 30 cm, RAU 45 cm (hole outlines must sit strictly inside their outer ring)
+var RAT = [at(RA, 0) + (at(RA, 1) - at(RA, 0)) * (30 / (at(RA, 1).y - at(RA, 0).y))];
+var RAU = [at(RA, 0) + (at(RA, 1) - at(RA, 0)) * (45 / (at(RA, 1).y - at(RA, 0).y))];
+for i 1..nRA - 1 { RAT = append(RAT, at(RA, i)); RAU = append(RAU, at(RA, i)); }
+RAT = append(RAT, at(RA, nRA - 1) - (at(RA, nRA - 1) - at(RA, nRA - 2)) * (30 / (at(RA, nRA - 1).y - at(RA, nRA - 2).y)));
+RAU = append(RAU, at(RA, nRA - 1) - (at(RA, nRA - 1) - at(RA, nRA - 2)) * (45 / (at(RA, nRA - 1).y - at(RA, nRA - 2).y)));
 var road = empty();
-for i 0..4 {
-    let lo = pick(i, -1300, -1000, -350, 1000);
-    let hi = pick(i, -1000, 1000, 350, 1300);
-    let zb = pick(i, 0, 0, 4, 0);
-    let zt = pick(i, 18, 5, 18, 18);
-    let quad = [(ax0 + lo / cth, RY0), (ax0 + hi / cth, RY0), (ax1 + hi / cth, RY1), (ax1 + lo / cth, RY1)];
-    road = merge(road, translate(extrude(points: quad, height: zt - zb, material: pick(i, "ICS_Paving", "ICS_Asphalt", "ICS_Paving", "ICS_Paving")), (0, 0, zb)));
+// both 3 m sidewalks as ONE paving ring (outer +-13 m, hole = the 20 m carriageway; no duplicate translated strips)
+var SOL = []; var SOR = []; var SHL = []; var SHR = [];
+for p in RA { SOL = append(SOL, (p.x - 1300 / cth, p.y)); SOR = append(SOR, (p.x + 1300 / cth, p.y)); }
+for p in RAT { SHL = append(SHL, (p.x - 1000 / cth, p.y)); SHR = append(SHR, (p.x + 1000 / cth, p.y)); }
+road = merge(road, extrude_shape(outer: concat_points(SOR, reverse_points(SOL)), holes: [concat_points(SHR, reverse_points(SHL))], height: 18, material: "ICS_Paving"));
+// one asphalt sheet for both carriageways (0..5) and the raised median (4..18; the Gold Line viaduct runs above it)
+// (the median runs on RAU so the marking plate's end bars at y -/+499.6 m never sit flush on it)
+for i 0..2 {
+    let lo = pick(i, -1000, -350);
+    let hi = pick(i, 1000, 350);
+    var QL = [];
+    var QR = [];
+    for p in pick(i, RA, RAU) { QL = append(QL, (p.x + lo / cth, p.y)); QR = append(QR, (p.x + hi / cth, p.y)); }
+    road = merge(road, translate(extrude(points: concat_points(QR, reverse_points(QL)), height: pick(i, 5, 14), material: pick(i, "ICS_Asphalt", "ICS_Paving")), (0, 0, pick(i, 0, 4))));
 }
-// lane markings (3 cm proud of the asphalt): edge lines + dashed lane dividers + one zebra crossing
-let EDGES = [-985, -365, 365, 985];
-for o in EDGES {
-    road = merge(road, beam_between(start: (ax0 + o / cth, RY0 + 30, 6), end: (ax1 + o / cth, RY1 - 30, 6), cross_width: 15, cross_height: 4, height_direction: (0, 0, 1), material: "ICS_White"));
+// lane markings (z 4..8, 3 cm proud of the asphalt): the four 15 cm edge lines (+-985, +-365) as one plate with three
+// holes, + dashed lane dividers + one zebra crossing
+var ML = [];
+var MR = [];
+for p in RAT { ML = append(ML, (p.x - 992.5 / cth, p.y)); MR = append(MR, (p.x + 992.5 / cth, p.y)); }
+var MH = [];
+for k 0..3 {
+    let lo = pick(k, -977.5, -357.5, 372.5);
+    let hi = pick(k, -372.5, 357.5, 977.5);
+    var HL = [];
+    var HR = [];
+    for p in RAU { HL = append(HL, (p.x + lo / cth, p.y)); HR = append(HR, (p.x + hi / cth, p.y)); }
+    MH = append(MH, concat_points(HR, reverse_points(HL)));
 }
+road = merge(road, translate(extrude_shape(outer: concat_points(MR, reverse_points(ML)), holes: MH, height: 4, material: "ICS_White"), (0, 0, 4)));
 let DIVS = [-675, 675];
-let ndash = floor((RY1 - RY0) / 1200);
+let ndash = floor((YN - YS) / 1200);
 for o in DIVS {
     for k 0..ndash {
-        let yc = RY0 + 600 + k * 1200;
-        let xa = w0.x + (yc - 150 * cth - w0.y) * kx - ROAD_OFF / cth + o / cth;
-        let xb = w0.x + (yc + 150 * cth - w0.y) * kx - ROAD_OFF / cth + o / cth;
-        road = merge(road, beam_between(start: (xa, yc - 150 * cth, 6), end: (xb, yc + 150 * cth, 6), cross_width: 12, cross_height: 4, height_direction: (0, 0, 1), material: "ICS_White"));
+        let yc = YS + 600 + k * 1200;
+        let ya = yc - 150 * cth;
+        let yb = yc + 150 * cth;
+        var xa = 0;
+        var xb = 0;
+        for i 0..nRA - 1 {
+            let a = at(RA, i);
+            let b = at(RA, i + 1);
+            if ya >= a.y { if ya < b.y { xa = a.x + (ya - a.y) / (b.y - a.y) * (b.x - a.x); } }
+            if yb >= a.y { if yb < b.y { xb = a.x + (yb - a.y) / (b.y - a.y) * (b.x - a.x); } }
+        }
+        road = merge(road, beam_between(start: (xa + o / cth, ya, 6), end: (xb + o / cth, yb, 6), cross_width: 12, cross_height: 4, height_direction: (0, 0, 1), material: "ICS_White"));
     }
 }
 let ZC = -2300;
@@ -907,86 +963,140 @@ for j 0..12 {
 // ---------- south service lane + boundary wall + overgrown lot (Photo B foreground-left)
 // north edge = the ICONSIAM plot's south boundary (SITE_A_FP v5 -> v6 -> v7), from the road's east sidewalk to x = 119 m;
 // 7.5 m asphalt (0..3, under the plaza paving at the shared edge) with a concrete kerb on the plot side, 1.5 m sidewalk,
-// 25 cm x 2 m boundary wall, then an ICS_Foliage lot (0..10) with scrub mounds down to the sim_box south edge
+// 25 cm x 2 m boundary wall (strips abut: no flush end faces at x 119 m), then an ICS_Foliage lot (0..10) to y -240 m
+// (its part south of y -170 m stays flat, SiteOps r2)
 let SA0 = at(SITE_A_FP, 5);
 let SA1 = at(SITE_A_FP, 6);
 let SA2 = at(SITE_A_FP, 7);
 let LXE = 11900;
 let LYE = SA1.y + (LXE - SA1.x) / (SA2.x - SA1.x) * (SA2.y - SA1.y);
-let REX = w0.x - ROAD_OFF / cth + 1270 / cth;      // road east sidewalk edge (30 cm overlap) at y: REX + (y - w0.y) * kx
+// REXQ = road east sidewalk edge (+12.7 m: 30 cm under the sidewalk) on RA at the y values QY used below
+let QY = [SA0.y, SA0.y - 750, SA0.y - 750, SA0.y - 900, SA0.y - 900, SA0.y - 925, SA0.y - 712, -15000, -20000, -24200];
+var REXQ = [];
+for yq in QY {
+    var xq = 0;
+    for i 0..nRA - 1 {
+        let a = at(RA, i);
+        let b = at(RA, i + 1);
+        if yq >= a.y { if yq < b.y { xq = a.x + (yq - a.y) / (b.y - a.y) * (b.x - a.x); } }
+    }
+    REXQ = append(REXQ, xq + 1270 / cth);
+}
 var lane = empty();
 for i 0..3 {
-    let lo = pick(i, 0, 740, 900);
-    let hi = pick(i, 750, 915, 925);
-    let quad = [(REX + (SA0.y - lo - w0.y) * kx, SA0.y - lo), (SA1.x, SA1.y - lo), (LXE, LYE - lo), (LXE, LYE - hi), (SA1.x, SA1.y - hi), (REX + (SA0.y - hi - w0.y) * kx, SA0.y - hi)];
+    let lo = pick(i, 0, 750, 900);
+    let hi = pick(i, 750, 900, 925);
+    let quad = [(at(REXQ, pick(i, 0, 2, 3)), SA0.y - lo), (SA1.x, SA1.y - lo), (LXE, LYE - lo), (LXE, LYE - hi), (SA1.x, SA1.y - hi), (at(REXQ, pick(i, 1, 4, 5)), SA0.y - hi)];
     lane = merge(lane, extrude(points: quad, height: pick(i, 3, 12, 200), material: pick(i, "ICS_Asphalt", "ICS_Paving", "ICS_Concrete")));
 }
-lane = merge(lane, sweep_box_path(points: [(REX + (SA0.y - w0.y) * kx, SA0.y, 7), (SA1.x, SA1.y, 7), (LXE, LYE, 7)], width: 30, height: 14, up: (0, 0, 1), material: "ICS_Concrete"));
-// lot = (road sidewalk, south sim_box edge, river bank, boundary wall) inset 2 m: drawn 2 m out on the road/edge/wall
-// sides so only the river side ends up 2 m inside the bank
-var LOT_RAW = [(REX + (-24200 - w0.y) * kx - 200 / cth, -24200), (15550, -24200)];
-for i 1..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
+lane = merge(lane, sweep_box_path(points: [(at(REXQ, 0), SA0.y, 7), (SA1.x, SA1.y, 7), (LXE, LYE, 7)], width: 30, height: 14, up: (0, 0, 1), material: "ICS_Concrete"));
+// lot = (road sidewalk, y -242 m, river bank, boundary wall) inset 2 m: drawn 2 m out on the road/edge/wall sides so
+// only the river side ends up 2 m inside the bank; the road side follows RA's vertices at y -150 / -200 m
+var LOT_RAW = [(at(REXQ, 9) - 200 / cth, -24200), (15550, -24200)];
+for i 12..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
 for i 0..4 { let p = at(BANK_LINE, i); LOT_RAW = append(LOT_RAW, (p.x, p.y)); }
 LOT_RAW = append(LOT_RAW, (LXE + 200, LYE - 712));
 LOT_RAW = append(LOT_RAW, (SA1.x, SA1.y - 712));
-LOT_RAW = append(LOT_RAW, (REX + (SA0.y - 712 - w0.y) * kx - 200 / cth, SA0.y - 712));
+LOT_RAW = append(LOT_RAW, (at(REXQ, 6) - 200 / cth, SA0.y - 712));
+for i 7..9 { LOT_RAW = append(LOT_RAW, (at(REXQ, i) - 200 / cth, at(QY, i))); }
 let LOT = offset_polygon(points: LOT_RAW, delta: -200);
 lane = merge(lane, extrude(points: LOT, height: 10, material: "ICS_Foliage"));
-// scrub canopy mounds (x, y, radius): low domes 3-6.6 m high, kept >= r + 0.6 m inside the lot (wall, bank, road)
+// overgrown-lot canopy (Photo B bottom-left: dense, irregular tree canopy; QC-B r2): each of the 28 photo-matched
+// MOUNDS seeds a cluster = a low wide scrub base (top 2.5-3.5 m) + 2-4 jittered crown blobs (r 3-9 m, top 4-12 m)
+// that overlap into continuous canopy masses; clusters 2, 8, 14, 20, 26 carry a taller emergent crown (14-16.5 m).
+// Every blob stays >= r + 0.6 m inside the lot and north of y -170 m; a blob that would sit inside a bigger one is dropped.
 let MOUNDS = [(-10920, -14730, 800), (-9710, -15450, 600), (-9290, -14170, 600), (-8760, -15010, 900), (-7410, -14110, 700), (-6430, -13900, 800), (-6190, -14960, 600), (-4950, -14860, 700), (-4530, -13860, 700), (-3700, -15090, 800), (-2860, -13800, 700), (-1990, -15040, 700), (-240, -14090, 1000), (-190, -15110, 600), (710, -14680, 600), (1720, -14540, 1000), (2830, -15460, 600), (3530, -14100, 700), (4420, -14800, 700), (4540, -13350, 600), (5600, -14510, 600), (6330, -13600, 700), (6550, -14990, 700), (7570, -14060, 900), (8290, -15120, 700), (8790, -14040, 900), (9650, -15280, 700), (10460, -14850, 700)];
-for i, q in MOUNDS {
-    lane = merge(lane, translate(scale(sphere(radius: q.z, segments: 8, material: "ICS_Foliage"), (1, 1, 0.3 + 0.1 * hash(i, seed: 61))), (q.x, q.y, 10 - q.z * 0.15)));
-}
-// the same scrub continues over the lot's extension (y -233 .. -170 m): jittered 12.5 x 11.5 m grid, ~80 % kept,
-// each mound inside the lot and >= r + 0.6 m from its edges
 let nLOT = len(LOT);
-for gy2 0..6 {
-    for gx 0..22 {
-        let id = gx * 31 + gy2;
-        let rr = 600 + 350 * hash(id, seed: 73);
-        let qx = -11200 + gx * 1250 + (hash(id, seed: 71) - 0.5) * 700;
-        let qy = -23300 + gy2 * 1150 + (hash(id, seed: 79) - 0.5) * 500;
-        var ins = 0;
-        var dmin = 1000000;
-        for k 0..nLOT {
-            let a = at(LOT, k);
-            let b = at(LOT, mod(k + 1, nLOT));
-            if (a.y > qy) != (b.y > qy) {
-                if qx < a.x + (qy - a.y) / (b.y - a.y) * (b.x - a.x) { ins = 1 - ins; }
+var CB = [];
+var CH = [];
+var CC = [];
+var canopy = empty();
+for i, q in MOUNDS {
+    let nk = 2 + floor(hash(i, seed: 91) * 2.999);
+    for k 0..5 {
+        if k <= nk {
+            let id = i * 7 + k;
+            let ang = hash(id, seed: 93) * 360;
+            let d = q.z * select(0.2 * hash(id, seed: 95), 0.3 + 0.55 * hash(id, seed: 95), k > 0);
+            let cx = q.x + cos(ang) * d;
+            let cy = q.y + sin(ang) * d;
+            var ins = 0;
+            var dmin = 1000000;
+            for e 0..nLOT {
+                let a = at(LOT, e);
+                let b = at(LOT, mod(e + 1, nLOT));
+                if (a.y > cy) != (b.y > cy) {
+                    if cx < a.x + (cy - a.y) / (b.y - a.y) * (b.x - a.x) { ins = 1 - ins; }
+                }
+                let ab = b - a;
+                let tt = clamp(((cx - a.x) * ab.x + (cy - a.y) * ab.y) / (ab.x * ab.x + ab.y * ab.y), 0, 1);
+                dmin = min(dmin, length((cx - a.x - ab.x * tt, cy - a.y - ab.y * tt, 0)));
             }
-            let ab = b - a;
-            let tt = clamp(((qx - a.x) * ab.x + (qy - a.y) * ab.y) / (ab.x * ab.x + ab.y * ab.y), 0, 1);
-            dmin = min(dmin, length((qx - a.x - ab.x * tt, qy - a.y - ab.y * tt, 0)));
+            let r = min(select(q.z * 1.2, 300 + 600 * hash(id, seed: 97), k > 0), dmin - 60);
+            let H = select(250 + 100 * hash(id, seed: 99), clamp(r * (1 + 0.6 * hash(id, seed: 101)), 400, 1200), k > 0);
+            if ins * (r > 250) * (cy - r > -17000) > 0.5 {
+                CB = append(CB, (cx, cy, r));
+                CH = append(CH, H);
+                CC = append(CC, H * select(0.75, 0.6, k > 0));
+            }
         }
-        if ins * (dmin > rr + 60) * (hash(id, seed: 83) > 0.2) > 0.5 {
-            lane = merge(lane, translate(scale(sphere(radius: rr, segments: 8, material: "ICS_Foliage"), (1, 1, 0.3 + 0.1 * hash(id, seed: 61))), (qx, qy, 10 - rr * 0.15)));
+    }
+    if mod(i, 6) == 2 {
+        // emergent crown: wide top lobe on a narrow foliage column rooted in the canopy
+        let ru = 500 + 150 * hash(i, seed: 105);
+        let He = 1400 + 250 * hash(i, seed: 107);
+        let zu = He - ru * 0.75;
+        let cl = zu * 0.55 + 60;
+        canopy = merge(canopy, translate(scale(sphere_center(radius: ru * 0.6, segments: 10, center: (0, 0, 0), material: "ICS_Foliage"), (1, 1, cl / (ru * 0.6))), (q.x, q.y, cl - 50)));
+        canopy = merge(canopy, translate(scale(sphere_center(radius: ru, segments: 12, center: (0, 0, 0), material: "ICS_Foliage"), (1, 1, 0.75)), (q.x, q.y, zu)));
+    }
+}
+let nCB = len(CB);
+for j 0..nCB {
+    let bj = at(CB, j);
+    let hj = at(CH, j);
+    var buried = 0;
+    for m 0..nCB {
+        let em = at(CB, m);
+        let dd = length((bj.x - em.x, bj.y - em.y, 0));
+        if (m != j) * (dd + bj.z < em.z) > 0.5 {
+            let tz = (hj - at(CH, m) + at(CC, m)) / at(CC, m);
+            if (dd / em.z) * (dd / em.z) + tz * tz < 1 { buried = 1; }
         }
+    }
+    if buried < 0.5 {
+        let cj = at(CC, j);
+        canopy = merge(canopy, translate(scale(sphere_center(radius: bj.z, segments: 10, center: (0, 0, 0), material: "ICS_Foliage"), (1, 1, cj / bj.z)), (bj.x, bj.y, hj - cj)));
     }
 }
 
-out.geo = merge(slab_lo, slab_hi, paving, prom, inlays, basin_wall, basin_rim, basin_water, jets, bank, posts, lamps, piers, gangways, shelters, fbridge, beds, trees, road, lane);
+out.geo = merge(slab_lo, slab_hi, paving, prom, inlays, basin_wall, basin_rim, basin_water, jets, bank, posts, lamps, piers, gangways, shelters, fbridge, beds, trees, road, lane, canopy);
 #end
 
 // ================================================================ LOD1: slab (paving / foliage top), basin, piers, road, lane, lot, lawns
 #mesh ICS_Site lod: 1
-let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
-let BNX = 12153;
-var land = [(-24000, -24000)];
+// same land / GREEN / plot outlines as LOD0 (D11/D13 apron to x -60000, y -/+50000)
+let XW = -60000;
+let YS = -50000;
+let YN = 50000;
+let BANK_S = [(14210, -50000), (13370, -37700), (13430, -36860), (13620, -35550), (13640, -35410), (14220, -32270), (14560, -30310), (14550, -30070), (14640, -29800), (14750, -27730), (14770, -27430), (15550, -27300), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
+let BANK_N = [(12030, 24740), (11800, 25620), (10150, 31790), (10970, 32150), (11270, 33050), (11210, 33900), (10680, 34140), (9250, 38910), (8490, 50000)];
+var land = [(XW, YS)];
 for p in BANK_S { land = append(land, p); }
 for p in BANK_LINE { land = append(land, (p.x, p.y)); }
-land = append(land, (BNX, 24000));
-land = append(land, (-24000, 24000));
+for p in BANK_N { land = append(land, p); }
+land = append(land, (XW, YN));
 var PLOTS = [];
 for i 2..17 { PLOTS = append(PLOTS, at(SITE_A_FP, i)); }
 for i 12..21 { PLOTS = append(PLOTS, at(TOWER_PLOT_FP, i)); }
-var GREEN = [(-24000, -24000)];
+var GREEN = [(XW, YS)];
 for p in BANK_S { GREEN = append(GREEN, p); }
 for i 0..6 { let p = at(BANK_LINE, i); GREEN = append(GREEN, (p.x, p.y)); }
 for i 0..5 { GREEN = append(GREEN, at(SITE_A_FP, 6 - i)); }
 for i 0..6 { GREEN = append(GREEN, at(TOWER_PLOT_FP, 20 - i)); }
 for i 17..21 { let p = at(BANK_LINE, i); GREEN = append(GREEN, (p.x, p.y)); }
-GREEN = append(GREEN, (BNX, 24000));
-GREEN = append(GREEN, (-24000, 24000));
+for p in BANK_N { GREEN = append(GREEN, p); }
+GREEN = append(GREEN, (XW, YN));
 let slab_lo = translate(extrude(points: land, height: 0 - 60 - RIVER_BED_Z, material: "ICS_Concrete"), (0, 0, RIVER_BED_Z));
 let slab_hi = merge(
     translate(extrude_shape(outer: PLOTS, holes: [offset_polygon(points: BASIN_FP, delta: 30)], height: 60, material: "ICS_Paving"), (0, 0, -60)),
@@ -1006,16 +1116,20 @@ let piers = merge(
     part(SITE_Gangway, gy: -2100, x_end: 15450, z0: 5, w: 900, mode: 1),
     part(SITE_Gangway, gy: 8140, x_end: 14700, z0: 5, w: 400, mode: 1),
     part(SITE_Gangway, gy: 11510, x_end: 14150, z0: 0, w: 170, mode: 1),
-    box_bounds(min: (16450, -7340, -156), max: (16750, -7060, -148), material: "ICS_White"),
+    box_bounds(min: (16450, -7340, -156), max: (16750, -7060, -148), material: "ICS_Concrete"),
     beam_between(start: (15210, 5400, -192), end: (15490, 440, -192), cross_width: 300, cross_height: 76, height_direction: (0, 0, 1), material: "ICS_Concrete")
 );
 let w0 = at(MALL_FP, 2);
 let w1 = at(MALL_FP, 5);
 let kx = (w1.x - w0.x) / (w1.y - w0.y);
 let cth = 1 / sqrt(1 + kx * kx);
-let ax0 = w0.x + (-24000 - w0.y) * kx - 3440 / cth;
-let ax1 = w0.x + (24000 - w0.y) * kx - 3440 / cth;
-let road = extrude(points: [(ax0 - 1000 / cth, -24000), (ax0 + 1000 / cth, -24000), (ax1 + 1000 / cth, 24000), (ax1 - 1000 / cth, 24000)], height: 5, material: "ICS_Asphalt");
+// carriageway = LOD0's asphalt sheet on the same RA polyline
+let RA = [(-15190, YS), (-14470, -39400), (-13850, -30300), (-13440, -24000), (-13260, -20000), (-13370, -15000), (w0.x + (-10500 - w0.y) * kx - 3440 / cth, -10500), (w0.x + (YN - w0.y) * kx - 3440 / cth, YN)];
+let nRA = len(RA);
+var QL = [];
+var QR = [];
+for p in RA { QL = append(QL, (p.x - 1000 / cth, p.y)); QR = append(QR, (p.x + 1000 / cth, p.y)); }
+let road = extrude(points: concat_points(QR, reverse_points(QL)), height: 5, material: "ICS_Asphalt");
 // lawns (grove + north strip) and the south lane / lot as flat colour patches
 let GROVE_S = [(6450, 4700), (7100, 4560), (10500, 6440), (12020, 7380), (12380, 7880), (6450, 7880)];
 let GROVE_N = [(5950, 8420), (12380, 8420), (12350, 8900), (12150, 11620), (12030, 13190), (12080, 15000), (9250, 15000), (9020, 14700), (9420, 14560), (9600, 14120), (9260, 12230)];
@@ -1026,36 +1140,54 @@ let SA1 = at(SITE_A_FP, 6);
 let SA2 = at(SITE_A_FP, 7);
 let LXE = 11900;
 let LYE = SA1.y + (LXE - SA1.x) / (SA2.x - SA1.x) * (SA2.y - SA1.y);
-let REX = w0.x - 3440 / cth + 1270 / cth;
-let lane = extrude(points: [(REX + (SA0.y - w0.y) * kx, SA0.y), (SA1.x, SA1.y), (LXE, LYE), (LXE, LYE - 750), (SA1.x, SA1.y - 750), (REX + (SA0.y - 750 - w0.y) * kx, SA0.y - 750)], height: 3, material: "ICS_Asphalt");
-var LOT_RAW = [(REX + (-24200 - w0.y) * kx - 200 / cth, -24200), (15550, -24200)];
-for i 1..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
+let QY = [SA0.y, SA0.y - 750, SA0.y - 712, -15000, -20000, -24200];
+var REXQ = [];
+for yq in QY {
+    var xq = 0;
+    for i 0..nRA - 1 {
+        let a = at(RA, i);
+        let b = at(RA, i + 1);
+        if yq >= a.y { if yq < b.y { xq = a.x + (yq - a.y) / (b.y - a.y) * (b.x - a.x); } }
+    }
+    REXQ = append(REXQ, xq + 1270 / cth);
+}
+let lane = extrude(points: [(at(REXQ, 0), SA0.y), (SA1.x, SA1.y), (LXE, LYE), (LXE, LYE - 750), (SA1.x, SA1.y - 750), (at(REXQ, 1), SA0.y - 750)], height: 3, material: "ICS_Asphalt");
+var LOT_RAW = [(at(REXQ, 5) - 200 / cth, -24200), (15550, -24200)];
+for i 12..len(BANK_S) { LOT_RAW = append(LOT_RAW, at(BANK_S, i)); }
 for i 0..4 { let p = at(BANK_LINE, i); LOT_RAW = append(LOT_RAW, (p.x, p.y)); }
 LOT_RAW = append(LOT_RAW, (LXE + 200, LYE - 712));
 LOT_RAW = append(LOT_RAW, (SA1.x, SA1.y - 712));
-LOT_RAW = append(LOT_RAW, (REX + (SA0.y - 712 - w0.y) * kx - 200 / cth, SA0.y - 712));
+LOT_RAW = append(LOT_RAW, (at(REXQ, 2) - 200 / cth, SA0.y - 712));
+for i 3..5 { LOT_RAW = append(LOT_RAW, (at(REXQ, i) - 200 / cth, at(QY, i))); }
 let lot = extrude(points: offset_polygon(points: LOT_RAW, delta: -200), height: 10, material: "ICS_Foliage");
 out.geo = merge(slab_lo, slab_hi, paving, basin_wall, basin_rim, basin_water, piers, road, lawns, lane, lot);
 #end
 
 // ================================================================ collider: land slab, pier prisms, gangway plates, footbridge,
-// bank parapet along the whole frontage, fountain kerb ring (<= 1000 verts)
-// The bank uses a Douglas-Peucker subset of BANK_LINE (max deviation 19 cm) and the parapet is one mitred
-// 30 cm band prism per run (12 verts / point), so the full 19-segment frontage plus the basin kerb fit the budget.
-// The land prism follows the same context outline as LOD0/LOD1 (BANK_S, BANK_LINE[0], subset, BANK_N; sim_box limits).
+// bank parapet along the whole frontage, fountain basin barrier ring (<= 1000 verts)
+// The bank uses a Douglas-Peucker subset of BANK_LINE (max deviation 19 cm) and the parapet is one mitred 30 cm band
+// prism per run (12 verts / point, open bottom buried 30 cm in the slab), so the frontage plus the basin fit the budget.
+// The land prism follows the LOD0/LOD1 apron outline (x -60000, y -/+50000); the context bank is thinned to
+// BANK_SC / BANK_NC (max deviation 1.8 m, >= 170 m from the site).
+// Fountain basin (ENG r2): ENG's alternative is used - the kerb ring is a 1 m barrier (-2..100) so nobody steps onto
+// the old invisible z 0 floor over the water. The primary variant (slab holed at BSN - 60 cm + basin-floor prism
+// -60..-40) measured 1160 collider verts with the extended apron (> 1000 cap).
 #mesh ICS_Site collider
-// BANK_S reduced to 6 of its 9 vertices for the collider (max deviation 1.4 m on the context bank)
-let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (12890, -20930), (12700, -17380)];
+let XW = -60000;
+let YS = -50000;
+let YN = 50000;
+let BANK_SC = [(14210, -50000), (13370, -37700), (14770, -27430), (15550, -27300), (15470, -21370), (14570, -21430), (12890, -20930), (12700, -17380)];
+let BANK_NC = [(12030, 24740), (10150, 31790), (10970, 32150), (11210, 33900), (10680, 34140), (9250, 38910), (8490, 50000)];
 let BK = [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 20];
 var BS = [];
 for i in BK { BS = append(BS, at(BANK_LINE, i)); }
-var land = [(-24000, -24000)];
-for p in BANK_S { land = append(land, p); }
+var land = [(XW, YS)];
+for p in BANK_SC { land = append(land, p); }
 let B0 = at(BANK_LINE, 0);
 land = append(land, (B0.x, B0.y));
 for p in BS { land = append(land, (p.x, p.y)); }
-land = append(land, (12153, 24000));
-land = append(land, (-24000, 24000));
+for p in BANK_NC { land = append(land, p); }
+land = append(land, (XW, YN));
 let slab = translate(extrude(points: land, height: 200, material: "ICS_Concrete"), (0, 0, -200));
 let piers = merge(
     part(SITE_Pier, which: 0, clip_x: 15050, mode: 2),
@@ -1131,14 +1263,14 @@ for k 0..len(subs) {
         lft = append(lft, (p.x + nm.x * s, p.y + nm.y * s));
         rgt = append(rgt, (p.x - nm.x * s, p.y - nm.y * s));
     }
-    rail = merge(rail, translate(extrude(points: concat_points(lft, reverse_points(rgt)), height: 140, material: "ICS_Concrete"), (0, 0, -30)));
+    rail = merge(rail, extrude_profile(points: concat_points(lft, reverse_points(rgt)), profile: [(-30, 0), (110, 0)], cap_start: "no", material: "ICS_Concrete"));
 }
-// fountain basin kerb: 25 cm ring on a 9-vertex subset of BASIN_FP, 60 cm inside .. 120 cm outside it
+// fountain basin barrier: 1 m ring on a 9-vertex subset of BASIN_FP, 60 cm inside .. 120 cm outside it
 // (covers 100 % of the real coping line)
 let RIM_IDX = [0, 2, 5, 8, 10, 11, 14, 15, 17];
 var BSN = [];
 for i in RIM_IDX { BSN = append(BSN, at(BASIN_FP, i)); }
-let rim = translate(extrude_shape(outer: offset_polygon(points: BSN, delta: 120), holes: [offset_polygon(points: BSN, delta: -60)], height: 25, material: "ICS_Concrete"), (0, 0, -2));
+let rim = translate(extrude_shape(outer: offset_polygon(points: BSN, delta: 120), holes: [offset_polygon(points: BSN, delta: -60)], height: 102, material: "ICS_Concrete"), (0, 0, -2));
 out.geo = merge(slab, piers, rail, rim);
 #end
 
@@ -3467,21 +3599,32 @@ out.geo = merge(part(RIV_Z1Mass, iters: 1, h: 2020, pave: 0, grow: 100),
 #end
 
 // ===== ICS_Crown (src/ICS_Crown.weave) =====
-// ICS_Crown - gold "krathong" crown on the Z4 roof (CROWN_BASE 58 m -> CROWN_TOP 75 m)      [scene QC rework round 1]
+// ICS_Crown - gold "krathong" crown on the Z4 roof (CROWN_BASE 58 m -> CROWN_TOP 77 m, D12)  [scene QC rework round 2]
 // Crown crew. World cm, Z up, authored in WORLD coordinates (object placed at 0,0,0).
 // Parts (top-level bindings in every #mesh, so parts_log reports each one):
-//   CROWN_Rim    gold rim band (ICS_Gold, scene QC: GoldRoof read dark bronze at dusk) ending in a short 2 m beak under
-//                an upturned point at the prow, champagne coping, a warm line just under the coping and a warm cove
-//                (1.1-1.4 m) along the WHOLE sloped soffit (ICS_WarmLight strips/coves only, D9)
+//   CROWN_Rim    gold rim band, top, coping and soffit all in ICS_GoldRoof (D13 brightened slot), ending in a short 2 m
+//                beak under an upturned point at the prow; a warm line just under the coping, a 14 cm warm strip
+//                wrapping the lower lip and a 12 cm warm cove strip at the drum head, both along the WHOLE rim
+//                (ICS_WarmLight thin strips only, D9)
 //   CROWN_Drum   drum glazing (ICS_ShopLit at LOD0 and LOD1) behind white fins (30 x 120 cm @ 88 cm, every 6th a
-//                45 x 170 cm primary fin), white kerb, white canopy skirt (3 m wide, 60.0-61.0 m) round the drum base
+//                45 x 170 cm primary fin carrying a 12 cm warm strip on its outer edge), white kerb, white canopy skirt
+//                (3 m wide, 60.0-61.0 m) round the drum base
 //   CROWN_Gable  Wisdom Hall bow on the river face: white stem post, right-triangle glass (ICS_SolidGlass, DarkMetal
-//                cable net, WarmLight floor lines + vertical strips) raised to a 56 m sill, broad white raking prow
-//                blade (8.5 m along the facade, ICS_White with 5 diagonal DarkMetal mullions) raking back to the rim
-//                soffit, then lit raked glazing (ICS_ShopLit + DarkMetal mullions) back to the drum on the south flank
-//   CROWN_Canopy cream (ICS_White) canopy deck + 3 stepped tiers on gold (ICS_Gold) fascias = three gold rings, a warm
-//                strip under each ring lip
-// Scene QC r1 (QCA/QCB majors, D4): the rim is lifted so the drum + rim wall stands ~16 m on the 58 m roof all round:
+//                cable net, WarmLight floor lines + vertical strips) raised to a 56 m sill, broad clean white raking
+//                prow blade (8.5 m along the facade, ICS_White, no mullions) raking back to the rim soffit, then lit
+//                raked glazing (ICS_ShopLit + DarkMetal mullions) back to the drum on the south flank
+//   CROWN_Canopy cream (ICS_White) canopy deck + 3 stepped tiers on gold (ICS_GoldRoof) fascias = three gold rings, a
+//                warm strip under each ring lip
+// Scene QC r2 (QCA/QCB majors D4, ENG lint): the rim depth and CROWN_TOP are unchanged (D12/D13). The rim is widened
+// in PLAN only: its top/soffit ring now reaches CR_IB = 4.0 m inward on the stern and flanks (was 1.5 m), narrowing
+// to 1.7 m over the last ~19 m to the prow, with the outer lip on the same outline and the same 2.8 m band. The
+// outer 1.5 m of the soffit keeps its 40 cm rise (the part seen from the river, drum head unchanged); the inner
+// soffit rises another 10 cm. The canopy deck edge follows the rim's inner face inward, so from the air the gold ring
+// reads ~3.5 m broad. ICS_Gold -> ICS_GoldRoof on the rim, coping and ring fascias. The 1.1-1.4 m warm cove is
+// replaced by thin (<= 15 cm) strips. The 5 diagonal DarkMetal mullions on the prow blade are deleted (QCA: they
+// read as a louvre at 250 m; Photo A's prow sail is clean white).
+// Scene QC r1 (QCA/QCB majors, D4; heights below are at the r1 CROWN_TOP 75 m, all derived, so +2 m since D12):
+// the rim is lifted so the drum + rim wall stands ~16 m on the 58 m roof all round:
 // rim top 73.8 m at the stern (CROWN_TOP - 1.2 m), rising 0.2 m to the bow root, then flicking up 1.0 m over the last
 // 9 m to the upturned point at CROWN_TOP 75.0 m. Flank band 2.8 m (stern) -> 3.1 m (bow root), was 3.5-4.0 m, so the
 // soffit sits at 71.0 m (was 66.0 m) and the finned drum stands 13 m on the roof. Everything stays <= CROWN_TOP; the
@@ -3528,8 +3671,11 @@ let CR_FLW = 900;               // ... flick length
 let CR_BD0 = 280;               // band depth at the stern (QC-A: flanks shallower than r3's 3.5-4.0 m)
 let CR_BD1 = 30;                // ... + 0.3 m toward the bow
 let CR_BEAK = 200;              // QC-A: a short 2 m beak at the tip instead of the 5 m rolled hook
-let CR_IB = 150;                // band soffit width (drum glazing and fins tuck under it)
-let CR_SLP = 40;                // the soffit rises 40 cm inward over CR_IB, so its warm cove faces the river
+let CR_IB = 400;                // top/soffit ring width on the stern and flanks (QCB r2: 1.5 -> 4.0 m, plan only)
+let CR_IBP = 170;               // ... narrowing to 1.7 m at the prow (keeps the accepted beak and bow)
+let CR_IBV = 150;               // outer, sloped soffit segment seen from the river (drum glazing and fins tuck under it)
+let CR_SLP = 40;                // the outer soffit rises 40 cm inward over CR_IBV, so it faces the river
+let CR_SLP2 = 10;               // the inner soffit (CR_IBV .. CR_IB, above the drum) rises another 10 cm
 let CR_CRL = 60;                // C-lip: at the beak the soffit curls back and up by 0.6 m behind the flat underside
 let CR_ZB0 = CROWN_BASE - 10;   // drum foot, embedded 10 cm into the Z4 roof
 // ---- white canopy skirt round the drum base (QC-B) ----
@@ -3558,9 +3704,10 @@ let CR_DW = select(60, 150, lod > 0.5);   // drum wall thickness, larger than th
 
 // ---------------- outline stations (pinched oval: stern semi-axis CR_AS, prow semi-axis CR_AP) ----------------
 var ou = []; var ov = []; var onx = []; var ony = []; var ozt = []; var ozb = [];
-var r_ot = []; var r_om = []; var r_ob = []; var r_im = []; var r_ib = []; var r_it = [];
+var r_ot = []; var r_om = []; var r_ob = []; var r_i1 = []; var r_im = []; var r_ib = []; var r_it = [];
 var c_ot = []; var c_ob = []; var c_ib = []; var c_it = [];
 var l_ot = []; var l_ob = []; var l_ib = []; var l_it = [];
+var h_ot = []; var h_ob = []; var h_ib = []; var h_it = [];
 var w_ot = []; var w_ob = []; var w_ib = []; var w_it = [];
 var d_b = []; var d_t = []; var d_ti = []; var d_bi = [];
 var kerb = []; var deck = []; var shead = []; var sfoot = [];
@@ -3586,22 +3733,25 @@ for i in 0..n {
     let fl = 120 + 60 * pow(q, 4) - 140 * hk;            // outward lean of the band top (1.2 m stern, 40 cm at the tip)
     let th = 70 + 60 * smoothstep(CR_AP - 1600, CR_AP - 600, u);   // band thickness: 70 cm, 130 cm in the beak
     let bu = 25 + 10 * bk;                               // outer bulge at mid-depth
-    let rr = CR_SLP + 5 + CR_CRL * bk;                   // inner soffit edge height (10 x 5 cm chamfer, C-curl at the beak)
-    let dd = CR_IB + 10 + 60 * bk;
+    let ib = CR_IB - (CR_IB - CR_IBP) * smoothstep(CR_AP - 2600, CR_AP - 700, u);   // ring width 4.0 m -> 1.7 m at the prow
+    let zi = CR_SLP + CR_SLP2 * (ib - CR_IBV) / (CR_IB - CR_IBV);                    // inner soffit edge height above zb
+    let rr = zi + 5 + CR_CRL * bk;                       // inner chamfer top (10 x 5 cm chamfer, C-curl at the beak)
+    let dd = ib + 10 + 60 * bk;
     // inward offsets near the sharp tip (radius ~1 m) fade their sideways part so no ring folds over itself
     let gh = 1 - smoothstep(CR_AP - 800, CR_AP - 200, u);
     let kit = fl - th;
     let vit = select(1, gh, kit < 0);
     let kc = fl - th - 6;
     let vc = select(1, gh, kc < 0);
-    let lw = 110 + 30 * bk;                              // cove strip inner edge: 1.1 m, 1.4 m under the beak
     let zm = (zb + zt) * 0.5;
     let om = fl * 0.5 + bu;
     ou = append(ou, u); ov = append(ov, v); onx = append(onx, nx); ony = append(ony, ny);
     ozt = append(ozt, zt); ozb = append(ozb, zb);
-    // rim band profile (outer face bulges through r_om; sloped soffit r_ob -> r_im, then the chamfer/C-curl r_im -> r_ib)
+    // rim band profile (outer face bulges through r_om; sloped outer soffit r_ob -> r_i1, flatter inner soffit
+    // r_i1 -> r_im, then the chamfer/C-curl r_im -> r_ib; the inner face r_ib -> r_it is the broad gold ring from above)
     r_ob = append(r_ob, (u, v, zb));
-    r_im = append(r_im, (u - nx * CR_IB, v - ny * CR_IB * gh, zb + CR_SLP));
+    r_i1 = append(r_i1, (u - nx * CR_IBV, v - ny * CR_IBV * gh, zb + CR_SLP));
+    r_im = append(r_im, (u - nx * ib, v - ny * ib * gh, zb + zi));
     r_om = append(r_om, (u + nx * om, v + ny * om, zm));
     r_ot = append(r_ot, (u + nx * fl, v + ny * fl, zt - 6));
     r_it = append(r_it, (u + nx * kit, v + ny * kit * vit, zt - 6));
@@ -3618,11 +3768,20 @@ for i in 0..n {
     w_it = append(w_it, (u + nx * (wa - 6), v + ny * (wa - 6), zt - 16));
     w_ib = append(w_ib, (u + nx * (wb - 6), v + ny * (wb - 6), zt - 40));
     w_ob = append(w_ob, (u + nx * (wb + 4), v + ny * (wb + 4), zt - 40));
-    // warm cove strip under the sloped soffit along the whole rim (QC-A): embedded 3 cm, 7 cm proud below
-    l_ot = append(l_ot, (u - nx * 10, v - ny * 10 * gh, zb + CR_SLP * 10 / CR_IB + 3));
-    l_ob = append(l_ob, (u - nx * 10, v - ny * 10 * gh, zb + CR_SLP * 10 / CR_IB - 7));
-    l_ib = append(l_ib, (u - nx * lw, v - ny * lw * gh, zb + CR_SLP * lw / CR_IB - 7));
-    l_it = append(l_it, (u - nx * lw, v - ny * lw * gh, zb + CR_SLP * lw / CR_IB + 3));
+    // scene QC r2 (QCA b, QCB 3, D9): thin warm strips along the WHOLE rim instead of the 1.1-1.4 m cove.
+    // Lip strip: 14 cm wrapping the lower lip (4 cm proud of the outer face's foot, 6 cm below the soffit).
+    let lz = zb + CR_SLP * 10 / CR_IBV;
+    l_ot = append(l_ot, (u + nx * 4, v + ny * 4, zb + 3));
+    l_ob = append(l_ob, (u + nx * 4, v + ny * 4, zb - 6));
+    l_ib = append(l_ib, (u - nx * 10, v - ny * 10 * gh, lz - 6));
+    l_it = append(l_it, (u - nx * 10, v - ny * 10 * gh, lz + 3));
+    // Cove strip: 12 cm on the sloped soffit just in front of the drum glazing head (106..118 cm in, 6 cm proud).
+    let hz0 = zb + CR_SLP * 106 / CR_IBV;
+    let hz1 = zb + CR_SLP * 118 / CR_IBV;
+    h_ot = append(h_ot, (u - nx * 106, v - ny * 106 * gh, hz0 + 3));
+    h_ob = append(h_ob, (u - nx * 106, v - ny * 106 * gh, hz0 - 6));
+    h_ib = append(h_ib, (u - nx * 118, v - ny * 118 * gh, hz1 - 6));
+    h_it = append(h_it, (u - nx * 118, v - ny * 118 * gh, hz1 + 3));
     // drum: foot inset by the taper (5.5 m stern -> 1.8 m river half), head under the soffit; both end on CR_UCUT.
     // v offsets fade out toward the prow so the clamped points stay monotone (no swallowtail at the sharp tip).
     let taper = 550 - 370 * smoothstep(-1500, 1500, u);
@@ -3631,7 +3790,7 @@ for i in 0..n {
     let fv = v - ny * taper * gw;
     let hu = u - nx * 130;
     let hv = v - ny * 130 * gh;
-    let zh = zb + CR_SLP * 130 / CR_IB + 15;            // 15 cm into the sloped soffit, 130 cm in from the lip
+    let zh = zb + CR_SLP * 130 / CR_IBV + 15;           // 15 cm into the sloped soffit, 130 cm in from the lip
     d_b = append(d_b, (min(fu, CR_UCUT), fv, CR_ZB0));
     d_t = append(d_t, (min(hu, CR_UCUT), hv, zh + CR_CRL * bk));
     d_ti = append(d_ti, (min(hu - nx * CR_DW, CR_UCUT - CR_DW), hv - ny * CR_DW * gh, zh + CR_CRL * bk));
@@ -3699,19 +3858,22 @@ if piece < 0.5 {
     // ================= CROWN_Rim =================
     // Each ring is lofted along the stations from the stern round and back to the stern: the end sections are
     // planar profiles (v = 0 at the stern), so the loft's outward orientation is established (no W_LOFT_WINDING).
-    var rs = []; var cs = []; var ls = []; var ws = [];
+    // Scene QC r2: band, top, inner face and soffit all ICS_GoldRoof (D13 brightened crown-rim slot; ENG lint).
+    var rs = []; var cs = []; var ls = []; var ws = []; var hs = [];
     for k in 0..(n + 1) {
         let i = mod(k + n / 2, n);
-        rs = append(rs, [at(r_ot, i), at(r_it, i), at(r_ib, i), at(r_im, i), at(r_ob, i), at(r_om, i)]);
+        rs = append(rs, [at(r_ot, i), at(r_it, i), at(r_ib, i), at(r_im, i), at(r_i1, i), at(r_ob, i), at(r_om, i)]);
         cs = append(cs, [at(c_ot, i), at(c_it, i), at(c_ib, i), at(c_ob, i)]);
         ls = append(ls, [at(l_ot, i), at(l_it, i), at(l_ib, i), at(l_ob, i)]);
         ws = append(ws, [at(w_ot, i), at(w_it, i), at(w_ib, i), at(w_ob, i)]);
+        hs = append(hs, [at(h_ot, i), at(h_it, i), at(h_ib, i), at(h_ob, i)]);
     }
-    g = merge(g, loft_sections(sections: rs, closed: "yes", material: "ICS_Gold"));
+    g = merge(g, loft_sections(sections: rs, closed: "yes", material: "ICS_GoldRoof"));
     g = merge(g, loft_sections(sections: ls, closed: "yes", material: "ICS_WarmLight"));
     g = merge(g, loft_sections(sections: ws, closed: "yes", material: "ICS_WarmLight"));
     if lod < 0.5 {
-        g = merge(g, loft_sections(sections: cs, closed: "yes", material: "ICS_Gold"));
+        g = merge(g, loft_sections(sections: cs, closed: "yes", material: "ICS_GoldRoof"));
+        g = merge(g, loft_sections(sections: hs, closed: "yes", material: "ICS_WarmLight"));
     }
 } else if piece < 1.5 {
     // ================= CROWN_Drum =================
@@ -3775,12 +3937,18 @@ if piece < 0.5 {
                     let pri = mod(nf, 6) < 0.5;
                     let fw = select(30, 45, pri);
                     let fd = select(120, 170, pri);
-                    let ztop = zb + CR_SLP * 130 / CR_IB + 25 + CR_CRL * bk;
+                    let ztop = zb + CR_SLP * 130 / CR_IBV + 25 + CR_CRL * bk;
                     let a0 = (fu + nx * fd * 0.5, fv + ny * fd * 0.5, CR_ZB0);
                     let a1 = (hu + nx * fd * 0.5, hv + ny * fd * 0.5, ztop);
                     let zs = select(CR_ZB0 - 5, CR_ZSK + CR_SKT - 40, onsk > 0.5);
                     let a = a0 + (a1 - a0) * ((zs - CR_ZB0) / (ztop - CR_ZB0));
                     g = merge(g, beam_between(start: a, end: a1, cross_width: fw, cross_height: fd, height_direction: (nx, ny, 0), material: "ICS_White"));
+                    if pri > 0.5 {
+                        // scene QC r2 (QCA b): 12 cm warm strip on the primary fin's outer (outward/downward) edge,
+                        // full fin length, 3 cm into the fin and 7 cm proud: the radial lit ribs of Photo A's fan
+                        let so = (nx, ny, 0) * (fd * 0.5 + 2);
+                        g = merge(g, beam_between(start: a + so, end: a1 + so, cross_width: 12, cross_height: 10, height_direction: (nx, ny, 0), material: "ICS_WarmLight"));
+                    }
                 }
             }
         }
@@ -3831,36 +3999,7 @@ if piece < 0.5 {
         // 60 cm white frame on the hypotenuse (the blade's inner edge, covers the glass/blade seam; top lands on the post)
         let fv0 = 0 - CR_HS - CR_LG - 30;
         g = merge(g, beam_between(start: (CR_UF + 77, fv0 - 5 * CR_SL, CR_ZGF - 5), end: (CR_UF + 77, fv0 + CR_SL * (CR_H + 25), CR_ZGA + 25), cross_width: 60, cross_height: 42, height_direction: (1, 0, 0), material: "ICS_White"));
-        // 5 diagonal DarkMetal mullions (30 cm wide, 12 cm proud) on the blade, each a face part + a raked part
-        for jw in 1..6 {
-            let dc = CR_WB * jw / 6;
-            let vf = 0 - CR_HS - CR_LG - dc;
-            var tp = (CR_UR, 0 - CR_HS, CR_ZGA);
-            var found = 0;
-            var prv = at(shead, n - 1);
-            var pf0 = 0;
-            for k in 0..(n / 2) {
-                let i = n - 1 - k;
-                let sh = at(shead, i);
-                let f = sh.y - (vf + CR_SL * (sh.z - CR_ZGF));
-                let hit = (found < 0.5) * (k > 0.5) * (pf0 >= 0) * (f < 0);
-                if hit > 0.5 {
-                    tp = prv + (sh - prv) * (pf0 / (pf0 - f));
-                    found = 1;
-                }
-                prv = sh;
-                pf0 = f;
-            }
-            let ft = (CR_UR + 9, vf - 5 * CR_SL, CR_ZGF - 5);
-            let kn = (CR_UR, vf + CR_SL * (CR_ZK - CR_ZGF), CR_ZK);
-            let ax = normalize(tp - kn);
-            let nu = normalize((ax.z, 0, 0 - ax.x));
-            let nm = normalize((1, 0, 0) + nu);
-            let km = kn + nm * (9 / nm.x);
-            let al = normalize(km - ft);
-            g = merge(g, beam_between(start: ft, end: km + al * 8, cross_width: 30, cross_height: 12, height_direction: (1, 0, 0), material: "ICS_DarkMetal"));
-            g = merge(g, beam_between(start: km - ax * 8, end: tp + nu * 9 + ax * 30, cross_width: 30, cross_height: 12, height_direction: nu, material: "ICS_DarkMetal"));
-        }
+        // scene QC r2 (QCA c): the 5 diagonal DarkMetal blade mullions are deleted - the prow reads as one white sail
     }
     // ---- lit raked glazing between the blade and the drum (Photo A's warm panels under the rim): top along the rim
     // soffit (= drum head) back to CR_USAIL, bottom over the coping at the knee height, then down behind the coping
@@ -3923,7 +4062,7 @@ if piece < 0.5 {
     }
 } else if piece < 3.5 {
     // ================= CROWN_Canopy: cream deck + three stepped gold rings following the sweep =================
-    // deck top 1.6 m below the sheer line; each ring steps up 0.6 m on an 0.8 m gold fascia (ICS_Gold) with a 18 cm
+    // deck top 1.6 m below the sheer line; each ring steps up 0.6 m on an 0.8 m gold fascia (ICS_GoldRoof) with a 18 cm
     // warm strip just under its lip; the top ring peaks ~0.5 m above the local rim top at the centre line (< 75 m)
     let ns = select(7, 5, lod > 0.5);
     let nt = select(4, 2, lod > 0.5);
@@ -3952,7 +4091,7 @@ if piece < 0.5 {
             eds = append(eds, (uu, ps.y * sv, zt - CR_DK + k * CR_TS));
         }
         let sheet = loft_sections(sections: secs, closed: "no", material: "ICS_White");
-        g = merge(g, solidify(sheet, thickness: select(40, CR_TT, k > 0.5), offset: 0, side_material: select("ICS_White", "ICS_Gold", k > 0.5)));
+        g = merge(g, solidify(sheet, thickness: select(40, CR_TT, k > 0.5), offset: 0, side_material: select("ICS_White", "ICS_GoldRoof", k > 0.5)));
         if (k > 0.5) * (lod < 0.5) > 0.5 {
             // warm strip under the ring lip (18 cm tall, 12-30 cm below the tier top, 5 cm proud of the gold fascia)
             let ring = concat_points(edn, reverse_points(eds));
