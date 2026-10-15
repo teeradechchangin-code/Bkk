@@ -82,7 +82,9 @@ param clip_x = 15050;  // pontoon starts here; the strip between bank and clip_x
 param mode = 0;        // 0 = full detail, 1 = LOD1 (hull + deck), 2 = collider prism
 // Icon Siam Pontoon 1B (OSM n6174365548 at (165.4, -67.4) m, footway w659467497 lands at y -67.8 m):
 // 20 x 7.2 m pontoon centred near (16500, -6740), 1.2 m clear of PIER1_FP's north edge
-let P1B = [(15500, -7100), (17500, -7100), (17500, -6380), (15500, -6380)];
+// (collider prism runs 3 m further south over the water gap to the Pier 1 deck, standing in for the link plate)
+let y1b = select(-7100, -7400, mode == 2);
+let P1B = [(15500, y1b), (17500, y1b), (17500, -6380), (15500, -6380)];
 let P = pick(which, PIER1_FP, PIER2_FP, PIER4_FP, PIER_SMALL_FP, P1B);
 var C = [];
 let n = len(P);
@@ -553,8 +555,18 @@ let gangways = merge(
     part(SITE_Gangway, gy: 8140, x_end: 14700, z0: 5, w: 400),
     part(SITE_Gangway, gy: 11510, x_end: 14150, z0: 0, w: 170)
 );
+// Pontoon 1B -> Pier 1 link plate (3 m wide, deck +2 cm, laps 40 cm onto 1B and 25 cm onto the Pier 1 deck) with
+// two handrails, so Pier 1 stays reachable now that its mid-pier gangway is gone
+var link1b = box_bounds(min: (16450, -7340, -156), max: (16750, -7060, -148), material: "ICS_White");
+for si 0..2 {
+    let lx = 16456 + si * 288;
+    link1b = merge(link1b, beam_between(start: (lx, -7060, -50), end: (lx, -7340, -50), cross_width: 8, cross_height: 7, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
+    for j 0..3 {
+        link1b = merge(link1b, box_at(size: (6, 6, 104), bottom_center: (lx, -7075 - j * 125, -149), material: "ICS_DarkMetal"));
+    }
+}
 // Pier 1 benches keep their 4.5 m south offset (y -10095..-9395, clear of the shelter posts and deck lamps)
-let shelters = merge(part(SITE_Shelter, which: 0), part(SITE_Shelter, which: 1, bench_dy: -450));
+let shelters = merge(part(SITE_Shelter, which: 0), part(SITE_Shelter, which: 1, bench_dy: -450), link1b);
 // footbridge (OSM w1125558211): laps ~30 cm into the Pier 4 hull (south edge y 5361..5380) and 20 cm onto Pier 2
 let fb_a = (15210, 5400, 0);
 let fb_b = (15490, 440, 0);
@@ -783,6 +795,7 @@ let piers = merge(
     part(SITE_Gangway, gy: -2100, x_end: 15450, z0: 5, w: 900, mode: 1),
     part(SITE_Gangway, gy: 8140, x_end: 14700, z0: 5, w: 400, mode: 1),
     part(SITE_Gangway, gy: 11510, x_end: 14150, z0: 0, w: 170, mode: 1),
+    box_bounds(min: (16450, -7340, -156), max: (16750, -7060, -148), material: "ICS_White"),
     beam_between(start: (15210, 5400, -192), end: (15490, 440, -192), cross_width: 300, cross_height: 76, height_direction: (0, 0, 1), material: "ICS_Concrete")
 );
 let w0 = at(MALL_FP, 2);
@@ -820,7 +833,8 @@ out.geo = merge(slab_lo, slab_hi, paving, basin_wall, basin_rim, basin_water, pi
 // 30 cm band prism per run (12 verts / point), so the full 19-segment frontage plus the basin kerb fit the budget.
 // The land prism follows the same context outline as LOD0/LOD1 (BANK_S, BANK_LINE[0], subset, BANK_N; sim_box limits).
 #mesh ICS_Site collider
-let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (13760, -21050), (13480, -21010), (12890, -20930), (12830, -18270), (12700, -17380)];
+// BANK_S reduced to 6 of its 9 vertices for the collider (max deviation 1.4 m on the context bank)
+let BANK_S = [(15550, -24000), (15550, -21820), (15470, -21370), (14570, -21430), (12890, -20930), (12700, -17380)];
 let BK = [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 20];
 var BS = [];
 for i in BK { BS = append(BS, at(BANK_LINE, i)); }
