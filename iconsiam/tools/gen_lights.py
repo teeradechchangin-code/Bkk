@@ -1,28 +1,35 @@
 #!/usr/bin/env python3
-"""Generate world/10_lights.weave: Oriverse pointLights that light the riverside podium shopfronts.
+"""Generate world/10_lights.weave: Management-owned Oriverse engine lights (client directive D9).
 
-Client directive D9: shop glazing is ordinary (non-emissive) glass like the upper floors; the warm dusk
-glow comes from real engine lights instead. Lights sit in front of the Z1 river face (outward normal),
-evenly spaced by arc length, plus a few along the plaza-facing north face.
+Glazing is ordinary (non-emissive) interior-window glass; the warm dusk glow of ICONSIAM comes from real
+engine lights instead of glowing materials. Rows (all warm, no shadows):
+  ICS_ShopLight_R/N   ground-floor shopfronts, in front of the Z1 river and north faces
+  ICS_Z1Light         under the Z1 roof edge along the river face (scene QC r2, QC-A: warm band from the river)
+  ICS_Z2Light         under the Z2 terrace roof edge on its river face
+  ICS_Z3Light         under the Z3 terrace roof edge on its river face
+  ICS_CrownLight      under the crown rim around its river half (lights the gold soffit and the drum)
+  ICS_MOBoxLight      in front of the Mandarin Oriental golden podium box (SE/NE faces)
+Footprints are copied from src/ICS_defs.weave (all CCW, so the right-hand normal of each edge points outward).
 """
 import math, pathlib
 
 Z1 = [(6860, 2220), (7680, -9800), (8570, -9730), (9320, -9360), (9980, -8380), (9970, -6540), (9200, -6600),
       (8910, -6140), (9410, -5550), (9750, -4700), (9360, -2480), (9510, -250), (9870, 470), (10710, 1420),
       (11010, 2290), (11150, 3170), (10980, 5100), (9150, 5080), (7580, 4470), (6330, 3400), (5610, 2200)]
+Z2_RIVER = [(7680, -9800), (6860, 2220)]                 # Z2_FP edge 1 -> 2
+Z3_RIVER = [(6100, -8680), (5360, 2200)]                 # Z3_FP edge 2 -> 3
+MO_BOX = [(5830, 8800), (8880, 12340), (9200, 14080)]    # MO_FP edges 10 -> 11 (SE face) -> 0 (NE face)
+CROWN_C = (-750, -2250)      # #meshdefs CROWN_C (rev B)
+SITE_ROT_DEG = 3.9
+CROWN_TOP = 7700             # #meshdefs rev C (D12)
+CROWN_PROW = 4950            # crown frame: centre -> prow tip (CR_UF + 40), cm
+CROWN_HALF_W = 2300          # crown frame: half width (CR_B), cm
 
-SPACING = 1100      # cm between lights along the facade
-OFFSET = 250        # cm in front of the glass line
-Z = 400             # cm above grade (canopy/downlight height of the ground-floor storey)
-RADIUS = 1400
-INTENSITY = 40
-SPECULAR = 0.4      # keep glass reflections from turning into hot blobs
-COLOR = "#ffc98a"
+WARM = "#ffc98a"
 
-def chain(i0, i1):
-    return [Z1[i] for i in range(i0, i1 + 1)]
 
-def place(pts, tag):
+def place(pts, tag, spacing, offset):
+    """Evenly spaced points (by arc length) along an open polyline, pushed `offset` cm along the outward normal."""
     segs = []
     for a, b in zip(pts, pts[1:]):
         dx, dy = b[0] - a[0], b[1] - a[1]
@@ -30,7 +37,7 @@ def place(pts, tag):
         if L > 1:
             segs.append((a, (dx / L, dy / L), L))
     total = sum(s[2] for s in segs)
-    n = max(1, int(total // SPACING))
+    n = max(1, int(total // spacing))
     step = total / n
     out, t = [], step / 2
     for k in range(n):
@@ -38,18 +45,45 @@ def place(pts, tag):
         for a, u, L in segs:
             if d <= L:
                 nx, ny = u[1], -u[0]          # outward normal (polygon is CCW)
-                out.append((f"{tag}{k:02d}", a[0] + u[0] * d + nx * OFFSET, a[1] + u[1] * d + ny * OFFSET))
+                out.append((f"{tag}{k:02d}", a[0] + u[0] * d + nx * offset, a[1] + u[1] * d + ny * offset))
                 break
             d -= L
         t += step
     return out
 
-lights = place(chain(1, 16), "ICS_ShopLight_R") + place(chain(16, 20), "ICS_ShopLight_N")
-lines = ["// ===== Riverside podium shopfront lighting (Management, client directive D9) =====",
+
+def crown_ring(tag, n, offset):
+    """n points around the river (east) half of the crown oval, `offset` cm outside it, in world coordinates."""
+    cs, sn = math.cos(math.radians(SITE_ROT_DEG)), math.sin(math.radians(SITE_ROT_DEG))
+    out = []
+    for k in range(n):
+        t = math.radians(-75 + 150 * k / (n - 1))
+        u = (CROWN_PROW + offset) * math.cos(t)
+        v = (CROWN_HALF_W + offset) * math.sin(t)
+        out.append((f"{tag}{k:02d}", CROWN_C[0] + u * cs - v * sn, CROWN_C[1] + u * sn + v * cs))
+    return out
+
+
+# (points, z cm, radius cm, intensity)
+ROWS = [
+    (place(Z1[1:17], "ICS_ShopLight_R", 1100, 250), 400, 1400, 70),
+    (place(Z1[16:21], "ICS_ShopLight_N", 1100, 250), 400, 1400, 70),
+    (place(Z1[1:17], "ICS_Z1Light", 1500, 200), 1850, 1200, 35),
+    (place(Z2_RIVER, "ICS_Z2Light", 1500, 150), 3500, 1200, 35),
+    (place(Z3_RIVER, "ICS_Z3Light", 1500, 150), 4050, 1200, 35),
+    (crown_ring("ICS_CrownLight", 6, 150), CROWN_TOP - 650, 1500, 60),
+    (place(MO_BOX, "ICS_MOBoxLight", 1100, 300), 900, 1400, 50),
+]
+
+lines = ["// ===== Engine lights (Management, client directive D9) =====",
          "// Generated by tools/gen_lights.py - ordinary glass + real engine lights instead of emissive glazing."]
-for name, x, y in lights:
-    lines.append(f"pointLight {name} {{\n    position = ({round(x)}, {round(y)}, {Z})\n    radius = {RADIUS}\n"
-                 f"    intensity = {INTENSITY}\n    color = {COLOR}\n    light_specular_scale = {SPECULAR}\n    cast_shadow = false\n}}")
+count = 0
+for pts, z, radius, intensity in ROWS:
+    for name, x, y in pts:
+        lines.append(f"pointLight {name} {{\n    position = ({round(x)}, {round(y)}, {z})\n    radius = {radius}\n"
+                     f"    intensity = {intensity}\n    color = {WARM}\n    light_specular_scale = 0.4\n"
+                     f"    cast_shadow = false\n}}")
+        count += 1
 out = pathlib.Path(__file__).resolve().parents[1] / "world/10_lights.weave"
 out.write_text("\n".join(lines) + "\n")
-print(out, len(lights), "lights")
+print(out, count, "lights")

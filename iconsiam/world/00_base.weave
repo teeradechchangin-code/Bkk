@@ -108,25 +108,30 @@ out.orm = orm(occlusion: 1.0 - joint * 0.3, roughness: 0.75, metallic: 0.0);
 #doc_version 3
 // ===== ICONSIAM material palette (library textures only: derived tints of imported library #textures and engine built-ins) =====
 material ICS_Gold { base = "lib1_NaturalBrush" tint = "#C9AE7C" roughness = 0.34 }
-material ICS_GoldRoof { base = "lib1_NaturalBrush" tint = "#D2A54E" roughness = 0.4 }
+// D13: bright crown-rim gold that still reads gold under the dusk sky
+material ICS_GoldRoof { base = "lib1_NaturalBrush" tint = "#E8C878" metallic = 0.6 roughness = 0.28 }
 material ICS_GoldPanel { base = "lib1_NaturalBrush" tint = "#B8975E" roughness = 0.5 }
 material ICS_White { base = "LibPlaster" roughness = 0.62 }
 material ICS_DarkMetal { base = "LibDarkMetal" metallic = 0.5 roughness = 0.45 }
 material ICS_Concrete { base = "LibConcrete" }
-material ICS_Paving { base = "LibPlazaTile" tileM = 2.4 }
-material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#8E9CAA" glassTint = "#2C4256" roomH = 4.0 bayW = 1.5 }
-material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#8E9CAA" glassTint = "#2C4256" roomH = 4.3 roomOffsetZ = 2.5 bayW = 1.5 }
-material ICS_MallGlass { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#4A5A58" roomH = 6.0 bayW = 2.0 }
+// D13: light grey like Photo B (the beige base read terracotta at dusk)
+material ICS_Paving { base = "LibPlazaTile" tileM = 2.4 tint = "#B8C0CC" }
+// interior_window_pbr: tint = mullion/spandrel frame colour; glassTint tints the rooms and is the far (>220-480 m) flat glass colour.
+// D13: towers are a matched dark navy pair (Photo A) with dark frames; mall/shop glass is warm so lit rooms read amber.
+material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#4A5058" glassTint = "#1E2833" roomH = 4.0 bayW = 1.5 }
+material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#4A5058" glassTint = "#1E2833" roomH = 4.3 roomOffsetZ = 2.5 bayW = 1.5 }
+material ICS_MallGlass { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#4E4A3E" roomH = 6.0 bayW = 2.0 }
 material ICS_SolidGlass { base = "Glass" tint = "#8FA2B0" }
-material ICS_Balustrade { base = "GlassTransparent" tint = "#5E9C98" }
+material ICS_Balustrade { base = "GlassTransparent" tint = "#6F8E8C" }
 // D9 (client): ground-floor shop / lobby glazing is ordinary interior-window glass like the upper floors (no emission);
 // the warm dusk glow comes from real pointLights in world/10_lights.weave.
-material ICS_ShopLit { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#45585A" roomH = 6.5 bayW = 2.0 }
+material ICS_ShopLit { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#5E5240" roomH = 6.5 bayW = 2.0 }
 material ICS_WarmLight { base = "MetalDetail" tint = "#FFD08A" emission = 1.2 }
 material ICS_Deck { base = "WoodDark" tileM = 2.0 }
 material ICS_Foliage { base = "Foliage" lighting = "foliage" }
 material ICS_Asphalt { base = "Asphalt" tileM = 3.0 }
-material ICS_Water { base = "Water" }
+// D13: basin reads as a dark mirror strip (Photo B)
+material ICS_Water { base = "Water" tint = "#2A3242" }
 material ICS_SignRed { base = "MetalDetail" tint = "#C8102E" emission = 0.8 }
 material ICS_SignWhite { base = "MetalDetail" tint = "#FFF6E8" emission = 1.0 }
 
