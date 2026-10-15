@@ -115,7 +115,7 @@ material ICS_White { base = "LibPlaster" roughness = 0.62 }
 material ICS_DarkMetal { base = "LibDarkMetal" metallic = 0.5 roughness = 0.45 }
 material ICS_Concrete { base = "LibConcrete" }
 // D13: light grey like Photo B (the beige base read terracotta at dusk)
-material ICS_Paving { base = "LibPlazaTile" tileM = 2.4 tint = "#B8C0CC" }
+material ICS_Paving { base = "LibPlazaTile" tileM = 2.4 tint = "#B0C0E0" }
 // interior_window_pbr: tint = mullion/spandrel frame colour; glassTint tints the rooms and is the far (>220-480 m) flat glass colour.
 // D13: towers are a matched dark navy pair (Photo A) with dark frames; mall/shop glass is warm so lit rooms read amber.
 material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#4A5058" glassTint = "#1E2833" roomH = 4.0 bayW = 1.5 }
