@@ -1,11 +1,11 @@
-// ICS_TowerMagnolias — Magnolias Waterfront Residences (south tower), South-tower crew.
+// ICS_TowerMagnolias - Magnolias Waterfront Residences (south tower), South-tower crew.
 // World cm, Z up, +X east, +Y north; authored in WORLD coordinates and placed at (0,0,0).
 // Plan: shaft = MAG_FP inset 2 m (Management decision: 2-4 m), gold fins 1 m proud toward the outline. Facade detail is built in a LOCAL frame
 // aligned to the river-facing SE face of MAG_FP (vertex 6 -> 7): local X runs along that face
 // (toward NE), local Y points into the building (NW). Both client photos look straight at this face.
 // Massing (Photo A): south block (local X <= U1) to the 281 m roof; deep gold slot (sky-garden
 // bridges) with the gold spine rising as the mast to 315 m + rod to 317.95 m; curved gold sail over
-// the slot; lower north block (~260 m) with a slanted crown.
+// the slot; lower north block (roof 247.8 m, gold-coped crown slanting 260 -> 251 m).
 // Floor pitch 4.2 m = ICS_TowerGlass roomH, anchored at the origin like the shader's room grid,
 // so every gold slab band lands on the shader's spandrel line.
 
@@ -175,7 +175,7 @@ for e in 0..NE {
         let bw = L / nb;
         let nfl = select(KS - K0 + 1, KN - K0, kind > 2.5);
         for j in 0..nb {
-            // pilaster (gold frame) at the bay start: +60 proud, back to the glass line
+            // pilaster (gold frame) at the bay start: 1 m proud, back to the glass line
             let px = a.x + ux * j * bw - nx * 45;
             let py = a.y + uy * j * bw - ny * 45;
             let ztop = select(S_PIL, CAP_HI - (px - U2) * CAP_SLOPE + 60, kind > 2.5);
@@ -211,7 +211,7 @@ let s_roof = translate(extrude(points: offset_polygon(points: S_F, delta: -25), 
 let s_plant = box_bounds(min: (U1 - 1800, WF + 1300, MAG_ROOF + 30), max: (U1 - 400, WF + 3200, MAG_ROOF + 550), material: "ICS_GoldPanel");
 let s_bmu = merge(box_bounds(min: (U1 - 1450, WF + 1700, MAG_ROOF + 545), max: (U1 - 750, WF + 2400, MAG_ROOF + 800), material: "ICS_DarkMetal"), beam_between(start: (U1 - 1100, WF + 2050, MAG_ROOF + 780), end: (U1 - 1100, WF + 600, MAG_ROOF + 780), cross_width: 45, cross_height: 70, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
 
-// ---------- north crown: glass screen with a slanted top + gold sloped lid (faces_solid) ----------
+// ---------- north crown: glass screen with a slanted top, gold coping ring, dark roof (faces_solid) ----------
 var CAPF = [];
 var cb = [];
 var ct = [];
@@ -329,9 +329,9 @@ for i in 0..NP {
         let nb = max(1, round(L / 850));
         let bw = L / nb;
         for j in 0..nb {
-            let px = a.x + ux * j * bw - uy * 35;
-            let py = a.y + uy * j * bw + ux * 35;
-            PPIL = append(PPIL, beam_between(start: (px, py, 0), end: (px, py, ZP + 60), cross_width: 80, cross_height: 110, height_direction: (uy, 0 - ux, 0), material: "ICS_Gold"));
+            let px = a.x + ux * j * bw - uy * 30;
+            let py = a.y + uy * j * bw + ux * 30;
+            PPIL = append(PPIL, beam_between(start: (px, py, 0), end: (px, py, ZP + 60), cross_width: 80, cross_height: 120, height_direction: (uy, 0 - ux, 0), material: "ICS_Gold"));
         }
     }
 }

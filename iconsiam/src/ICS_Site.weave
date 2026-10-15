@@ -189,12 +189,19 @@ var g = beam_between(start: (x0, gy, zs - 10), end: (x_end, gy, zt - 10), cross_
 if mode == 0 {
     for si 0..2 {
         let ys = gy + (si * 2 - 1) * (w * 0.5 + 6);
+        // bank x on this side's line, so the rail lands on the bank railing's end post
+        var xs = xb;
+        for i 0..nbl {
+            let a = at(BANK_LINE, i);
+            let b = at(BANK_LINE, i + 1);
+            if (ys - a.y) * (ys - b.y) < 0 { xs = a.x + (ys - a.y) / (b.y - a.y) * (b.x - a.x); }
+        }
         g = merge(g, beam_between(start: (x0, ys, zs - 10), end: (x_end, ys, zt - 10), cross_width: 12, cross_height: 40, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
-        g = merge(g, beam_between(start: (xb + 5, ys, zs + 52 - (xb + 5 - x0) * slope), end: (x_end - 20, ys, zt + 52 + 20 * slope), cross_width: 2, cross_height: 90, height_direction: (0, 0, 1), material: "ICS_Balustrade"));
-        g = merge(g, beam_between(start: (xb - 3, ys, zs + 100 - (xb - 3 - x0) * slope), end: (x_end, ys, zt + 100), cross_width: 8, cross_height: 7, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
+        g = merge(g, beam_between(start: (xs + 5, ys, zs + 52 - (xs + 5 - x0) * slope), end: (x_end - 20, ys, zt + 52 + 20 * slope), cross_width: 2, cross_height: 90, height_direction: (0, 0, 1), material: "ICS_Balustrade"));
+        g = merge(g, beam_between(start: (xs - 3, ys, zs + 100 - (xs - 3 - x0) * slope), end: (x_end, ys, zt + 100), cross_width: 8, cross_height: 7, height_direction: (0, 0, 1), material: "ICS_DarkMetal"));
         let np = max(2, floor(run / 160));
         for j 0..np + 1 {
-            let x = xb + 2 + j * (x_end - xb - 10) / np;
+            let x = xs + 2 + j * (x_end - xs - 10) / np;
             let zw = zs - (x - x0) * slope;
             g = merge(g, box_at(size: (6, 6, 110), bottom_center: (x, ys, zw - 8), material: "ICS_DarkMetal"));
         }
@@ -421,7 +428,6 @@ let RY0 = -16190;
 let RY1 = 19550;
 let ax0 = w0.x + (RY0 - w0.y) * kx - ROAD_OFF / cth;
 let ax1 = w0.x + (RY1 - w0.y) * kx - ROAD_OFF / cth;
-// strips: (offset from, offset to, height, material) east-positive perpendicular offsets
 // strips (perpendicular offset from..to, z bottom..top): sidewalk W, one asphalt sheet for both carriageways,
 // raised median sitting on the asphalt (Gold Line viaduct runs above it), sidewalk E
 var road = empty();

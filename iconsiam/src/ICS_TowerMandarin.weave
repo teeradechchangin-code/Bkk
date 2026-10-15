@@ -2,9 +2,10 @@
 // North-tower crew. World cm, Z up, +X east, +Y north; every outline derived from #meshdefs (MO_FP, MO_C, MO_*).
 // Local frame: u along the 46 deg long axis (toward the river/NE), v toward the NW, origin MO_C.
 // Massing (Photo A/B calibrated): golden podium box on MO_FP to MO_PODIUM_TOP over a recessed glass lobby;
-// shaft = MO_FP inset 5 m, split by a gold spine blade at u = U_SP into a taller SW block (248 m) and a
-// lower NE block (MO_ROOF 232 m); the narrow NE "bow" of MO_FP beyond u = U_NE stays podium roof garden.
-// Blade rises into a sail-shaped crown with a mast to MO_ARCH_TOP and a rod to MO_TIP.
+// shaft = MO_FP inset 4.5 m (river face set back 6 m for the pool terrace), split by a gold spine blade at
+// u = U_SP into a taller SW block (248 m) and a lower NE block (MO_ROOF 232 m); the narrow NE "bow" of MO_FP
+// beyond u = U_NE stays podium roof garden. Blade rises into a mast to MO_ARCH_TOP + rod to MO_TIP; a convex
+// sail crown curves from the NE roof up into the blade (Photo A). Balcony types: 1 straight, 2 curved, 3 slab edge.
 
 #meshpart MO_Tower
 param lodq = 0 range 0..2;
@@ -17,6 +18,7 @@ let CY = MO_C.y;
 let U_SP = 1200;
 let U_NE = 2900;
 let INSET = 450;
+let SE_SET = 600;
 let Z_LOB = 450;
 let Z_BOX = MO_PODIUM_TOP;
 let SW_ROOF = 24800;
@@ -59,7 +61,44 @@ for i in 0..N1 {
   let lq = sqrt((q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y));
   if max(la, lq) >= 400 { P2 = append(P2, (p.x, p.y)); }
 }
-let SH = offset_polygon(points: P2, delta: 0 - INSET);
+// podium edges of interest: ISE = long river (SE) face, IE = east-facing NE end face
+var ISE = 0;
+var ISE_L = 0;
+var IE = 0;
+var IE_X = -2;
+for i in 0..NFP {
+  let a = at(MO_FP, i);
+  let b = at(MO_FP, mod(i + 1, NFP));
+  let el = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+  let ox = (b.y - a.y) / el;
+  let oy = (a.x - b.x) / el;
+  let onv = oy * CU - ox * SU;
+  if (onv < -0.9) * (el > ISE_L) > 0 { ISE = i; ISE_L = el; }
+  if (el > 1000) * (ox > IE_X) > 0 { IE = i; IE_X = ox; }
+}
+let SEA = at(MO_FP, ISE);
+let SEB = at(MO_FP, mod(ISE + 1, NFP));
+let SEX = (SEB.x - SEA.x) / ISE_L;
+let SEY = (SEB.y - SEA.y) / ISE_L;
+let SE_IX = 0 - SEY;
+let SE_IY = SEX;
+let SE_UA = (SEA.x - CX) * CU + (SEA.y - CY) * SU;
+let SE_DU = SEX * CU + SEY * SU;
+// shaft = P2 inset by INSET, river (SE) face set back to SE_SET from the podium edge (pool + garden terrace, Photo B)
+let SH0 = offset_polygon(points: P2, delta: 0 - INSET);
+let NS0 = len(SH0);
+var SH = [];
+for i in 0..NS0 {
+  let p = at(SH0, i);
+  let q = at(SH0, mod(i + 1, NS0));
+  let sp = (p.x - SEA.x) * SE_IX + (p.y - SEA.y) * SE_IY - SE_SET;
+  let sq = (q.x - SEA.x) * SE_IX + (q.y - SEA.y) * SE_IY - SE_SET;
+  if sp >= 0 { SH = append(SH, (p.x, p.y)); }
+  if sp * sq < 0 {
+    let t = sp / (sp - sq);
+    SH = append(SH, (p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t));
+  }
+}
 let NSH = len(SH);
 // split at the spine plane u = U_SP; record the blade's v extent (VSE = river face, VNW = back face)
 var SWP = [];
@@ -97,29 +136,6 @@ for i in 0..NN1 {
     NEP = append(NEP, (p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t));
   }
 }
-// podium edges of interest: ISE = long river (SE) face, IE = east-facing NE end face
-var ISE = 0;
-var ISE_L = 0;
-var IE = 0;
-var IE_X = -2;
-for i in 0..NFP {
-  let a = at(MO_FP, i);
-  let b = at(MO_FP, mod(i + 1, NFP));
-  let el = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
-  let ox = (b.y - a.y) / el;
-  let oy = (a.x - b.x) / el;
-  let onv = oy * CU - ox * SU;
-  if (onv < -0.9) * (el > ISE_L) > 0 { ISE = i; ISE_L = el; }
-  if (el > 1000) * (ox > IE_X) > 0 { IE = i; IE_X = ox; }
-}
-let SEA = at(MO_FP, ISE);
-let SEB = at(MO_FP, mod(ISE + 1, NFP));
-let SEX = (SEB.x - SEA.x) / ISE_L;
-let SEY = (SEB.y - SEA.y) / ISE_L;
-let SE_IX = 0 - SEY;
-let SE_IY = SEX;
-let SE_UA = (SEA.x - CX) * CU + (SEA.y - CY) * SU;
-let SE_DU = SEX * CU + SEY * SU;
 let POOL_S0 = 350;
 let POOL_S1 = (U_SP - 520 - SE_UA) / SE_DU;
 let BLADE_S1 = (U_SP + 420 - SE_UA) / SE_DU;
@@ -161,8 +177,8 @@ let rod = cylinder_at(radius: 22, height: MO_TIP - MO_ARCH_TOP + 120, bottom_cen
 // sail crown on the NE block: convex curve in the (u, z) river-face plane rising from the NE roof into the spine (Photo A),
 // trimmed by the blade's descending (v, z) profile and by the NE block outline
 var UPF = [];
-UPF = append(UPF, (U_SP - 10, NE_ROOF - 30));
-UPF = append(UPF, (U_SP + BT / 2 + SAIL_W, NE_ROOF - 30));
+UPF = append(UPF, (U_SP - 10, NE_ROOF - 25));
+UPF = append(UPF, (U_SP + BT / 2 + SAIL_W, NE_ROOF - 25));
 for j in 0..9 {
   let th = j * 10;
   UPF = append(UPF, (U_SP + BT / 2 + SAIL_W * cos(th), NE_ROOF + 170 + (SAIL_HI - NE_ROOF - 170) * sin(th)));
@@ -171,8 +187,8 @@ UPF = append(UPF, (U_SP + BT / 2, SAIL_HI));
 UPF = append(UPF, (U_SP - 10, SAIL_HI));
 let SDEP = VNW - VSE + 700;
 let crown_u = translate(rotate_z(rotate_x(extrude(points: UPF, height: SDEP, material: "ICS_Gold"), degrees: 90, pivot: (0, 0, 0)), degrees: AX, pivot: (0, 0, 0)), (CX - SU * (VNW + 400), CY + CU * (VNW + 400), 0));
-let crown_v = translate(rotate_z(rotate_x(extrude(points: BP, height: BT / 2 + SAIL_W + 230, material: "ICS_Gold"), degrees: 90, pivot: (0, 0, 0)), degrees: AX + 90, pivot: (0, 0, 0)), (CX + CU * (U_SP - 10), CY + SU * (U_SP - 10), 0));
-let crown_xy = extrude(points: offset_polygon(points: NEP, delta: 40), height: MO_ARCH_TOP, material: "ICS_Gold");
+let crown_v = translate(rotate_z(rotate_x(extrude(points: BP, height: BT / 2 + SAIL_W + 230, material: "ICS_Gold"), degrees: 90, pivot: (0, 0, 0)), degrees: AX + 90, pivot: (0, 0, 0)), (CX + CU * (U_SP - 10), CY + SU * (U_SP - 10), -8));
+let crown_xy = extrude(points: offset_polygon(points: NEP, delta: 45), height: MO_ARCH_TOP, material: "ICS_Gold");
 let sail = boolean(boolean(crown_u, crown_v, op: "intersect", solver: "exact"), crown_xy, op: "intersect", solver: "exact");
 
 // ---------------- LOD0 detail ----------------
@@ -256,6 +272,22 @@ if lodq == 0 {
       PL = append(PL, translate(disc, (pcx + ox * 14, pcy + oy * 14, pz)));
     }
   }
+  // lobby curtain-wall mullions on the recessed glass line
+  let NFI = len(fp_in);
+  for i in 0..NFI {
+    let a = at(fp_in, i);
+    let b = at(fp_in, mod(i + 1, NFI));
+    let el = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+    let ex = (b.x - a.x) / el;
+    let ey = (b.y - a.y) / el;
+    let nm = max(1, floor(el / 160));
+    for j in 0..40 {
+      if j < nm {
+        let sm = el * j / nm;
+        PL = append(PL, beam_between(start: (a.x + ex * sm + ey * 5, a.y + ey * sm - ex * 5, -5), end: (a.x + ex * sm + ey * 5, a.y + ey * sm - ex * 5, Z_LOB + 5), cross_width: 10, cross_height: 18, height_direction: (ey, 0 - ex, 0), material: "ICS_DarkMetal"));
+      }
+    }
+  }
   podium = merge(lobby, gbox, coping, soffit_light, merge(PL));
 
   // ---- tower facade: corner piers, bay piers, champagne fins, floor bands ----
@@ -301,7 +333,7 @@ if lodq == 0 {
             let fr = sf / bw;
             let dpier = abs(fr - round(fr)) * bw;
             if (dpier > 100) * (sf > gold_s + 60) > 0 {
-              FL = append(FL, beam_between(start: (pa.x + ex * sf + ox * 20, pa.y + ey * sf + oy * 20, ZS0), end: (pa.x + ex * sf + ox * 20, pa.y + ey * sf + oy * 20, RF - 30), cross_width: 20, cross_height: 50, height_direction: (ox, oy, 0), material: "ICS_Gold"));
+              FL = append(FL, beam_between(start: (pa.x + ex * sf + ox * 18, pa.y + ey * sf + oy * 18, ZS0), end: (pa.x + ex * sf + ox * 18, pa.y + ey * sf + oy * 18, RF - 30), cross_width: 16, cross_height: 46, height_direction: (ox, oy, 0), material: "ICS_Gold"));
             }
           }
         }
@@ -310,7 +342,7 @@ if lodq == 0 {
           let gm = gold_s * 0.5;
           FL = append(FL, beam_between(start: (pa.x + ex * gm + ox * 6, pa.y + ey * gm + oy * 6, ZS0), end: (pa.x + ex * gm + ox * 6, pa.y + ey * gm + oy * 6, RF - 30), cross_width: gold_s, cross_height: 20, height_direction: (ox, oy, 0), material: "ICS_GoldPanel"));
         }
-        // balconies: 0 none, 1 straight, 2 curved
+        // balconies: 0 none, 1 straight, 2 curved, 3 slab edge only
         for j in 0..8 {
           if (j < nb) * (el > 800) > 0 {
             let is_se = onv < -0.9;
@@ -411,7 +443,7 @@ if lodq == 0 {
   }
   // infinity pool on the river edge in front of the SW block (Photo B)
   let pw0 = 75;
-  let pw1 = 380;
+  let pw1 = 520;
   let pr = [(SEA.x + SEX * POOL_S0 + SE_IX * pw0, SEA.y + SEY * POOL_S0 + SE_IY * pw0), (SEA.x + SEX * POOL_S1 + SE_IX * pw0, SEA.y + SEY * POOL_S1 + SE_IY * pw0), (SEA.x + SEX * POOL_S1 + SE_IX * pw1, SEA.y + SEY * POOL_S1 + SE_IY * pw1), (SEA.x + SEX * POOL_S0 + SE_IX * pw1, SEA.y + SEY * POOL_S0 + SE_IY * pw1)];
   let pinner = [(SEA.x + SEX * (POOL_S0 + 30) + SE_IX * (pw0 + 25), SEA.y + SEY * (POOL_S0 + 30) + SE_IY * (pw0 + 25)), (SEA.x + SEX * (POOL_S1 - 30) + SE_IX * (pw0 + 25), SEA.y + SEY * (POOL_S1 - 30) + SE_IY * (pw0 + 25)), (SEA.x + SEX * (POOL_S1 - 30) + SE_IX * (pw1 - 30), SEA.y + SEY * (POOL_S1 - 30) + SE_IY * (pw1 - 30)), (SEA.x + SEX * (POOL_S0 + 30) + SE_IX * (pw1 - 30), SEA.y + SEY * (POOL_S0 + 30) + SE_IY * (pw1 - 30))];
   let pool_rim = translate(extrude_shape(outer: pr, holes: [pinner], height: 45, material: "ICS_White"), (0, 0, Z_BOX + 5));

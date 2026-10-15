@@ -1,36 +1,43 @@
 // ICS_Crown - gold "krathong" crown on the Z4 roof (CROWN_BASE 58 m -> CROWN_TOP 75 m)
-// Crown crew. World cm, Z up, authored in WORLD coordinates (placed at 0,0,0).
-// Calibration (crown crew, vs Photo A + Photo B with two fitted pinhole cameras):
-//   The dossier's INFERRED CROWN_FP (60 m E-W x 100 m N-S, centre (9,-32)) projects ~1.8x too wide in
-//   Photo A and too far east in Photo B. Both photos fit a boat-shaped oval with its LONG axis on the
-//   site grid E-W (rotated SITE_ROT_DEG, so the prow points along the bank normal, bearing 86.1),
-//   ~100 m long x 44 m wide, centred at (-12.5, -48) m, prow tip 0.7 m inside the Z4 east edge.
-//   Rim sweeps from 72.5 m (stern, west) to CROWN_TOP 75 m at the prow (Photo A), band deepens
-//   to a 6 m beak at the prow; triangular Wisdom Hall gable (A-frame, 58 -> ~69 m) under the prow.
+// Crown crew. World cm, Z up, authored in WORLD coordinates (object placed at 0,0,0).
+// Parts: gold rim band (ICS_GoldRoof) with champagne coping (ICS_Gold) and a warm cove strip under it
+//   (ICS_WarmLight); white canopy deck with 3 stepped tiers on gold fascias; glazed drum (ICS_SolidGlass)
+//   wrapped in ~150 white fins that rake into the prow "sails"; white kerb on the Z4 roof; Wisdom Hall
+//   A-frame at the river prow: white legs, triangular glass with cable-net mullions (ICS_DarkMetal) and
+//   warm floor-edge lines; the rim deepens into a downturned beak over the gable apex (Photo A).
+// Calibration (vs Photo A + Photo B, two fitted pinhole cameras, rms 22 px / 14 px):
+//   The dossier's INFERRED CROWN_FP (60 m E-W x 100 m N-S, centre (9,-32) m) projects ~1.8x too wide
+//   in Photo A and too far east in Photo B. Both photos fit a boat-shaped oval with its LONG axis on
+//   the site grid (rotated SITE_ROT_DEG, prow toward the river along bearing 86.1): 88 m tip-to-stern
+//   (95 m over the flared rim) x 46 m (51 m over the rim), centred (-7, -50) m, prow 1.3 m inside the
+//   Z4 east edge. Rim top 72.0 m at the stern sweeping to CROWN_TOP 75.0 m at the prow; drum 58 -> ~68 m.
 // Local construction frame inside CROWN_Body: u = along the long axis toward the prow (east),
 // v = across (north), z = world height; rotated by SITE_ROT_DEG about the crown centre at the end.
 
 #meshpart CROWN_Body
 param lod = 0;                  // 0 = full detail, 1 = far display, 2 = collider
 // ---- calibrated frame ----
-let CR_CX = -1250;              // crown centre, world x (cm)
-let CR_CY = -4800;              // crown centre, world y (cm)
-let CR_A = 5000;                // centre -> prow tip (cm)
-let CR_B = 2200;                // half width (cm)
-let CR_K = 0.8;                 // prow pinch exponent (0 = plain ellipse)
-let CR_ZST = 7250;              // rim top at the stern (west end)
+let CR_CX = -700;               // crown centre, world x (cm)
+let CR_CY = -5000;              // crown centre, world y (cm)
+let CR_A = 4400;                // centre -> prow tip (cm)
+let CR_B = 2300;                // half width (cm)
+let CR_P = 0.45;                // prow pinch (0 = plain ellipse); keeps a 3.6 m tip radius
+let CR_ZST = 7200;              // rim top at the stern (west end)
 let CR_ZPR = CROWN_TOP;         // rim top at the prow tip
 let CR_ZB0 = CROWN_BASE - 10;   // drum foot, embedded 10 cm into the Z4 roof
 let CR_TH = 70;                 // rim band thickness
-let CR_DKT = 7150;              // canopy deck top
-let CR_DKB = 7100;              // canopy deck underside
+let CR_DKT = 7120;              // canopy deck top
+let CR_DKB = 7070;              // canopy deck underside
 let CR_TAPER = 550;             // drum inset at its foot (drum leans out under the rim)
-let CR_US = 2200;               // start of the prow transition (u)
-let CR_UG = 4600;               // Wisdom Hall gable head line (u)
-let CR_UGB = 4640;              // Wisdom Hall gable foot line (u)
-let CR_HWB = 1050;              // gable foot half width
-let CR_HWG = 800;               // glass triangle foot half width
-let n = select(160, 48, lod > 0.5);
+let CR_US = 1900;               // start of the prow transition (u)
+let CR_UG = 4200;               // Wisdom Hall gable head line (u)
+let CR_UGB = 4240;              // Wisdom Hall gable foot line (u)
+let CR_HWB = 1150;              // gable foot half width
+let CR_HWG = 860;               // glass triangle foot half width
+let CR_BEAK = 380;              // extra band depth at the prow tip (the downturned beak in Photo A)
+let CR_QG = (CR_UG + CR_A) / (2 * CR_A);
+let CR_ZG = CR_ZST + (CROWN_TOP - CR_ZST) * CR_QG * CR_QG - 450 - 100 * pow(CR_QG, 4);   // gable head z
+let n = select(160, 36, lod > 0.5);
 
 var g = empty();
 
@@ -41,7 +48,7 @@ if lod > 1.5 {
         let t = 360 * i / 20;
         let s = sin(t);
         let c = cos(t);
-        cpts = append(cpts, (CR_A * c, CR_B * s * pow(max(abs(s), 0.000001), CR_K * max(c, 0))));
+        cpts = append(cpts, (CR_A * c, CR_B * s * (1 - CR_P * max(c, 0) * max(c, 0))));
     }
     g = translate(extrude(points: cpts, height: CR_DKT - CR_ZB0, material: "ICS_White"), (0, 0, CR_ZB0));
 } else {
@@ -53,11 +60,12 @@ if lod > 1.5 {
         let s = sin(t);
         let c = cos(t);
         ou = append(ou, CR_A * c);
-        ov = append(ov, CR_B * s * pow(max(abs(s), 0.000001), CR_K * max(c, 0)));
+        ov = append(ov, CR_B * s * (1 - CR_P * max(c, 0) * max(c, 0)));
     }
     // ---------------- rim band rings, cove strip, deck, drum head ----------------
     var r_ot = []; var r_ob = []; var r_ib = []; var r_it = [];
     var l_ot = []; var l_ob = []; var l_ib = []; var l_it = [];
+    var c_ot = []; var c_ob = []; var c_ib = []; var c_it = [];
     var deck = [];
     var tu = []; var tv = []; var tz = []; var tcl = [];
     var nxs = []; var nys = [];
@@ -73,14 +81,20 @@ if lod > 1.5 {
         let nx = dv / ln;
         let ny = 0 - du / ln;
         let q = (u + CR_A) / (2 * CR_A);
-        let zt = CR_ZST + (CR_ZPR - CR_ZST) * pow(q, 2.5);   // sheer line: sweeps up to the prow
-        let d = 450 + 200 * pow(q, 4);                        // band depth: 4.5 m stern -> 6.5 m prow
+        let zt = CR_ZST + (CR_ZPR - CR_ZST) * pow(q, 2);     // sheer line: sweeps up to the prow
+        let bk = smoothstep(CR_UG, CR_A, u);
+        let d = 450 + 100 * pow(q, 4) + CR_BEAK * bk * bk;    // band depth: 4.5 m stern -> 5.5 m bow -> 9.3 m beak tip
         let zb = zt - d;
         let fl = 240 + 260 * pow(q, 6);                       // outward flare, beak at the prow
-        r_ot = append(r_ot, (u + nx * fl, v + ny * fl, zt));
+        r_ot = append(r_ot, (u + nx * fl, v + ny * fl, zt - 6));
         r_ob = append(r_ob, (u, v, zb));
         r_ib = append(r_ib, (u - nx * CR_TH, v - ny * CR_TH, zb));
-        r_it = append(r_it, (u + nx * (fl - CR_TH), v + ny * (fl - CR_TH), zt));
+        r_it = append(r_it, (u + nx * (fl - CR_TH), v + ny * (fl - CR_TH), zt - 6));
+        // champagne-gold coping on the rim lip (14 cm, tops out at the sheer line, 6 cm proud outside)
+        c_ot = append(c_ot, (u + nx * (fl + 6), v + ny * (fl + 6), zt));
+        c_ob = append(c_ob, (u + nx * (fl + 6), v + ny * (fl + 6), zt - 14));
+        c_ib = append(c_ib, (u + nx * (fl - CR_TH - 6), v + ny * (fl - CR_TH - 6), zt - 14));
+        c_it = append(c_it, (u + nx * (fl - CR_TH - 6), v + ny * (fl - CR_TH - 6), zt));
         // warm cove light strip tucked under the band (embedded 3 cm, 7 cm proud below)
         l_ot = append(l_ot, (u - nx * 10, v - ny * 10, zb + 3));
         l_ob = append(l_ob, (u - nx * 10, v - ny * 10, zb - 7));
@@ -96,7 +110,7 @@ if lod > 1.5 {
         if cl > 0.5 { wt = max(wt, abs(hv)); }
         tu = append(tu, min(hu, CR_UG));
         tv = append(tv, hv);
-        tz = append(tz, zb + 15);
+        tz = append(tz, select(zb, CR_ZG, cl) + 15);
         tcl = append(tcl, cl);
         nxs = append(nxs, nx);
         nys = append(nys, ny);
@@ -106,7 +120,7 @@ if lod > 1.5 {
     let deck_slab = translate(extrude(points: deck, height: CR_DKT - CR_DKB, material: "ICS_White"), (0, 0, CR_DKB));
     g = merge(g, deck_slab);
 
-    // ---------------- drum (white) + prow sails + Wisdom Hall gable wall ----------------
+    // ---------------- glazed drum + prow sails + Wisdom Hall gable wall ----------------
     var r_t = []; var r_b = []; var r_ti = []; var r_bi = [];
     for i in 0..n {
         let u = at(ou, i);
@@ -126,8 +140,15 @@ if lod > 1.5 {
         r_ti = append(r_ti, (hu - nx * 40, hv - ny * 40, at(tz, i)));
         r_bi = append(r_bi, (bu - nx * 40, bv - ny * 40, CR_ZB0));
     }
-    let drum = loft_sections(sections: [r_b, r_t, r_ti, r_bi, r_b], closed: "yes", material: "ICS_White");
+    let drum = loft_sections(sections: [r_b, r_t, r_ti, r_bi, r_b], closed: "yes", material: "ICS_SolidGlass");
     g = merge(g, drum);
+    // white kerb where the drum meets the Z4 roof: closes the drum foot, doubles as the gable sill
+    var kerb = [];
+    for i in 0..n {
+        let p = at(r_b, i);
+        kerb = append(kerb, (p.x * 1.012, p.y * 1.025));
+    }
+    g = merge(g, translate(extrude(points: kerb, height: 55, material: "ICS_White"), (0, 0, CR_ZB0 + 5)));
 
     // gable geometry (head line at CR_UG, foot line at CR_UGB)
     let zg = at(tz, 0);
@@ -141,19 +162,21 @@ if lod > 1.5 {
     // bow soffit plug: closes the pocket between the gable head and the band tip
     var plug = [];
     for j in 0..13 {
-        let t = -27 + 4.5 * j;
+        let t = -24 + 4 * j;
         let s = sin(t);
         let c = cos(t);
         let pu = CR_A * c;
-        let pv = CR_B * s * pow(max(abs(s), 0.000001), CR_K * max(c, 0));
+        let pv = CR_B * s * (1 - CR_P * max(c, 0) * max(c, 0));
         plug = append(plug, (pu - 15, pv * 0.9));
     }
     g = merge(g, translate(extrude(points: plug, height: 35, material: "ICS_White"), (0, 0, zg - 30)));
 
     if lod < 0.5 {
         // ---------------- full detail ----------------
-        // cove light under the rim
+        // cove light under the rim, champagne coping on the lip
         g = merge(g, loft_sections(sections: [l_ot, l_ob, l_ib, l_it, l_ot], closed: "yes", material: "ICS_WarmLight"));
+        g = merge(g, loft_sections(sections: [c_ot, c_ob, c_ib, c_it, c_ot], closed: "yes", material: "ICS_Gold"));
+
         // stepped canopy tiers (gold fascia, white tops)
         let u0 = -300;
         for k in 1..4 {
@@ -168,9 +191,9 @@ if lod > 1.5 {
                 tp = append(tp, (u0 + (p.x - u0) * su, p.y * sv));
                 tq = append(tq, (u0 + (p.x - u0) * su2, p.y * sv2));
             }
-            let zl = CR_DKT + (k - 1) * 75;
-            g = merge(g, translate(extrude(points: tp, height: 77, material: "ICS_GoldRoof"), (0, 0, zl - 2)));
-            g = merge(g, translate(extrude(points: tq, height: 8, material: "ICS_White"), (0, 0, zl + 73)));
+            let zl = CR_DKT + (k - 1) * 55;
+            g = merge(g, translate(extrude(points: tp, height: 57, material: "ICS_GoldRoof"), (0, 0, zl - 2)));
+            g = merge(g, translate(extrude(points: tq, height: 8, material: "ICS_White"), (0, 0, zl + 53)));
         }
         // drum fins (white ribs): vertical on the drum, raking "sail" ribs at the prow
         for i in 0..n {
@@ -179,7 +202,7 @@ if lod > 1.5 {
                 let ny = at(nys, i);
                 let a = at(r_b, i);
                 let b = at(r_t, i);
-                g = merge(g, beam_between(start: (a.x + nx * 30, a.y + ny * 30, a.z), end: (b.x + nx * 30, b.y + ny * 30, b.z - 15), cross_width: 40, cross_height: 70, height_direction: (nx, ny, 0), material: "ICS_White"));
+                g = merge(g, beam_between(start: (a.x + nx * 30, a.y + ny * 30, a.z + 30), end: (b.x + nx * 30, b.y + ny * 30, b.z - 15), cross_width: 55, cross_height: 80, height_direction: (nx, ny, 0), material: "ICS_White"));
             }
         }
         // Wisdom Hall cable-net mullions + warm floor-edge glow lines in front of the glass
