@@ -1,0 +1,3955 @@
+{
+ "meta": {
+  "doc_id": "ICONSIAM-DC-FP-001",
+  "revision": "A",
+  "date": "2026-10-14",
+  "issued_by": "Document Control lead",
+  "frame": "local metres; origin (0,0,0) = Google Maps pin 13.7268131 N, 100.5103667 E (the user's link; the user asked for the model at 0 0 0); x = east, y = north (TRUE north), z = up; ground z=0 = River Park / Charoen Nakhon Rd grade (INFERRED flat site)",
+  "projection": "equirectangular about origin: x=(lon-100.5103667)*108140.5 ; y=(lat-13.7268131)*110574 ; error < 0.1 m inside 500 m",
+  "superseded": "towers_footprints_local.json (towers researcher) used the UTM 47N grid, which is rotated 0.36 deg from true north; its vertices differ by up to 1.14 m. SUPERSEDED by this file.",
+  "winding": "polygons CCW, not closed (first vertex not repeated)",
+  "status_legend": {
+   "OSM": "traced geometry from OpenStreetMap, verified against raw Overture extract (max vertex deviation 0.07 m)",
+   "DERIVED": "computed by Doc Control from OSM geometry",
+   "INFERRED": "estimated by Doc Control from photos + published figures; NOT measured; calibrate against the user's photos"
+  },
+  "source": "OpenStreetMap (c) OSM contributors, ODbL-1.0, via Overture Maps release 2026-09-23.1 (OSM snapshot 2026-09-06), https://overturemaps-us-west-2.s3.us-west-2.amazonaws.com/release/2026-09-23.1/",
+  "dossier": "DOSSIER.md (ICONSIAM-DC-DOSSIER-001 rev A)"
+ },
+ "mall": {
+  "name": "ICONSIAM (main building + ICONLUXE riverside podium)",
+  "osm_outline": {
+   "status": "OSM",
+   "osm_id": "w680735864@18",
+   "osm_url": "https://www.openstreetmap.org/way/680735864",
+   "tags": {
+    "building": "retail",
+    "building:levels": 8,
+    "height": null
+   },
+   "area_m2": 33786,
+   "n_vertices": 33,
+   "vertices_xy_m": [
+    [
+     -34.6,
+     107.4
+    ],
+    [
+     -120.5,
+     91.0
+    ],
+    [
+     -120.5,
+     82.6
+    ],
+    [
+     -110.6,
+     -19.9
+    ],
+    [
+     -105.0,
+     -77.5
+    ],
+    [
+     -102.8,
+     -104.6
+    ],
+    [
+     28.9,
+     -98.0
+    ],
+    [
+     37.8,
+     -91.0
+    ],
+    [
+     48.7,
+     -86.9
+    ],
+    [
+     71.8,
+     -86.7
+    ],
+    [
+     74.6,
+     -98.2
+    ],
+    [
+     85.7,
+     -97.3
+    ],
+    [
+     93.2,
+     -93.6
+    ],
+    [
+     99.8,
+     -83.8
+    ],
+    [
+     99.7,
+     -65.4
+    ],
+    [
+     92.0,
+     -66.0
+    ],
+    [
+     89.1,
+     -61.4
+    ],
+    [
+     94.1,
+     -55.5
+    ],
+    [
+     97.5,
+     -47.0
+    ],
+    [
+     95.7,
+     -36.6
+    ],
+    [
+     93.6,
+     -24.8
+    ],
+    [
+     95.1,
+     -2.5
+    ],
+    [
+     98.7,
+     4.7
+    ],
+    [
+     107.1,
+     14.2
+    ],
+    [
+     110.1,
+     22.9
+    ],
+    [
+     111.5,
+     31.7
+    ],
+    [
+     109.8,
+     51.0
+    ],
+    [
+     91.5,
+     50.8
+    ],
+    [
+     75.8,
+     44.7
+    ],
+    [
+     63.3,
+     34.0
+    ],
+    [
+     56.1,
+     22.0
+    ],
+    [
+     -7.8,
+     20.9
+    ],
+    [
+     -26.8,
+     104.1
+    ]
+   ]
+  },
+  "river_face_polyline": {
+   "status": "DERIVED",
+   "note": "east/SE/NE perimeter from vertex 6 (28.9,-98.0) to vertex 30 (56.1,22.0); length matches seele 300 m pleated glass front (https://seele.com/project/glass-front-iconsiam-bangkok)",
+   "length_m": 306.4,
+   "vertices_xy_m": [
+    [
+     28.9,
+     -98.0
+    ],
+    [
+     37.8,
+     -91.0
+    ],
+    [
+     48.7,
+     -86.9
+    ],
+    [
+     71.8,
+     -86.7
+    ],
+    [
+     74.6,
+     -98.2
+    ],
+    [
+     85.7,
+     -97.3
+    ],
+    [
+     93.2,
+     -93.6
+    ],
+    [
+     99.8,
+     -83.8
+    ],
+    [
+     99.7,
+     -65.4
+    ],
+    [
+     92.0,
+     -66.0
+    ],
+    [
+     89.1,
+     -61.4
+    ],
+    [
+     94.1,
+     -55.5
+    ],
+    [
+     97.5,
+     -47.0
+    ],
+    [
+     95.7,
+     -36.6
+    ],
+    [
+     93.6,
+     -24.8
+    ],
+    [
+     95.1,
+     -2.5
+    ],
+    [
+     98.7,
+     4.7
+    ],
+    [
+     107.1,
+     14.2
+    ],
+    [
+     110.1,
+     22.9
+    ],
+    [
+     111.5,
+     31.7
+    ],
+    [
+     109.8,
+     51.0
+    ],
+    [
+     91.5,
+     50.8
+    ],
+    [
+     75.8,
+     44.7
+    ],
+    [
+     63.3,
+     34.0
+    ],
+    [
+     56.1,
+     22.0
+    ]
+   ]
+  },
+  "height_zones": {
+   "status": "INFERRED",
+   "method": "bands parallel to the riverbank (bank bearing 356.1 deg); u = x*cos3.9+y*sin3.9; Z1 u>70 plus NE lobe (x>40 and north of the main-block north edge line (-7.8,20.9)-(56.1,22.0)); Z2 55<u<=70; Z3 40<u<=55; Z4 u<=40. Zones tile the OSM outline exactly (sum = outline area).",
+   "zones": [
+    {
+     "name": "Z1_riverside_podium",
+     "use": "ICONLUXE + riverside glass podium (floors G, M, 1)",
+     "roof_z_m": 20.0,
+     "glass_balustrade_top_z_m": 24.0,
+     "basis": "glass hung from ceiling at 20 m (https://architizer.com/projects/iconsiam/); fins up to 24 m, 4 m above roof as roof-garden balustrade (https://seele.com/project/glass-front-iconsiam-bangkok)",
+     "parts_vertices_xy_m": [
+      [
+       [
+        68.6,
+        22.2
+       ],
+       [
+        76.8,
+        -98.0
+       ],
+       [
+        85.7,
+        -97.3
+       ],
+       [
+        93.2,
+        -93.6
+       ],
+       [
+        99.8,
+        -83.8
+       ],
+       [
+        99.7,
+        -65.4
+       ],
+       [
+        92.0,
+        -66.0
+       ],
+       [
+        89.1,
+        -61.4
+       ],
+       [
+        94.1,
+        -55.5
+       ],
+       [
+        97.5,
+        -47.0
+       ],
+       [
+        93.6,
+        -24.8
+       ],
+       [
+        95.1,
+        -2.5
+       ],
+       [
+        98.7,
+        4.7
+       ],
+       [
+        107.1,
+        14.2
+       ],
+       [
+        110.1,
+        22.9
+       ],
+       [
+        111.5,
+        31.7
+       ],
+       [
+        109.8,
+        51.0
+       ],
+       [
+        91.5,
+        50.8
+       ],
+       [
+        75.8,
+        44.7
+       ],
+       [
+        63.3,
+        34.0
+       ],
+       [
+        56.1,
+        22.0
+       ]
+      ]
+     ],
+     "area_m2": 4116
+    },
+    {
+     "name": "Z2_terrace_step_A",
+     "use": "stepped glass terrace (~5F river-view dining)",
+     "roof_z_m": 36.5,
+     "basis": "INFERRED: 5F outdoor river-view seating (https://eatinasia.blog/countries/thailand/iconsiam-bangkok-dining-guide); 20 m + 3 floors x 5.5 m",
+     "parts_vertices_xy_m": [
+      [
+       [
+        74.6,
+        -98.2
+       ],
+       [
+        76.8,
+        -98.0
+       ],
+       [
+        68.6,
+        22.2
+       ],
+       [
+        53.6,
+        22.0
+       ],
+       [
+        61.0,
+        -86.8
+       ],
+       [
+        71.8,
+        -86.7
+       ]
+      ]
+     ],
+     "area_m2": 1673
+    },
+    {
+     "name": "Z3_terrace_step_B",
+     "use": "stepped glass terrace (~6F Tasana Nakorn open-air terrace)",
+     "roof_z_m": 42.0,
+     "basis": "INFERRED: 6F open-air terrace facing the water (https://www.phuket101.net/tasana-nakorn-terrace/)",
+     "parts_vertices_xy_m": [
+      [
+       [
+        46.1,
+        -87.9
+       ],
+       [
+        48.7,
+        -86.9
+       ],
+       [
+        61.0,
+        -86.8
+       ],
+       [
+        53.6,
+        22.0
+       ],
+       [
+        38.6,
+        21.7
+       ]
+      ]
+     ],
+     "area_m2": 1635
+    },
+    {
+     "name": "Z4_main_block",
+     "use": "main 10-level mall block (G, M, 1-8); white pleated/diamond aluminium on S, W, N faces",
+     "roof_z_m": 58.0,
+     "basis": "INFERRED: 20 m podium + 2F..8F (7 floors x ~5.5 m) = 58.5 m; low confidence",
+     "parts_vertices_xy_m": [
+      [
+       [
+        37.8,
+        -91.0
+       ],
+       [
+        46.1,
+        -87.9
+       ],
+       [
+        38.6,
+        21.7
+       ],
+       [
+        -7.8,
+        20.9
+       ],
+       [
+        -26.8,
+        104.1
+       ],
+       [
+        -34.6,
+        107.4
+       ],
+       [
+        -120.5,
+        91.0
+       ],
+       [
+        -120.5,
+        82.6
+       ],
+       [
+        -105.0,
+        -77.5
+       ],
+       [
+        -102.8,
+        -104.6
+       ],
+       [
+        28.9,
+        -98.0
+       ]
+      ]
+     ],
+     "area_m2": 26361
+    }
+   ]
+  },
+  "gold_crown": {
+   "status": "INFERRED (LOW confidence: position, size and shape)",
+   "shape": "oval/krathong-like swooping gold crown above main roof",
+   "centre_xy_m": [
+    9,
+    -32
+   ],
+   "semi_axis_EW_m": 30,
+   "semi_axis_NS_m": 50,
+   "rotation_deg_ccw_from_east": 3.9,
+   "base_z_m": 58.0,
+   "top_z_m": 70.0,
+   "basis": "krathong-shaped top (https://thailandmagazine.com/bangkok/shopping-malls/iconsiam/); gold+white lighting brief (https://lsionline.com/news/martin-illuminates-the-bangkok-skyline); aluminium honeycomb roof panels set in an arc (https://www.togen.com.cn/article/project-review-icon-siam-retail-mall); placed as far toward the river as fits inside Z4",
+   "vertices_xy_m": [
+    [
+     37.7,
+     -20.3
+    ],
+    [
+     35.4,
+     -11.0
+    ],
+    [
+     32.0,
+     -2.6
+    ],
+    [
+     27.8,
+     4.7
+    ],
+    [
+     22.8,
+     10.6
+    ],
+    [
+     17.3,
+     14.9
+    ],
+    [
+     11.5,
+     17.3
+    ],
+    [
+     5.6,
+     17.9
+    ],
+    [
+     -0.2,
+     16.5
+    ],
+    [
+     -5.6,
+     13.3
+    ],
+    [
+     -10.5,
+     8.3
+    ],
+    [
+     -14.6,
+     1.8
+    ],
+    [
+     -17.8,
+     -6.0
+    ],
+    [
+     -20.0,
+     -14.8
+    ],
+    [
+     -21.0,
+     -24.3
+    ],
+    [
+     -20.9,
+     -34.0
+    ],
+    [
+     -19.7,
+     -43.7
+    ],
+    [
+     -17.4,
+     -53.0
+    ],
+    [
+     -14.0,
+     -61.4
+    ],
+    [
+     -9.8,
+     -68.7
+    ],
+    [
+     -4.8,
+     -74.6
+    ],
+    [
+     0.7,
+     -78.9
+    ],
+    [
+     6.5,
+     -81.3
+    ],
+    [
+     12.4,
+     -81.9
+    ],
+    [
+     18.2,
+     -80.5
+    ],
+    [
+     23.6,
+     -77.3
+    ],
+    [
+     28.5,
+     -72.3
+    ],
+    [
+     32.6,
+     -65.8
+    ],
+    [
+     35.8,
+     -58.0
+    ],
+    [
+     38.0,
+     -49.2
+    ],
+    [
+     39.0,
+     -39.7
+    ],
+    [
+     38.9,
+     -30.0
+    ]
+   ],
+   "area_m2": 4684
+  }
+ },
+ "tower_south_magnolias": {
+  "name": "Magnolias Waterfront Residences (taller; LEFT tower in Photo A)",
+  "osm_outline_base": {
+   "status": "OSM",
+   "role": "ground-level podium/base outline (INFERRED role: 3,186 m2 is too large for a 70-floor residential plate)",
+   "osm_id": "w680736465@10",
+   "osm_url": "https://www.openstreetmap.org/way/680736465",
+   "tags": {
+    "height": 317.95,
+    "building:levels": 70
+   },
+   "area_m2": 3188,
+   "min_rotated_rect_m": [
+    78.1,
+    53.4
+   ],
+   "long_axis_deg_ccw_from_east": 101.0,
+   "vertices_xy_m": [
+    [
+     8.2,
+     117.3
+    ],
+    [
+     -18.0,
+     112.0
+    ],
+    [
+     -4.7,
+     43.7
+    ],
+    [
+     -2.8,
+     41.7
+    ],
+    [
+     -0.3,
+     40.5
+    ],
+    [
+     9.0,
+     40.7
+    ],
+    [
+     25.1,
+     41.0
+    ],
+    [
+     45.8,
+     63.1
+    ],
+    [
+     42.6,
+     80.6
+    ],
+    [
+     41.4,
+     82.5
+    ],
+    [
+     39.9,
+     84.2
+    ],
+    [
+     21.4,
+     97.5
+    ],
+    [
+     15.4,
+     102.0
+    ],
+    [
+     13.6,
+     104.4
+    ]
+   ],
+   "podium_top_z_m": 27.0,
+   "podium_basis": "INFERRED: facilities on 6th floor (https://www.thailand-property.com/new-home/3650/magnolias-waterfront-residences-iconsiam) -> ~6 floors x 4.5 m"
+  },
+  "shaft_INFERRED": {
+   "status": "INFERRED",
+   "shape": "chamfered rectangle (4 m chamfers)",
+   "length_m": 48,
+   "width_m": 32,
+   "long_axis_deg_ccw_from_east": 99.0,
+   "centre_xy_m": [
+    11.0,
+    69.5
+   ],
+   "area_m2": 1504,
+   "fits_inside_osm_outline_margin_m": 3.3,
+   "vertices_xy_m": [
+    [
+     23.7,
+     91.8
+    ],
+    [
+     19.1,
+     95.1
+    ],
+    [
+     -4.6,
+     91.3
+    ],
+    [
+     -7.9,
+     86.8
+    ],
+    [
+     -1.7,
+     47.2
+    ],
+    [
+     2.9,
+     43.9
+    ],
+    [
+     26.6,
+     47.7
+    ],
+    [
+     29.9,
+     52.2
+    ]
+   ],
+   "basis": "plate sized from unit mix (379 units; 203 one-beds of 60-79 m2, FazWaz) and photo slenderness; axis from OSM outline. Calibrate width against Photo A."
+  },
+  "heights": {
+   "roof_z_m": 281.0,
+   "architectural_top_z_m": 315.0,
+   "tip_z_m": 317.95,
+   "floors_above_ground": 70,
+   "basements": 2
+  }
+ },
+ "tower_north_mandarin_oriental": {
+  "name": "The Residences at Mandarin Oriental, Bangkok (RIGHT tower in Photo A; golden podium box in Photo B)",
+  "osm_outline_base": {
+   "status": "OSM",
+   "role": "ground-level podium/base outline incl. golden podium box (INFERRED role)",
+   "osm_id": "w680739268@9",
+   "osm_url": "https://www.openstreetmap.org/way/680739268",
+   "tags": {
+    "height": 272.2,
+    "building:levels": 52
+   },
+   "area_m2": 2174,
+   "min_rotated_rect_m": [
+    67.1,
+    46.1
+   ],
+   "long_axis_deg_ccw_from_east": 46.1,
+   "vertices_xy_m": [
+    [
+     92.0,
+     140.8
+    ],
+    [
+     91.2,
+     142.6
+    ],
+    [
+     89.0,
+     143.3
+    ],
+    [
+     52.4,
+     138.0
+    ],
+    [
+     46.5,
+     132.3
+    ],
+    [
+     25.7,
+     120.6
+    ],
+    [
+     28.1,
+     110.8
+    ],
+    [
+     30.0,
+     108.4
+    ],
+    [
+     52.7,
+     86.5
+    ],
+    [
+     56.0,
+     86.1
+    ],
+    [
+     58.3,
+     88.0
+    ],
+    [
+     88.8,
+     123.4
+    ]
+   ],
+   "podium_top_z_m": 24.0,
+   "podium_basis": "INFERRED: lobby floor 1 + River Clubhouse floors 4-5 (https://www.khaosodenglish.com/life/2019/08/15/heres-what-the-condo-above-iconsiam-looks-like-and-costs-photos/) -> ~5 floors"
+  },
+  "shaft_INFERRED": {
+   "status": "INFERRED",
+   "shape": "chamfered rectangle (4 m chamfers)",
+   "length_m": 46,
+   "width_m": 30,
+   "long_axis_deg_ccw_from_east": 49.1,
+   "centre_xy_m": [
+    59.7,
+    114.1
+   ],
+   "area_m2": 1351,
+   "fits_inside_osm_outline_margin_m": 0.9,
+   "vertices_xy_m": [
+    [
+     83.5,
+     118.6
+    ],
+    [
+     83.1,
+     124.3
+    ],
+    [
+     66.4,
+     138.7
+    ],
+    [
+     60.8,
+     138.3
+    ],
+    [
+     35.9,
+     109.6
+    ],
+    [
+     36.3,
+     103.9
+    ],
+    [
+     53.0,
+     89.5
+    ],
+    [
+     58.6,
+     89.9
+    ]
+   ],
+   "basis": "4 units/floor on floors 6-42 (khaosodenglish, listing sites) -> ~1,300-1,500 m2 gross plate; axis from OSM outline"
+  },
+  "heights": {
+   "roof_z_m": 232.0,
+   "roof_status": "INFERRED (range 223-241)",
+   "architectural_top_z_m": 268.7,
+   "tip_z_m": 272.2,
+   "floors_above_ground": 52
+  }
+ },
+ "riverbank_west_line": {
+  "status": "OSM",
+  "osm_id": "r14038959@9 (outer ring, site-side west bank)",
+  "osm_url": "https://www.openstreetmap.org/relation/14038959",
+  "order": "south to north",
+  "n_vertices": 50,
+  "length_m": 855.6,
+  "vertices_xy_m": [
+   [
+    133.7,
+    -377.0
+   ],
+   [
+    134.3,
+    -368.6
+   ],
+   [
+    136.2,
+    -355.5
+   ],
+   [
+    136.4,
+    -354.1
+   ],
+   [
+    142.2,
+    -322.7
+   ],
+   [
+    145.6,
+    -303.1
+   ],
+   [
+    145.5,
+    -300.7
+   ],
+   [
+    146.4,
+    -298.0
+   ],
+   [
+    147.5,
+    -277.3
+   ],
+   [
+    147.7,
+    -274.3
+   ],
+   [
+    155.5,
+    -273.0
+   ],
+   [
+    155.5,
+    -218.2
+   ],
+   [
+    154.7,
+    -213.7
+   ],
+   [
+    145.7,
+    -214.3
+   ],
+   [
+    137.6,
+    -210.5
+   ],
+   [
+    134.8,
+    -210.1
+   ],
+   [
+    128.9,
+    -209.3
+   ],
+   [
+    128.3,
+    -182.7
+   ],
+   [
+    127.0,
+    -173.8
+   ],
+   [
+    125.3,
+    -161.9
+   ],
+   [
+    115.3,
+    -161.2
+   ],
+   [
+    113.7,
+    -131.5
+   ],
+   [
+    122.9,
+    -130.8
+   ],
+   [
+    122.2,
+    -119.9
+   ],
+   [
+    121.8,
+    -114.7
+   ],
+   [
+    121.4,
+    -109.2
+   ],
+   [
+    148.0,
+    -108.0
+   ],
+   [
+    146.0,
+    -73.9
+   ],
+   [
+    146.6,
+    -67.8
+   ],
+   [
+    146.2,
+    -38.0
+   ],
+   [
+    144.8,
+    -35.1
+   ],
+   [
+    143.3,
+    -11.0
+   ],
+   [
+    136.8,
+    69.8
+   ],
+   [
+    135.5,
+    89.0
+   ],
+   [
+    133.5,
+    116.2
+   ],
+   [
+    132.3,
+    131.9
+   ],
+   [
+    133.1,
+    156.7
+   ],
+   [
+    130.3,
+    187.4
+   ],
+   [
+    129.8,
+    191.4
+   ],
+   [
+    128.9,
+    195.5
+   ],
+   [
+    120.3,
+    247.4
+   ],
+   [
+    119.9,
+    249.1
+   ],
+   [
+    119.1,
+    252.1
+   ],
+   [
+    118.0,
+    256.2
+   ],
+   [
+    101.5,
+    317.9
+   ],
+   [
+    109.7,
+    321.5
+   ],
+   [
+    112.7,
+    330.5
+   ],
+   [
+    112.1,
+    339.0
+   ],
+   [
+    106.8,
+    341.4
+   ],
+   [
+    92.5,
+    389.1
+   ]
+  ],
+  "fits": {
+   "bank_fit_mall_south_half": {
+    "y_range_m": [
+     -105,
+     -12
+    ],
+    "n_samples": 46,
+    "fit_point_xy_m": [
+     146.0,
+     -58.3
+    ],
+    "bank_line_bearing_deg": 357.7,
+    "bank_line_angle_deg_from_east_ccw": 92.3,
+    "outward_normal_toward_river_bearing_deg": 87.7,
+    "max_deviation_from_fit_m": 1.0
+   },
+   "bank_fit_mall_north_half_and_towers": {
+    "y_range_m": [
+     -12,
+     157
+    ],
+    "n_samples": 85,
+    "fit_point_xy_m": [
+     137.0,
+     72.1
+    ],
+    "bank_line_bearing_deg": 356.0,
+    "bank_line_angle_deg_from_east_ccw": 94.0,
+    "outward_normal_toward_river_bearing_deg": 86.0,
+    "max_deviation_from_fit_m": 1.9
+   },
+   "bank_fit_whole_iconsiam_frontage": {
+    "y_range_m": [
+     -105,
+     157
+    ],
+    "n_samples": 131,
+    "fit_point_xy_m": [
+     140.2,
+     26.3
+    ],
+    "bank_line_bearing_deg": 356.1,
+    "bank_line_angle_deg_from_east_ccw": 93.9,
+    "outward_normal_toward_river_bearing_deg": 86.1,
+    "max_deviation_from_fit_m": 1.7
+   },
+   "bank_fit_towers_only": {
+    "y_range_m": [
+     40,
+     157
+    ],
+    "n_samples": 59,
+    "fit_point_xy_m": [
+     135.1,
+     98.1
+    ],
+    "bank_line_bearing_deg": 356.5,
+    "bank_line_angle_deg_from_east_ccw": 93.5,
+    "outward_normal_toward_river_bearing_deg": 86.5,
+    "max_deviation_from_fit_m": 1.5
+   }
+  },
+  "outward_normal_bearing_deg": 86.1,
+  "bank_bearing_deg": 356.1,
+  "river_width_m_at_y0": 205.1
+ },
+ "river_water_polygon_clip": {
+  "status": "OSM (clipped to x 60..420, y -400..400, simplified 0.5 m)",
+  "note": "includes the far (east) bank; use for the water surface",
+  "vertices_xy_m": [
+   [
+    132.0,
+    -400.0
+   ],
+   [
+    352.8,
+    -400.0
+   ],
+   [
+    353.1,
+    -398.3
+   ],
+   [
+    352.5,
+    -384.3
+   ],
+   [
+    350.0,
+    -375.7
+   ],
+   [
+    346.0,
+    -344.3
+   ],
+   [
+    342.9,
+    -287.8
+   ],
+   [
+    348.7,
+    -283.9
+   ],
+   [
+    357.7,
+    -279.7
+   ],
+   [
+    343.1,
+    -278.7
+   ],
+   [
+    343.6,
+    -271.2
+   ],
+   [
+    351.2,
+    -271.6
+   ],
+   [
+    352.8,
+    -235.3
+   ],
+   [
+    346.5,
+    -235.3
+   ],
+   [
+    347.0,
+    -229.3
+   ],
+   [
+    339.2,
+    -227.3
+   ],
+   [
+    339.6,
+    -184.4
+   ],
+   [
+    359.7,
+    -183.9
+   ],
+   [
+    358.7,
+    -166.9
+   ],
+   [
+    353.3,
+    -162.4
+   ],
+   [
+    349.9,
+    -154.4
+   ],
+   [
+    347.0,
+    -144.4
+   ],
+   [
+    343.5,
+    -143.7
+   ],
+   [
+    342.9,
+    -111.7
+   ],
+   [
+    353.3,
+    -111.1
+   ],
+   [
+    353.9,
+    -89.6
+   ],
+   [
+    352.8,
+    -56.9
+   ],
+   [
+    347.2,
+    2.6
+   ],
+   [
+    346.5,
+    17.3
+   ],
+   [
+    344.9,
+    33.2
+   ],
+   [
+    341.4,
+    52.0
+   ],
+   [
+    328.4,
+    110.1
+   ],
+   [
+    336.9,
+    121.1
+   ],
+   [
+    325.7,
+    170.6
+   ],
+   [
+    328.3,
+    171.3
+   ],
+   [
+    323.0,
+    189.9
+   ],
+   [
+    312.4,
+    188.3
+   ],
+   [
+    291.9,
+    272.0
+   ],
+   [
+    297.5,
+    277.6
+   ],
+   [
+    320.7,
+    294.2
+   ],
+   [
+    318.6,
+    302.4
+   ],
+   [
+    321.5,
+    303.1
+   ],
+   [
+    319.2,
+    314.6
+   ],
+   [
+    316.2,
+    319.6
+   ],
+   [
+    304.2,
+    318.0
+   ],
+   [
+    297.5,
+    328.6
+   ],
+   [
+    284.5,
+    333.1
+   ],
+   [
+    266.7,
+    400.0
+   ],
+   [
+    87.8,
+    400.0
+   ],
+   [
+    91.5,
+    393.2
+   ],
+   [
+    106.8,
+    341.4
+   ],
+   [
+    112.1,
+    339.0
+   ],
+   [
+    112.7,
+    330.5
+   ],
+   [
+    109.7,
+    321.5
+   ],
+   [
+    101.5,
+    317.9
+   ],
+   [
+    120.3,
+    247.4
+   ],
+   [
+    129.8,
+    191.4
+   ],
+   [
+    133.1,
+    156.7
+   ],
+   [
+    132.3,
+    131.9
+   ],
+   [
+    144.8,
+    -35.1
+   ],
+   [
+    146.2,
+    -38.0
+   ],
+   [
+    146.6,
+    -67.8
+   ],
+   [
+    146.0,
+    -73.9
+   ],
+   [
+    148.0,
+    -108.0
+   ],
+   [
+    121.4,
+    -109.2
+   ],
+   [
+    122.9,
+    -130.8
+   ],
+   [
+    113.7,
+    -131.5
+   ],
+   [
+    115.3,
+    -161.2
+   ],
+   [
+    125.3,
+    -161.9
+   ],
+   [
+    128.3,
+    -182.7
+   ],
+   [
+    128.9,
+    -209.3
+   ],
+   [
+    137.6,
+    -210.5
+   ],
+   [
+    145.7,
+    -214.3
+   ],
+   [
+    154.7,
+    -213.7
+   ],
+   [
+    155.5,
+    -218.2
+   ],
+   [
+    155.5,
+    -273.0
+   ],
+   [
+    147.7,
+    -274.3
+   ],
+   [
+    146.4,
+    -298.0
+   ],
+   [
+    134.3,
+    -368.6
+   ]
+  ]
+ },
+ "piers": {
+  "status": "OSM",
+  "items": [
+   {
+    "osm_id": "w1125558214@2",
+    "tags": {
+     "area": "yes",
+     "man_made": "pier"
+    },
+    "geom_type": "Polygon",
+    "area_m2": 160,
+    "centroid_xy_m": [
+     152.1,
+     119.7
+    ],
+    "vertices_xy_m": [
+     [
+      133.7,
+      113.6
+     ],
+     [
+      163.8,
+      116.2
+     ],
+     [
+      162.6,
+      129.8
+     ],
+     [
+      159.4,
+      129.5
+     ],
+     [
+      160.3,
+      119.4
+     ],
+     [
+      151.6,
+      118.6
+     ],
+     [
+      150.7,
+      128.5
+     ],
+     [
+      147.3,
+      128.2
+     ],
+     [
+      148.2,
+      117.5
+     ],
+     [
+      133.5,
+      116.2
+     ]
+    ]
+   },
+   {
+    "osm_id": "w1125558202@3",
+    "tags": {
+     "area": "yes",
+     "man_made": "pier"
+    },
+    "geom_type": "Polygon",
+    "area_m2": 1021,
+    "centroid_xy_m": [
+     152.7,
+     79.5
+    ],
+    "vertices_xy_m": [
+     [
+      136.8,
+      69.8
+     ],
+     [
+      147.6,
+      70.5
+     ],
+     [
+      148.7,
+      53.5
+     ],
+     [
+      152.1,
+      53.7
+     ],
+     [
+      165.5,
+      54.6
+     ],
+     [
+      165.3,
+      58.4
+     ],
+     [
+      160.7,
+      58.1
+     ],
+     [
+      160.1,
+      66.0
+     ],
+     [
+      166.0,
+      66.4
+     ],
+     [
+      164.0,
+      95.3
+     ],
+     [
+      158.5,
+      94.9
+     ],
+     [
+      158.0,
+      101.6
+     ],
+     [
+      162.7,
+      101.9
+     ],
+     [
+      162.5,
+      105.6
+     ],
+     [
+      146.5,
+      104.5
+     ],
+     [
+      147.5,
+      89.7
+     ],
+     [
+      135.5,
+      89.0
+     ]
+    ]
+   },
+   {
+    "osm_id": "w1057672409@2",
+    "names": {
+     "primary": "ท่าเรือฮิลตัน",
+     "name:en": "Hilton Pier",
+     "name:th": "ท่าเรือฮิลตัน"
+    },
+    "tags": {
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 34.0,
+    "vertices_xy_m": [
+     [
+      128.9,
+      195.5
+     ],
+     [
+      133.3,
+      196.5
+     ],
+     [
+      133.6,
+      195.3
+     ],
+     [
+      143.7,
+      197.9
+     ],
+     [
+      143.8,
+      197.2
+     ],
+     [
+      143.9,
+      196.3
+     ],
+     [
+      134.2,
+      193.7
+     ],
+     [
+      134.2,
+      192.1
+     ],
+     [
+      129.8,
+      191.4
+     ]
+    ]
+   },
+   {
+    "osm_id": "w656633298@1",
+    "tags": {
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 20.8,
+    "vertices_xy_m": [
+     [
+      154.4,
+      82.5
+     ],
+     [
+      155.5,
+      61.8
+     ]
+    ]
+   },
+   {
+    "osm_id": "w1128384549@1",
+    "tags": {
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 5.1,
+    "vertices_xy_m": [
+     [
+      135.3,
+      81.4
+     ],
+     [
+      130.2,
+      81.3
+     ]
+    ]
+   },
+   {
+    "osm_id": "w656633296@3",
+    "tags": {
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 19.2,
+    "vertices_xy_m": [
+     [
+      154.4,
+      82.5
+     ],
+     [
+      135.3,
+      81.4
+     ]
+    ]
+   },
+   {
+    "osm_id": "w656633297@1",
+    "tags": {
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 17.9,
+    "vertices_xy_m": [
+     [
+      154.4,
+      82.5
+     ],
+     [
+      153.3,
+      100.4
+     ]
+    ]
+   },
+   {
+    "osm_id": "n6174365548@2",
+    "names": {
+     "primary": "Icon Siam Pontoon 1B"
+    },
+    "tags": {
+     "floating": "yes",
+     "man_made": "pier"
+    },
+    "geom_type": "Point",
+    "xy_m": [
+     165.4,
+     -67.4
+    ]
+   },
+   {
+    "osm_id": "w659467497@5",
+    "tags": {
+     "highway": "footway",
+     "lit": "no",
+     "man_made": "pier",
+     "surface": "paving_stones"
+    },
+    "geom_type": "LineString",
+    "length_m": 24.3,
+    "vertices_xy_m": [
+     [
+      141.1,
+      -68.0
+     ],
+     [
+      146.6,
+      -67.8
+     ],
+     [
+      165.4,
+      -67.4
+     ]
+    ]
+   },
+   {
+    "osm_id": "w656633299@2",
+    "tags": {
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 17.9,
+    "vertices_xy_m": [
+     [
+      160.8,
+      -20.6
+     ],
+     [
+      161.2,
+      -38.5
+     ]
+    ]
+   },
+   {
+    "osm_id": "w656633295@3",
+    "tags": {
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 21.2,
+    "vertices_xy_m": [
+     [
+      160.8,
+      -20.6
+     ],
+     [
+      156.0,
+      -20.8
+     ],
+     [
+      139.7,
+      -21.2
+     ]
+    ]
+   },
+   {
+    "osm_id": "w656633300@2",
+    "tags": {
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 27.5,
+    "vertices_xy_m": [
+     [
+      160.8,
+      -20.6
+     ],
+     [
+      160.2,
+      0.1
+     ],
+     [
+      160.3,
+      1.3
+     ],
+     [
+      160.7,
+      1.7
+     ],
+     [
+      161.1,
+      1.9
+     ],
+     [
+      161.9,
+      1.9
+     ],
+     [
+      165.7,
+      2.0
+     ]
+    ]
+   },
+   {
+    "osm_id": "w1125558208@2",
+    "tags": {
+     "footway": "access_aisle",
+     "highway": "footway",
+     "man_made": "pier"
+    },
+    "geom_type": "LineString",
+    "length_m": 12.8,
+    "vertices_xy_m": [
+     [
+      165.7,
+      2.0
+     ],
+     [
+      166.1,
+      0.9
+     ],
+     [
+      166.8,
+      -10.7
+     ]
+    ]
+   },
+   {
+    "osm_id": "w1125558211@1",
+    "tags": {
+     "bridge": "yes",
+     "highway": "footway"
+    },
+    "geom_type": "LineString",
+    "length_m": 49.6,
+    "vertices_xy_m": [
+     [
+      152.1,
+      53.7
+     ],
+     [
+      154.9,
+      4.2
+     ]
+    ]
+   },
+   {
+    "osm_id": "w1125558201@1",
+    "tags": {
+     "area": "yes",
+     "man_made": "pier"
+    },
+    "geom_type": "Polygon",
+    "area_m2": 1095,
+    "centroid_xy_m": [
+     159.3,
+     -21.6
+    ],
+    "vertices_xy_m": [
+     [
+      143.3,
+      -11.0
+     ],
+     [
+      144.8,
+      -35.1
+     ],
+     [
+      154.2,
+      -34.5
+     ],
+     [
+      155.0,
+      -48.1
+     ],
+     [
+      172.9,
+      -47.0
+     ],
+     [
+      172.7,
+      -43.3
+     ],
+     [
+      166.5,
+      -43.7
+     ],
+     [
+      166.0,
+      -35.5
+     ],
+     [
+      172.9,
+      -35.1
+     ],
+     [
+      171.0,
+      -5.5
+     ],
+     [
+      165.0,
+      -5.8
+     ],
+     [
+      164.7,
+      -0.3
+     ],
+     [
+      169.7,
+      0.0
+     ],
+     [
+      169.4,
+      5.1
+     ],
+     [
+      154.9,
+      4.2
+     ],
+     [
+      152.3,
+      4.0
+     ],
+     [
+      153.1,
+      -10.4
+     ]
+    ]
+   },
+   {
+    "osm_id": "w1125558200@1",
+    "tags": {
+     "area": "yes",
+     "floating": "yes",
+     "man_made": "pier"
+    },
+    "geom_type": "Polygon",
+    "area_m2": 853,
+    "centroid_xy_m": [
+     159.7,
+     -92.8
+    ],
+    "vertices_xy_m": [
+     [
+      146.0,
+      -73.9
+     ],
+     [
+      148.0,
+      -108.0
+     ],
+     [
+      148.3,
+      -112.3
+     ],
+     [
+      177.9,
+      -110.6
+     ],
+     [
+      177.0,
+      -95.6
+     ],
+     [
+      170.0,
+      -96.0
+     ],
+     [
+      170.6,
+      -105.7
+     ],
+     [
+      163.9,
+      -106.1
+     ],
+     [
+      162.2,
+      -77.3
+     ],
+     [
+      169.4,
+      -76.8
+     ],
+     [
+      169.9,
+      -85.4
+     ],
+     [
+      175.3,
+      -85.1
+     ],
+     [
+      174.5,
+      -72.2
+     ]
+    ]
+   }
+  ],
+  "shelter_roofs": [
+   {
+    "osm_id": "w1125558203@1",
+    "note": "building=roof (pier shelter canopy) on ICONSIAM pier",
+    "area_m2": 214,
+    "centroid_xy_m": [
+     154.7,
+     68.8
+    ],
+    "vertices_xy_m": [
+     [
+      158.8,
+      80.5
+     ],
+     [
+      149.4,
+      80.0
+     ],
+     [
+      150.6,
+      57.2
+     ],
+     [
+      151.9,
+      57.2
+     ],
+     [
+      159.9,
+      57.7
+     ]
+    ]
+   },
+   {
+    "osm_id": "w1125558204@1",
+    "note": "building=roof (pier shelter canopy) on ICONSIAM pier",
+    "area_m2": 237,
+    "centroid_xy_m": [
+     156.5,
+     -92.9
+    ],
+    "vertices_xy_m": [
+     [
+      160.4,
+      -79.7
+     ],
+     [
+      151.4,
+      -80.1
+     ],
+     [
+      152.5,
+      -106.2
+     ],
+     [
+      161.6,
+      -105.8
+     ]
+    ]
+   }
+  ],
+  "ferry_stops": [
+   {
+    "osm_id": "n11052197852@1",
+    "names": {
+     "primary": "ท่าเรือฮิลตัน",
+     "name:en": "Hilton Pier",
+     "name:th": "ท่าเรือฮิลตัน"
+    },
+    "tags": {
+     "ferry": "yes",
+     "public_transport": "stop_position"
+    },
+    "xy_m": [
+     143.8,
+     197.2
+    ]
+   },
+   {
+    "osm_id": "n6150815346@5",
+    "names": {
+     "primary": "ท่าเรือไอคอนสยาม 4",
+     "name:en": "Icon Siam Pier 4",
+     "name:th": "ท่าเรือไอคอนสยาม 4"
+    },
+    "tags": {
+     "amenity": "ferry_terminal",
+     "country": "Thailand",
+     "ferry": "yes",
+     "province": "Bangkok",
+     "public_transport": "stop_position",
+     "ref": "N2/1"
+    },
+    "xy_m": [
+     154.4,
+     82.5
+    ]
+   },
+   {
+    "osm_id": "n269747411@10",
+    "names": {
+     "primary": "ท่าเรือไอคอนสยาม 1",
+     "name:en": "Icon Siam Pier 1",
+     "name:th": "ท่าเรือไอคอนสยาม 1"
+    },
+    "tags": {
+     "ferry": "yes",
+     "public_transport": "stop_position",
+     "wheelchair": "yes"
+    },
+    "xy_m": [
+     174.0,
+     -106.6
+    ]
+   },
+   {
+    "osm_id": "n6174365548@2",
+    "names": {
+     "primary": "Icon Siam Pontoon 1B"
+    },
+    "tags": {
+     "floating": "yes",
+     "man_made": "pier"
+    },
+    "xy_m": [
+     165.4,
+     -67.4
+    ]
+   },
+   {
+    "osm_id": "n6150815344@5",
+    "names": {
+     "primary": "ท่าเรือไอคอนสยาม 2",
+     "name:en": "Icon Siam Pier 2",
+     "name:th": "ท่าเรือไอคอนสยาม 2"
+    },
+    "tags": {
+     "amenity": "ferry_terminal",
+     "country": "ไทย",
+     "ferry": "yes",
+     "public_transport": "station",
+     "wheelchair": "yes"
+    },
+    "xy_m": [
+     160.8,
+     -20.6
+    ]
+   }
+  ],
+  "note": "ICONSIAM Pier 1 w1125558200 (floating, south), Pier 2 w1125558201 (centre), Pier 4 w1125558202 (north, ferry ref N2/1), small pier w1125558214; Hilton Pier w1057672409 is CONTEXT"
+ },
+ "river_park": {
+  "plaza_polygon": {
+   "status": "DERIVED",
+   "note": "site landuse ring A minus mall outline, east of x=20 (River Park ~10,000 m2 per https://www.eglobaltravelmedia.com.au/thailands-largest-commercial-property-development-iconsiam-opens-with-dazzling-us30-million-launch/)",
+   "area_m2": 10252,
+   "vertices_xy_m": [
+    [
+     20.0,
+     24.7
+    ],
+    [
+     20.0,
+     21.4
+    ],
+    [
+     56.1,
+     22.0
+    ],
+    [
+     63.3,
+     34.0
+    ],
+    [
+     75.8,
+     44.7
+    ],
+    [
+     91.5,
+     50.8
+    ],
+    [
+     109.8,
+     51.0
+    ],
+    [
+     111.5,
+     31.7
+    ],
+    [
+     110.1,
+     22.9
+    ],
+    [
+     107.1,
+     14.2
+    ],
+    [
+     98.7,
+     4.7
+    ],
+    [
+     95.1,
+     -2.5
+    ],
+    [
+     93.6,
+     -24.8
+    ],
+    [
+     97.5,
+     -47.0
+    ],
+    [
+     94.1,
+     -55.5
+    ],
+    [
+     89.1,
+     -61.4
+    ],
+    [
+     92.0,
+     -66.0
+    ],
+    [
+     99.7,
+     -65.4
+    ],
+    [
+     99.8,
+     -83.8
+    ],
+    [
+     93.2,
+     -93.6
+    ],
+    [
+     85.7,
+     -97.3
+    ],
+    [
+     74.6,
+     -98.2
+    ],
+    [
+     71.8,
+     -86.7
+    ],
+    [
+     48.7,
+     -86.9
+    ],
+    [
+     37.8,
+     -91.0
+    ],
+    [
+     28.9,
+     -98.0
+    ],
+    [
+     20.0,
+     -98.4
+    ],
+    [
+     20.0,
+     -117.9
+    ],
+    [
+     121.8,
+     -114.7
+    ],
+    [
+     121.4,
+     -109.2
+    ],
+    [
+     148.0,
+     -108.0
+    ],
+    [
+     146.0,
+     -73.9
+    ],
+    [
+     146.6,
+     -67.8
+    ],
+    [
+     146.2,
+     -38.0
+    ],
+    [
+     144.8,
+     -35.1
+    ],
+    [
+     143.3,
+     -11.0
+    ],
+    [
+     135.5,
+     89.0
+    ],
+    [
+     120.4,
+     72.3
+    ],
+    [
+     105.4,
+     62.9
+    ],
+    [
+     70.5,
+     43.9
+    ],
+    [
+     54.4,
+     26.7
+    ]
+   ]
+  },
+  "water_feature_basin": {
+   "osm_id": "w1190311738@1",
+   "osm_url": "https://www.openstreetmap.org/way/1190311738",
+   "tags": {
+    "intermittent": "no",
+    "natural": "water",
+    "salt": "no"
+   },
+   "area_m2": 960,
+   "bbox_m": {
+    "xmin": 122.4,
+    "ymin": -86.6,
+    "xmax": 139.9,
+    "ymax": 15.1,
+    "width_x": 17.6,
+    "depth_y": 101.7
+   },
+   "min_rotated_rect": {
+    "long_m": 101.8,
+    "long_axis_angle_deg_from_east_ccw": 94.9,
+    "short_m": 13.9,
+    "short_axis_angle_deg": 4.9
+   },
+   "vertices_xy_m": [
+    [
+     134.1,
+     15.1
+    ],
+    [
+     129.5,
+     13.3
+    ],
+    [
+     125.1,
+     9.9
+    ],
+    [
+     122.9,
+     1.7
+    ],
+    [
+     122.7,
+     -5.7
+    ],
+    [
+     122.4,
+     -11.2
+    ],
+    [
+     127.9,
+     -29.4
+    ],
+    [
+     131.1,
+     -34.3
+    ],
+    [
+     132.9,
+     -40.2
+    ],
+    [
+     132.7,
+     -48.2
+    ],
+    [
+     131.8,
+     -54.2
+    ],
+    [
+     128.6,
+     -58.8
+    ],
+    [
+     128.0,
+     -65.0
+    ],
+    [
+     128.4,
+     -70.8
+    ],
+    [
+     129.0,
+     -74.5
+    ],
+    [
+     131.9,
+     -82.6
+    ],
+    [
+     136.6,
+     -86.1
+    ],
+    [
+     139.9,
+     -86.6
+    ],
+    [
+     139.2,
+     -73.7
+    ],
+    [
+     138.9,
+     -58.4
+    ],
+    [
+     137.9,
+     -36.4
+    ],
+    [
+     137.4,
+     -24.3
+    ],
+    [
+     136.0,
+     -8.3
+    ]
+   ],
+   "interpretation": "INFERRED: long narrow natural=water strip in the River Park plaza between mall and river = the riverside fountain basin (fountain node n10845355405 amenity=fountain sits at (131,-11))."
+  },
+  "footways": [
+   {
+    "osm_ids": [
+     "w1057672411@2"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 10.2,
+    "vertices_xy_m": [
+     [
+      106.7,
+      201.7
+     ],
+     [
+      107.6,
+      191.5
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1057672410@1"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 43.2,
+    "vertices_xy_m": [
+     [
+      83.8,
+      188.7
+     ],
+     [
+      107.6,
+      191.5
+     ],
+     [
+      126.6,
+      193.8
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1125558210@1"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 12.7,
+    "vertices_xy_m": [
+     [
+      159.9,
+      105.1
+     ],
+     [
+      160.7,
+      92.4
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1125558209@1"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 12.7,
+    "vertices_xy_m": [
+     [
+      162.1,
+      68.7
+     ],
+     [
+      162.9,
+      56.0
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w722854229@3"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 89.8,
+    "vertices_xy_m": [
+     [
+      133.0,
+      51.8
+     ],
+     [
+      130.0,
+      57.1
+     ],
+     [
+      125.9,
+      61.9
+     ],
+     [
+      119.5,
+      65.1
+     ],
+     [
+      110.9,
+      66.6
+     ],
+     [
+      87.7,
+      68.5
+     ],
+     [
+      75.0,
+      68.5
+     ],
+     [
+      65.1,
+      67.9
+     ],
+     [
+      49.5,
+      67.4
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w722854228@5"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 164.5,
+    "vertices_xy_m": [
+     [
+      97.0,
+      -109.7
+     ],
+     [
+      101.4,
+      -105.9
+     ],
+     [
+      104.8,
+      -100.9
+     ],
+     [
+      108.7,
+      -91.8
+     ],
+     [
+      113.2,
+      -79.8
+     ],
+     [
+      113.2,
+      -73.2
+     ],
+     [
+      111.6,
+      -55.4
+     ],
+     [
+      106.5,
+      -39.3
+     ],
+     [
+      104.3,
+      -29.2
+     ],
+     [
+      104.6,
+      -15.0
+     ],
+     [
+      107.8,
+      -3.6
+     ],
+     [
+      114.4,
+      7.8
+     ],
+     [
+      121.8,
+      19.8
+     ],
+     [
+      127.8,
+      27.7
+     ],
+     [
+      131.3,
+      33.4
+     ],
+     [
+      133.9,
+      41.3
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1125558208@2"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 12.8,
+    "vertices_xy_m": [
+     [
+      165.7,
+      2.0
+     ],
+     [
+      166.1,
+      0.9
+     ],
+     [
+      166.8,
+      -10.7
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1125558213@1",
+     "w1125558211@1",
+     "w1125558212@1"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 78.1,
+    "vertices_xy_m": [
+     [
+      151.9,
+      57.2
+     ],
+     [
+      152.1,
+      53.7
+     ],
+     [
+      154.9,
+      4.2
+     ],
+     [
+      155.1,
+      2.0
+     ],
+     [
+      156.0,
+      -20.8
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1125558207@1"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 12.7,
+    "vertices_xy_m": [
+     [
+      167.9,
+      -32.7
+     ],
+     [
+      169.0,
+      -45.4
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1125558205@2"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 12.8,
+    "vertices_xy_m": [
+     [
+      161.2,
+      -107.6
+     ],
+     [
+      174.0,
+      -106.6
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1125558206@1"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 12.8,
+    "vertices_xy_m": [
+     [
+      159.3,
+      -75.4
+     ],
+     [
+      172.1,
+      -74.5
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w659467497@5"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": null,
+    "length_m": 24.3,
+    "vertices_xy_m": [
+     [
+      141.1,
+      -68.0
+     ],
+     [
+      146.6,
+      -67.8
+     ],
+     [
+      165.4,
+      -67.4
+     ]
+    ]
+   },
+   {
+    "osm_ids": [
+     "w1193762965@2"
+    ],
+    "cls": "footway",
+    "subclass": null,
+    "name": "ซอยเจริญนคร 7",
+    "length_m": 186.5,
+    "vertices_xy_m": [
+     [
+      -38.9,
+      -199.9
+     ],
+     [
+      49.5,
+      -200.2
+     ],
+     [
+      51.7,
+      -200.3
+     ],
+     [
+      90.5,
+      -199.8
+     ],
+     [
+      89.9,
+      -214.8
+     ],
+     [
+      121.6,
+      -217.1
+     ],
+     [
+      122.5,
+      -211.7
+     ],
+     [
+      126.8,
+      -209.6
+     ]
+    ]
+   }
+  ]
+ },
+ "site_plots": {
+  "iconsiam_landuse_retail": {
+   "osm_id": "r15632099@1",
+   "osm_url": "https://www.openstreetmap.org/relation/15632099",
+   "tags": {
+    "landuse": "retail",
+    "type": "multipolygon"
+   },
+   "note": "multipolygon with 2 outer rings: ring A = ICONSIAM mall plot incl. River Park plaza out to the riverbank; ring B = ICS plot west of Charoen Nakhon Rd",
+   "ringA_area_m2": 51684,
+   "ringA_vertices_xy_m": [
+    [
+     -30.6,
+     110.4
+    ],
+    [
+     -121.5,
+     93.5
+    ],
+    [
+     -142.6,
+     91.3
+    ],
+    [
+     -145.4,
+     91.0
+    ],
+    [
+     -144.2,
+     79.8
+    ],
+    [
+     -122.0,
+     -123.5
+    ],
+    [
+     -23.2,
+     -119.2
+    ],
+    [
+     121.8,
+     -114.7
+    ],
+    [
+     121.4,
+     -109.2
+    ],
+    [
+     148.0,
+     -108.0
+    ],
+    [
+     146.0,
+     -73.9
+    ],
+    [
+     146.6,
+     -67.8
+    ],
+    [
+     146.2,
+     -38.0
+    ],
+    [
+     144.8,
+     -35.1
+    ],
+    [
+     143.3,
+     -11.0
+    ],
+    [
+     136.8,
+     69.8
+    ],
+    [
+     135.5,
+     89.0
+    ],
+    [
+     120.4,
+     72.3
+    ],
+    [
+     105.4,
+     62.9
+    ],
+    [
+     92.9,
+     55.8
+    ],
+    [
+     70.5,
+     43.9
+    ],
+    [
+     54.4,
+     26.7
+    ],
+    [
+     -6.2,
+     23.1
+    ],
+    [
+     -20.7,
+     86.2
+    ],
+    [
+     -25.4,
+     106.8
+    ]
+   ],
+   "ringB_ICS_area_m2": 7617,
+   "ringB_vertices_xy_m": [
+    [
+     -220.6,
+     -88.6
+    ],
+    [
+     -158.6,
+     -73.7
+    ],
+    [
+     -161.3,
+     -10.5
+    ],
+    [
+     -265.4,
+     -37.6
+    ],
+    [
+     -257.9,
+     -92.7
+    ],
+    [
+     -249.9,
+     -125.5
+    ],
+    [
+     -234.9,
+     -127.2
+    ],
+    [
+     -212.7,
+     -123.4
+    ]
+   ]
+  },
+  "towers_landuse_residential": {
+   "osm_id": "w1190311737@4",
+   "osm_url": "https://www.openstreetmap.org/way/1190311737",
+   "tags": {
+    "landuse": "residential",
+    "residential": "apartments"
+   },
+   "area_m2": 19113,
+   "bbox_m": {
+    "xmin": -145.5,
+    "ymin": 23.1,
+    "xmax": 135.5,
+    "ymax": 156.7,
+    "width_x": 281.0,
+    "depth_y": 133.7
+   },
+   "vertices_xy_m": [
+    [
+     -142.6,
+     91.3
+    ],
+    [
+     -121.5,
+     93.5
+    ],
+    [
+     -30.6,
+     110.4
+    ],
+    [
+     -25.4,
+     106.8
+    ],
+    [
+     -20.7,
+     86.2
+    ],
+    [
+     -6.2,
+     23.1
+    ],
+    [
+     54.4,
+     26.7
+    ],
+    [
+     70.5,
+     43.9
+    ],
+    [
+     92.9,
+     55.8
+    ],
+    [
+     105.4,
+     62.9
+    ],
+    [
+     120.4,
+     72.3
+    ],
+    [
+     135.5,
+     89.0
+    ],
+    [
+     133.5,
+     116.2
+    ],
+    [
+     132.3,
+     131.9
+    ],
+    [
+     133.1,
+     156.7
+    ],
+    [
+     58.0,
+     150.0
+    ],
+    [
+     18.1,
+     142.4
+    ],
+    [
+     -90.8,
+     119.9
+    ],
+    [
+     -103.7,
+     119.9
+    ],
+    [
+     -119.4,
+     126.1
+    ],
+    [
+     -145.5,
+     124.4
+    ]
+   ]
+  }
+ },
+ "context_not_iconsiam": {
+  "millennium_hilton": {
+   "osm_id": "w342556929@19",
+   "osm_url": "https://www.openstreetmap.org/way/342556929",
+   "names": {
+    "primary": "Millennium Hilton Bangkok"
+   },
+   "building_levels": 32,
+   "osm_last_edit": "2024-12-08T18:38:45.000Z",
+   "area_m2": 1941,
+   "centroid_xy_m": [
+    66.8,
+    206.9
+   ],
+   "bbox_m": {
+    "xmin": 19.6,
+    "ymin": 190.7,
+    "xmax": 108.7,
+    "ymax": 225.3,
+    "width_x": 89.1,
+    "depth_y": 34.6
+   },
+   "dominant_edge_angle_deg_from_east_ccw": 9.3,
+   "dominant_edge_length_share": 0.56,
+   "second_edge_angle_deg": 50.8,
+   "second_edge_length_share": 0.06,
+   "min_rotated_rect": {
+    "long_m": 90.0,
+    "long_axis_angle_deg_from_east_ccw": 5.3,
+    "short_m": 28.6,
+    "short_axis_angle_deg": 95.3
+   },
+   "perimeter_m": 208.7,
+   "tags_note": "height/min_height/building:levels not tagged in OSM",
+   "n_vertices": 26,
+   "ring_winding": "CCW",
+   "vertices_xy_m": [
+    [
+     28.1,
+     210.9
+    ],
+    [
+     24.4,
+     209.6
+    ],
+    [
+     20.4,
+     204.7
+    ],
+    [
+     19.6,
+     199.4
+    ],
+    [
+     21.8,
+     194.8
+    ],
+    [
+     24.6,
+     192.4
+    ],
+    [
+     27.9,
+     190.7
+    ],
+    [
+     32.1,
+     190.9
+    ],
+    [
+     77.5,
+     198.0
+    ],
+    [
+     81.5,
+     197.4
+    ],
+    [
+     85.2,
+     196.5
+    ],
+    [
+     91.4,
+     196.4
+    ],
+    [
+     98.6,
+     197.8
+    ],
+    [
+     103.9,
+     200.6
+    ],
+    [
+     107.4,
+     204.7
+    ],
+    [
+     108.6,
+     208.6
+    ],
+    [
+     108.7,
+     213.1
+    ],
+    [
+     107.3,
+     217.8
+    ],
+    [
+     104.0,
+     221.9
+    ],
+    [
+     97.9,
+     225.1
+    ],
+    [
+     93.5,
+     225.3
+    ],
+    [
+     88.5,
+     224.9
+    ],
+    [
+     85.0,
+     224.5
+    ],
+    [
+     79.4,
+     222.3
+    ],
+    [
+     74.1,
+     218.9
+    ],
+    [
+     67.5,
+     217.8
+    ]
+   ],
+   "role": "Millennium Hilton Bangkok (CONTEXT ONLY - not ICONSIAM)"
+  },
+  "ics": {
+   "osm_id": "w723505090@4",
+   "osm_url": "https://www.openstreetmap.org/way/723505090",
+   "names": {
+    "primary": "ICS"
+   },
+   "overture_class": "retail",
+   "osm_last_edit": "2023-09-28T05:41:53.000Z",
+   "area_m2": 4926,
+   "centroid_xy_m": [
+    -211.0,
+    -57.2
+   ],
+   "bbox_m": {
+    "xmin": -256.5,
+    "ymin": -105.3,
+    "xmax": -165.2,
+    "ymax": -17.3,
+    "width_x": 91.3,
+    "depth_y": 88.0
+   },
+   "dominant_edge_angle_deg_from_east_ccw": 13.8,
+   "dominant_edge_length_share": 0.58,
+   "second_edge_angle_deg": 103.9,
+   "second_edge_length_share": 0.25,
+   "min_rotated_rect": {
+    "long_m": 98.0,
+    "long_axis_angle_deg_from_east_ccw": 13.9,
+    "short_m": 66.5,
+    "short_axis_angle_deg": 103.9
+   },
+   "perimeter_m": 319.5,
+   "tags_note": "height/min_height/building:levels not tagged in OSM",
+   "n_vertices": 11,
+   "ring_winding": "CCW",
+   "vertices_xy_m": [
+    [
+     -166.4,
+     -42.3
+    ],
+    [
+     -167.4,
+     -17.3
+    ],
+    [
+     -256.5,
+     -39.4
+    ],
+    [
+     -246.7,
+     -78.8
+    ],
+    [
+     -252.8,
+     -80.3
+    ],
+    [
+     -246.6,
+     -105.3
+    ],
+    [
+     -222.5,
+     -99.4
+    ],
+    [
+     -226.0,
+     -85.3
+    ],
+    [
+     -223.3,
+     -84.7
+    ],
+    [
+     -165.2,
+     -70.5
+    ],
+    [
+     -165.5,
+     -64.5
+    ]
+   ]
+  },
+  "gold_line_station_building": {
+   "osm_id": "w950299867@3",
+   "osm_url": "https://www.openstreetmap.org/way/950299867",
+   "names": {
+    "primary": "สถานีเจริญนคร"
+   },
+   "overture_class": "train_station",
+   "osm_last_edit": "2025-10-25T15:10:11.000Z",
+   "area_m2": 2221,
+   "centroid_xy_m": [
+    -139.1,
+    -36.5
+   ],
+   "bbox_m": {
+    "xmin": -155.5,
+    "ymin": -83.0,
+    "xmax": -122.4,
+    "ymax": 10.8,
+    "width_x": 33.1,
+    "depth_y": 93.8
+   },
+   "dominant_edge_angle_deg_from_east_ccw": 95.5,
+   "dominant_edge_length_share": 0.77,
+   "second_edge_angle_deg": 14.9,
+   "second_edge_length_share": 0.23,
+   "min_rotated_rect": {
+    "long_m": 91.8,
+    "long_axis_angle_deg_from_east_ccw": 95.5,
+    "short_m": 25.8,
+    "short_axis_angle_deg": 5.5
+   },
+   "perimeter_m": 226.3,
+   "tags_note": "height/min_height/building:levels not tagged in OSM",
+   "n_vertices": 8,
+   "ring_winding": "CCW",
+   "vertices_xy_m": [
+    [
+     -127.8,
+     -21.6
+    ],
+    [
+     -131.5,
+     10.8
+    ],
+    [
+     -155.5,
+     4.1
+    ],
+    [
+     -151.4,
+     -41.3
+    ],
+    [
+     -149.5,
+     -63.3
+    ],
+    [
+     -147.7,
+     -83.0
+    ],
+    [
+     -122.4,
+     -76.6
+    ],
+    [
+     -123.0,
+     -70.5
+    ]
+   ]
+  },
+  "charoen_nakhon_road": {
+   "label": "Charoen Nakhon Road (ถนนเจริญนคร), highway=secondary, route relation r19038597; centre-lines of dual carriageway ways",
+   "osm_ids": [
+    "r19038597@3",
+    "w1005494437@3",
+    "w1025131626@3",
+    "w1134691016@3",
+    "w1141461640@2",
+    "w1306083824@2",
+    "w338036004@25",
+    "w364700058@6",
+    "w630482758@8",
+    "w630482759@18",
+    "w749195386@8",
+    "w749195387@9",
+    "w749195388@4",
+    "w749195390@5",
+    "w749195391@4",
+    "w749195392@5",
+    "w749195393@11",
+    "w749195399@3",
+    "w752117576@6",
+    "w752119254@8",
+    "w763278588@3"
+   ],
+   "main_carriageways_near_site": [
+    {
+     "length_m": 341.2,
+     "vertices_xy_m": [
+      [
+       -148.0,
+       79.4
+      ],
+      [
+       -130.0,
+       -105.2
+      ],
+      [
+       -129.4,
+       -111.4
+      ],
+      [
+       -129.1,
+       -114.5
+      ],
+      [
+       -128.7,
+       -119.5
+      ],
+      [
+       -127.5,
+       -136.4
+      ],
+      [
+       -126.4,
+       -158.4
+      ],
+      [
+       -125.8,
+       -203.6
+      ],
+      [
+       -126.4,
+       -215.0
+      ],
+      [
+       -128.7,
+       -260.7
+      ]
+     ]
+    },
+    {
+     "length_m": 339.0,
+     "vertices_xy_m": [
+      [
+       -142.2,
+       -260.4
+      ],
+      [
+       -141.2,
+       -241.8
+      ],
+      [
+       -139.8,
+       -214.2
+      ],
+      [
+       -139.4,
+       -203.8
+      ],
+      [
+       -139.6,
+       -184.3
+      ],
+      [
+       -139.9,
+       -159.8
+      ],
+      [
+       -141.3,
+       -137.2
+      ],
+      [
+       -142.4,
+       -119.9
+      ],
+      [
+       -142.8,
+       -114.8
+      ],
+      [
+       -144.6,
+       -95.4
+      ],
+      [
+       -147.2,
+       -68.4
+      ],
+      [
+       -152.5,
+       -11.0
+      ],
+      [
+       -152.9,
+       -7.6
+      ],
+      [
+       -155.7,
+       23.3
+      ],
+      [
+       -159.6,
+       60.7
+      ],
+      [
+       -161.3,
+       77.6
+      ]
+     ]
+    }
+   ],
+   "other_pieces_within_420m": "13 further pieces (north of y=+200 and south of y=-260, plus short link ways) kept in iconsiam_osm_footprints_local.json",
+   "axis_note": "carriageways at x~-128..-160, running bearing ~354 deg (angle 95.5 deg from east), i.e. parallel to the mall west facade"
+  },
+  "bts_gold_line": {
+   "label": "BTS Gold Line (รถไฟฟ้าสายสีทอง) track centre-lines, railway=monorail, bridge=viaduct, colour #D4AF37",
+   "osm_ids": [
+    "w1185513184@8",
+    "w852021475@41"
+   ],
+   "track_centrelines": [
+    {
+     "length_m": 778.2,
+     "vertices_xy_m": [
+      [
+       -212.9,
+       362.0
+      ],
+      [
+       -203.9,
+       358.6
+      ],
+      [
+       -196.2,
+       353.7
+      ],
+      [
+       -188.4,
+       346.0
+      ],
+      [
+       -179.7,
+       333.8
+      ],
+      [
+       -173.6,
+       320.4
+      ],
+      [
+       -171.1,
+       305.1
+      ],
+      [
+       -160.5,
+       182.8
+      ],
+      [
+       -156.9,
+       149.8
+      ],
+      [
+       -152.0,
+       104.5
+      ],
+      [
+       -145.4,
+       48.2
+      ],
+      [
+       -141.2,
+       4.6
+      ],
+      [
+       -137.7,
+       -38.4
+      ],
+      [
+       -133.8,
+       -87.6
+      ],
+      [
+       -131.6,
+       -123.4
+      ],
+      [
+       -129.5,
+       -167.5
+      ],
+      [
+       -128.2,
+       -201.9
+      ],
+      [
+       -129.2,
+       -232.9
+      ],
+      [
+       -131.6,
+       -269.1
+      ],
+      [
+       -133.9,
+       -303.1
+      ],
+      [
+       -137.4,
+       -347.0
+      ],
+      [
+       -139.2,
+       -374.0
+      ],
+      [
+       -140.5,
+       -395.8
+      ]
+     ]
+    },
+    {
+     "length_m": 774.9,
+     "vertices_xy_m": [
+      [
+       -144.5,
+       -394.4
+      ],
+      [
+       -141.1,
+       -340.0
+      ],
+      [
+       -134.8,
+       -241.2
+      ],
+      [
+       -133.2,
+       -217.5
+      ],
+      [
+       -133.0,
+       -194.1
+      ],
+      [
+       -133.7,
+       -166.1
+      ],
+      [
+       -135.2,
+       -133.0
+      ],
+      [
+       -137.9,
+       -92.6
+      ],
+      [
+       -142.2,
+       -38.8
+      ],
+      [
+       -151.9,
+       75.2
+      ],
+      [
+       -165.2,
+       191.0
+      ],
+      [
+       -175.3,
+       303.1
+      ],
+      [
+       -176.7,
+       316.2
+      ],
+      [
+       -178.7,
+       323.2
+      ],
+      [
+       -181.5,
+       329.9
+      ],
+      [
+       -184.2,
+       334.8
+      ],
+      [
+       -189.8,
+       341.9
+      ],
+      [
+       -195.3,
+       347.1
+      ],
+      [
+       -203.6,
+       353.3
+      ],
+      [
+       -210.1,
+       356.7
+      ],
+      [
+       -217.1,
+       359.6
+      ]
+     ]
+    }
+   ],
+   "station_G2_charoen_nakhon": [
+    {
+     "osm_id": "w1185513199@2",
+     "tags": {
+      "monorail": "yes",
+      "operator": "กรุงเทพธนาคม",
+      "public_transport": "platform",
+      "railway": "platform",
+      "ref": "1"
+     },
+     "bbox_m": {
+      "xmin": -152.2,
+      "ymin": -78.8,
+      "xmax": -140.2,
+      "ymax": -1.2,
+      "width_x": 12.0,
+      "depth_y": 77.5
+     },
+     "area_m2": 417,
+     "centroid_xy_m": [
+      -146.2,
+      -39.6
+     ],
+     "dominant_edge_angle_deg_from_east_ccw": 94.9,
+     "dominant_edge_length_share": 0.93,
+     "second_edge_angle_deg": 5.0,
+     "second_edge_length_share": 0.07,
+     "min_rotated_rect": {
+      "long_m": 77.6,
+      "long_axis_angle_deg_from_east_ccw": 95.0,
+      "short_m": 5.5,
+      "short_axis_angle_deg": 5.0
+     },
+     "perimeter_m": 165.5,
+     "rings": [
+      {
+       "n_vertices": 4,
+       "ring_winding": "CCW",
+       "vertices_xy_m": [
+        [
+         -152.2,
+         -1.5
+        ],
+        [
+         -145.4,
+         -78.8
+        ],
+        [
+         -140.2,
+         -78.1
+        ],
+        [
+         -146.7,
+         -1.2
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "osm_id": "n5812248586@23",
+     "names": {
+      "primary": "เจริญนคร",
+      "name:en": "Charoen Nakhon",
+      "name:ja": "チャルンナコーン",
+      "name:th": "เจริญนคร"
+     },
+     "tags": {
+      "addr:country": "Thailand",
+      "addr:district": "คลองสาน",
+      "addr:postcode": "10600",
+      "addr:province": "กรุงเทพมหานคร",
+      "addr:subdistrict": "คลองต้นไทร",
+      "country": "Thailand",
+      "monorail": "yes",
+      "network": "BTS",
+      "operator": "กรุงเทพธนาคม",
+      "province": "Bangkok",
+      "public_transport": "station",
+      "railway": "station",
+      "ref": "G2",
+      "wikipedia": "th:สถานีเจริญนคร (รถไฟฟ้าสายสีทอง)"
+     },
+     "xy_m": [
+      -140.3,
+      -38.8
+     ]
+    },
+    {
+     "osm_id": "w1185513200@3",
+     "tags": {
+      "country": "Thailand",
+      "monorail": "yes",
+      "operator": "กรุงเทพธนาคม",
+      "province": "Bangkok",
+      "public_transport": "platform",
+      "railway": "platform",
+      "ref": "2"
+     },
+     "bbox_m": {
+      "xmin": -138.3,
+      "ymin": -77.2,
+      "xmax": -126.3,
+      "ymax": 0.3,
+      "width_x": 12.0,
+      "depth_y": 77.5
+     },
+     "area_m2": 416,
+     "centroid_xy_m": [
+      -132.2,
+      -38.0
+     ],
+     "dominant_edge_angle_deg_from_east_ccw": 94.9,
+     "dominant_edge_length_share": 0.93,
+     "second_edge_angle_deg": 5.0,
+     "second_edge_length_share": 0.07,
+     "min_rotated_rect": {
+      "long_m": 77.5,
+      "long_axis_angle_deg_from_east_ccw": 95.0,
+      "short_m": 5.5,
+      "short_axis_angle_deg": 5.0
+     },
+     "perimeter_m": 165.5,
+     "rings": [
+      {
+       "n_vertices": 4,
+       "ring_winding": "CCW",
+       "vertices_xy_m": [
+        [
+         -138.3,
+         0.0
+        ],
+        [
+         -131.5,
+         -77.2
+        ],
+        [
+         -126.3,
+         -76.6
+        ],
+        [
+         -132.8,
+         0.3
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "derived_checks": {
+  "mall_area_m2": 33786,
+  "mall_extent_along_bank_m": 212.6,
+  "mall_extent_normal_m": 228.0,
+  "river_face_length_m": 306.4,
+  "bank_length_pier1_to_tower_plot_north_m": 295.3,
+  "bank_length_alongside_mall_m": 212.8,
+  "shaft_mag_area": 1504,
+  "shaft_mo_area": 1351,
+  "shaft_gap_m": 17.5,
+  "shaft_mag_to_mall_m": 11.8,
+  "shaft_mo_to_water_m": 49.6,
+  "shaft_mag_to_water_m": 108.0,
+  "plaza_area_m2": 10252,
+  "crown_area_m2": 4682
+ }
+}
