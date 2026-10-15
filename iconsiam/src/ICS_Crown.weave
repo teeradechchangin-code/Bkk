@@ -54,6 +54,7 @@ let CR_ZGA = 7100;              // glass apex, just under the hook
 let CR_LG = 1700;               // glass base along the river face, south of the stem
 let CR_USAIL = CR_UF - 1400;    // west end of the raked sail on the south flank
 let n = select(160, 36, lod > 0.5);
+let CR_DW = select(60, 150, lod > 0.5);   // drum wall thickness, larger than the worst quad fold (25 cm @ n=160, 95 cm @ n=36) so the walls never cross
 
 // ---------------- outline stations (pinched oval: stern semi-axis CR_AS, prow semi-axis CR_AP) ----------------
 var ou = []; var ov = []; var onx = []; var ony = []; var ozt = []; var ozb = [];
@@ -112,8 +113,8 @@ for i in 0..n {
     let hv = v - ny * 130 * gh;
     d_b = append(d_b, (min(fu, CR_UCUT), fv, CR_ZB0));
     d_t = append(d_t, (min(hu, CR_UCUT), hv, zb + 15));
-    d_ti = append(d_ti, (min(hu - nx * 40, CR_UCUT - 40), hv - ny * 40 * gh, zb + 15));
-    d_bi = append(d_bi, (min(fu - nx * 40, CR_UCUT - 40), fv - ny * 40 * gw, CR_ZB0));
+    d_ti = append(d_ti, (min(hu - nx * CR_DW, CR_UCUT - CR_DW), hv - ny * CR_DW * gh, zb + 15));
+    d_bi = append(d_bi, (min(fu - nx * CR_DW, CR_UCUT - CR_DW), fv - ny * CR_DW * gw, CR_ZB0));
     kerb = append(kerb, (min(fu + nx * 45, CR_UCUT + 45), fv + ny * 45 * gw));
     ocl = append(ocl, step(CR_UCUT, fu));
     shead = append(shead, (hu, hv, zb + 15));

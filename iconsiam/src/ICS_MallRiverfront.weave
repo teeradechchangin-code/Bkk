@@ -141,8 +141,9 @@ var dc3 = [];
 for p in sp { dc3 = append(dc3, (p.x, p.y, 0)); }
 for i in 1..len(dcc) { let p = at(dcc, i); dc3 = append(dc3, (p.x, p.y, 0)); }
 if lod > 1.5 {
-    // collision: drum outline +65 cm, closed back through the Z1 / Z2 / Z3 interiors
-    let cq = resample_path(dc3, spacing: 500);
+    // collision: drum outline +65 cm, closed back through the Z1 / Z2 / Z3 interiors. The Chaikin polygon is used as is:
+    // at convex corners every Chaikin level lies outside the limit curve, so no chord ever cuts inside the visual glass.
+    let cq = dc3;
     let ncq = len(cq);
     var cp = [];
     for i in 0..ncq {
@@ -159,8 +160,8 @@ if lod > 1.5 {
     cp = append(cp, at(Z3_FP, 0) + (-40, 40));
     out.geo = extrude(points: cp, height: 1950, material: "ICS_Concrete");
 } else if lod > 0.5 {
-    // LOD1: gold-lit lower storey, white band at 10 m, blue-grey upper storey
-    let cq = resample_path(dc3, spacing: 700);
+    // LOD1: gold-lit lower storey, white band at 10 m, blue-grey upper storey (on the coarse Chaikin polygon, see above)
+    let cq = dc3;
     let ncq = len(cq);
     var lo = [];
     var bd = [];
@@ -187,6 +188,36 @@ if lod > 1.5 {
     var dBand = [];
     var dUp = [];
     var drum = empty();
+    // glass skins follow the dense Chaikin curve (a 2.2 m resample would cut the tight Z2_FP[0] corner and let the Z2
+    // mass show through); mullions and fins use the regular 2.2 m stations
+    var gp = [];
+    var gn = [];
+    var gs = [];
+    var glast = at(dc3, 0);
+    var gsum = 0;
+    let ng3 = len(dc3);
+    for i in 0..ng3 {
+        let p = at(dc3, i);
+        let dl = sqrt((p.x - glast.x) * (p.x - glast.x) + (p.y - glast.y) * (p.y - glast.y));
+        if (i == 0) + (dl > 20) > 0.5 {
+            let a = at(dc3, max(i - 1, 0));
+            let b = at(dc3, min(i + 1, ng3 - 1));
+            let tl = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+            gsum = gsum + dl;
+            gp = append(gp, p);
+            gn = append(gn, ((b.y - a.y) / tl, (a.x - b.x) / tl));
+            gs = append(gs, gsum);
+            glast = p;
+        }
+    }
+    for i in 0..len(gp) {
+        let p = at(gp, i);
+        let n = at(gn, i);
+        let rp = clamp(at(gs, i) / 300, 0, 1);
+        dLow = append(dLow, (p.x + n.x * 12, p.y + n.y * 12, 475));
+        dBand = append(dBand, (p.x + n.x * 40 * rp, p.y + n.y * 40 * rp, 1000));
+        dUp = append(dUp, (p.x + n.x * (12 + 38 * rp), p.y + n.y * (12 + 38 * rp), 1500));
+    }
     var s = 0;
     for i in 0..ndq {
         let a = at(dq, max(i - 1, 0));
@@ -201,9 +232,6 @@ if lod > 1.5 {
         }
         // band / upper glass / fins die into the Z4 SE corner over the first 3 m
         let rp = clamp(s / 300, 0, 1);
-        dLow = append(dLow, (p.x + nxv * 12, p.y + nyv * 12, 475));
-        dBand = append(dBand, (p.x + nxv * 40 * rp, p.y + nyv * 40 * rp, 1000));
-        dUp = append(dUp, (p.x + nxv * (12 + 38 * rp), p.y + nyv * (12 + 38 * rp), 1500));
         drum = merge(drum, beam_between(start: (p.x + nxv * 15, p.y + nyv * 15, 472), end: (p.x + nxv * 42, p.y + nyv * 42, 472), cross_width: 20, cross_height: 938, height_direction: (0, 0, 1), material: "ICS_Gold"));
         let dsg = sqrt((p.x - sgc.x) * (p.x - sgc.x) + (p.y - sgc.y) * (p.y - sgc.y));
         if (rp > 0.5) * (dsg > 470) {
@@ -839,8 +867,8 @@ out.geo = merge(part(RIV_Z1Mass, iters: 2, h: 2010, band: 1),
     extrude(points: Z3_FP, height: Z3_ROOF, material: "ICS_MallGlass"),
     translate(extrude(points: offset_polygon(points: Z3_FP, delta: -30), height: 14, material: "ICS_Paving"), (0, 0, Z3_ROOF - 7)),
     plates,
-    part(RIV_Drum, lod: 1, iters: 2),
-    part(RIV_Pavilion, iters: 2, spacing: 640, detail: 0));
+    part(RIV_Drum, lod: 1, iters: 1),
+    part(RIV_Pavilion, iters: 2, spacing: 400, detail: 0));
 #end
 
 #mesh ICS_MallRiverfront collider
@@ -849,6 +877,6 @@ out.geo = merge(part(RIV_Z1Mass, iters: 2, h: 2010, band: 1),
 out.geo = merge(part(RIV_Z1Mass, iters: 2, h: 2020, pave: 0, grow: 60),
     extrude(points: Z2_FP, height: Z2_ROOF, material: "ICS_Concrete"),
     extrude(points: Z3_FP, height: Z3_ROOF, material: "ICS_Concrete"),
-    part(RIV_Drum, lod: 2, iters: 2),
-    part(RIV_Pavilion, iters: 2, spacing: 640, detail: 0));
+    part(RIV_Drum, lod: 2, iters: 1),
+    part(RIV_Pavilion, iters: 2, spacing: 400, detail: 0));
 #end
