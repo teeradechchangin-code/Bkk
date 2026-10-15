@@ -25,6 +25,8 @@ knob SetSkyLightIntensity = 2.6
 knob SetSkyLightColor = #a8bce0
 knob SetBloomIntensity = 0.6
 knob SetSkyboxHaze = 2.5
+// Bangkok dusk: city glow hides the stars (stage r2 capture: the starfield read like snow).
+knob SetSkyboxStarIntensity = 0
 knob SetSkyboxGroundColor = #8c86a6
 knob SetSkyboxHorizonTilt = 0
 // Distance fog stays off the complex (~420-570 m from the Photo A camera) and fully fogs the water before the 1000 m far plane.
