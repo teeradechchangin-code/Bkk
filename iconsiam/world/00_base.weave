@@ -24,9 +24,11 @@ knob SetSkyLightColor = #8a90c8
 knob SetBloomIntensity = 0.6
 knob SetSkyboxGroundColor = #6a6478
 knob SetDistanceFogEnabled = 1
-knob SetFogColor = #b49aa8
-knob SetFogStartDistance = 700
-knob SetFogEndDistance = 2000
+knob SetFogColor = #8c86a6
+knob SetFogStartDistance = 500
+knob SetFogEndDistance = 1400
+knob SetFogSkyboxAffect = 0
+knob SetSkyboxHorizonTilt = 10
 #end
 
 // imported_material_asset {"asset_id":"material_5dadcd66b9fe0fce92f34c9beaad4ac76956b1d733dfc67dc9cf17f9d1c72b3e","source_digest":"5dadcd66b9fe0fce92f34c9beaad4ac76956b1d733dfc67dc9cf17f9d1c72b3e","catalog_key":null,"local_root":"lib1_NaturalBrush","local_digest":"7cb476554f7f622b67e8d4f4e2264d6b6167aa620d6fa5c70942a6a570e93d93"}
