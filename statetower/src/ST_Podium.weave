@@ -1,0 +1,540 @@
+// ===== ST_Podium - State Tower podium + corner portal (Podium crew, rev 1) =====
+// World centimetres, Z up, +X east, +Y true north; authored directly in WORLD coordinates from #meshdefs.
+// Owns GRADE -> PODIUM_TOP over PODIUM_FP plus the corner portal on the north neck (to PORTAL_TOP).
+// Photo calibration (P1 night / P2 day through the dossier cameras, P3 street):
+//   giant colonnade 0 -> 23 m (round shafts on pedestals, ~8.6 m bays, dark recessed arcade wall),
+//   balcony storey 24.8 -> 29.6 m (pedestals + colonnette screen, lit windows behind),
+//   arched bays 30.2 -> 44.6 m (paired pilasters, 3 x 5 window grid, two-arch tracery at head + mid),
+//   entablature + heavy cornice to 48.9 m, parapet to PODIUM_TOP.
+//   Portal: giant arch 10.5 m x 18.25 m, paired giant columns, entablature 20.4-24.6 m, ledge 28 m,
+//   "State Tower / Bangkok" lettering, 9.4 m medallion (gold disc, white 5-petal flower) centred 38.8 m,
+//   top cornice at PODIUM_TOP, pediment + gable roof to PORTAL_TOP.
+
+// ---------------------------------------------------------------------------------------------
+// One giant column: pedestal, torus base, tapered shaft, flared capital, square abacus.
+#meshpart POD_Column
+param x = 0;
+param y = 0;
+param z0 = 0;
+param z1 = 2300;
+param r = 100;
+param ped = 250;
+param ped_h = 170;
+param segs = 20;
+let base_h = r * 0.6;
+let cap_h = r * 0.75;
+let aba_h = r * 0.6;
+let s0 = z0 + ped_h + base_h - 2;
+let s1 = z1 - aba_h - cap_h + 1;
+let pedg = box_at(size: (ped, ped, ped_h), bottom_center: (x, y, z0), material: "ST_Stone");
+let base = cylinder_at(r_bot: r * 1.2, r_top: r * 1.04, height: base_h, bottom_center: (x, y, z0 + ped_h - 1), segments: segs, material: "ST_Stone");
+let shaft = cylinder_at(r_bot: r, r_top: r * 0.88, height: s1 - s0, bottom_center: (x, y, s0), segments: segs, material: "ST_Stone");
+let cap = cylinder_at(r_bot: r * 0.9, r_top: r * 1.2, height: cap_h, bottom_center: (x, y, s1 - 1), segments: segs, material: "ST_Stone");
+let aba = box_at(size: (r * 2.55, r * 2.55, aba_h), bottom_center: (x, y, z1 - aba_h), material: "ST_Stone");
+out.geo = merge(pedg, base, shaft, cap, aba);
+#end
+
+// ---------------------------------------------------------------------------------------------
+// Semicircular arch band (archivolt / tracery / window surround) in the XZ plane: springing at z = 0,
+// outer radius ro, inner radius ri, straight legs lg below the springing, depth centred on y = 0.
+#meshpart POD_ArchBand
+param ro = 200;
+param ri = 180;
+param lg = 20;
+param depth = 14;
+param segs = 8;
+param mat = "ST_Stone";
+var p = [];
+p = append(p, (0 - ro, 0 - lg));
+for k in 0..(segs + 1) {
+    let a = 180 - k * 180 / segs;
+    p = append(p, (ro * cos(a), ro * sin(a)));
+}
+p = append(p, (ro, 0 - lg));
+p = append(p, (ri, 0 - lg));
+for k in 0..(segs + 1) {
+    let a = k * 180 / segs;
+    p = append(p, (ri * cos(a), ri * sin(a)));
+}
+p = append(p, (0 - ri, 0 - lg));
+out.geo = translate(rotate_x(extrude(points: p, height: depth, material: mat), degrees: 90, pivot: (0, 0, 0)), (0, depth * 0.5, 0));
+#end
+
+// ---------------------------------------------------------------------------------------------
+// One straight podium facade run A -> B (footprint CCW order: outside on the right of A->B).
+// Authored in a local frame (x along the face 0..L, face line y = 0, outward = -y, inward = +y),
+// then turned and moved onto A. colonnade = 1 builds the Charoen Krung giant colonnade.
+#meshpart POD_Face
+param ax = 0;
+param ay = 0;
+param bx = 1000;
+param by = 0;
+param bay_t = 870;
+param colonnade = 0;
+param skip_a = 0;
+param skip_b = 0;
+let dx = bx - ax;
+let dy = by - ay;
+let L = sqrt(dx * dx + dy * dy);
+let ang = atan2(dy, dx);
+let nb = max(1, round(L / bay_t));
+let bw = L / nb;
+let zBase = 130;
+let zL1 = 2300;
+let zB0 = 2480;
+let zB1 = 2960;
+let zU0 = 3020;
+let zU1 = 4460;
+let hU = zU1 - zU0;
+var g = empty();
+
+// glazing planes behind the stone screens (interior_window_pbr: lit rooms at night)
+g = merge(g, box_bounds(min: (0, 95, zU0 - 1), max: (L, 105, zU1 + 1), material: "ST_PodiumRooms"));
+g = merge(g, box_bounds(min: (0, 170, zB0 - 1), max: (L, 180, zB1 + 1), material: "ST_PodiumRooms"));
+
+// bay boundaries: paired pilasters (arched-bay zone) on a backing strip, pedestals (balcony storey)
+for i in 0..(nb + 1) {
+    let xc = clamp(i * bw, 135, L - 135);
+    let sx0 = select(xc - 118, 0, i < 0.5);
+    let sx1 = select(xc + 118, L, i > nb - 0.5);
+    g = merge(g, box_bounds(min: (sx0, 30, zU0 - 1), max: (sx1, 76, zU1 + 1), material: "ST_Facade"));
+    for s in 0..2 {
+        let px = xc - 48 + s * 96;
+        g = merge(g, box_bounds(min: (px - 30, 0, zU0 + 58), max: (px + 30, 40, zU1 - 73), material: "ST_Stone"));
+        g = merge(g, box_bounds(min: (px - 38, -8, zU1 - 75), max: (px + 38, 42, zU1 + 1), material: "ST_Stone"));
+        g = merge(g, box_bounds(min: (px - 38, -8, zU0 - 1), max: (px + 38, 42, zU0 + 60), material: "ST_Stone"));
+    }
+    g = merge(g, box_bounds(min: (xc - 128, -12, zB0 - 1), max: (xc + 128, 76, zB1 + 1), material: "ST_Stone"));
+}
+
+// arched bays: recessed white screen with a 3 x 5 window grid + two-arch tracery at the head and mid height
+for i in 0..nb {
+    let x0 = clamp(i * bw, 135, L - 135) + 116;
+    let x1 = clamp((i + 1) * bw, 135, L - 135) - 116;
+    let wp = x1 - x0;
+    let ww = wp * 0.19;
+    let wdx = wp * 0.31;
+    var holes = [];
+    for c in 0..3 {
+        for r in 0..5 {
+            let cx = wp * 0.5 + (c - 1) * wdx;
+            let wz = 110 + r * 235;
+            holes = append(holes, [(cx - ww * 0.5, wz), (cx + ww * 0.5, wz), (cx + ww * 0.5, wz + 130), (cx - ww * 0.5, wz + 130)]);
+        }
+    }
+    let pnl = extrude_shape(outer: [(0, 0), (wp, 0), (wp, hU), (0, hU)], holes: holes, height: 40, material: "ST_Facade");
+    g = merge(g, translate(rotate_x(pnl, degrees: 90, pivot: (0, 0, 0)), (x0, 75, zU0)));
+    let aw = wp * 0.5 - 10;
+    let tr = part(POD_ArchBand, ro: aw * 0.5, ri: aw * 0.5 - 16, lg: 30, depth: 14, segs: 8);
+    let tr2 = merge(translate(tr, (x0 + wp * 0.25 + 2.5, 29, 0)), translate(tr, (x0 + wp * 0.75 - 2.5, 29, 0)));
+    g = merge(g, translate(tr2, (0, 0, zU0 + 1220)), translate(tr2, (0, 0, zU0 + 515)));
+}
+
+// balcony storey: plinth rail, top rail, colonnette screen between the pedestals
+g = merge(g, box_bounds(min: (0, 0, zB0 - 1), max: (L, 62, zB0 + 70), material: "ST_Stone"));
+g = merge(g, box_bounds(min: (0, -6, zB1 - 60), max: (L, 62, zB1 + 1), material: "ST_Stone"));
+for i in 0..nb {
+    let xs = clamp(i * bw, 135, L - 135) + 128;
+    let xe = clamp((i + 1) * bw, 135, L - 135) - 128;
+    let n = max(1, floor((xe - xs) / 45));
+    let sp = (xe - xs) / n;
+    let bal = box_bounds(min: (xs + sp * 0.5 - 8, 22, zB0 + 68), max: (xs + sp * 0.5 + 8, 38, zB1 - 58), material: "ST_Stone");
+    g = merge(g, array(bal, count: n, offset: (sp, 0, 0)));
+}
+
+if colonnade > 0 {
+    // giant colonnade in front of a 7 m deep, darker arcade wall with glazed shopfronts / upper glazing
+    g = merge(g, box_bounds(min: (300, 690, zBase - 1), max: (L - 300, 702, zL1 + 1), material: "ST_PodiumRooms"));
+    for k in 1..4 {
+        let zk = zBase + k * (zL1 - zBase) / 4;
+        g = merge(g, box_bounds(min: (300, 668, zk - 28), max: (L - 300, 691, zk + 28), material: "ST_FacadeShade"));
+    }
+    for i in 1..nb {
+        g = merge(g, box_bounds(min: (i * bw - 70, 660, zBase - 1), max: (i * bw + 70, 691, zL1 + 1), material: "ST_FacadeShade"));
+    }
+    let mul = box_bounds(min: (-6, 678, zBase - 1), max: (6, 691, zBase + (zL1 - zBase) / 4 - 27), material: "ST_DarkMetal");
+    for i in 0..nb {
+        let mx0 = select(i * bw + 70, 300, i < 0.5);
+        let mx1 = select((i + 1) * bw - 70, L - 300, i > nb - 1.5);
+        let msp = (mx1 - mx0) / 4;
+        g = merge(g, array(translate(mul, (mx0 + msp, 0, 0)), count: 3, offset: (msp, 0, 0)));
+    }
+    g = merge(g, box_bounds(min: (0, 0, 0), max: (300, 702, zL1 + 1), material: "ST_Stone"));
+    g = merge(g, box_bounds(min: (L - 300, 0, 0), max: (L, 702, zL1 + 1), material: "ST_Stone"));
+    let col = part(POD_Column, x: bw, y: 125, z0: 0, z1: zL1 + 1, r: 100, ped: 250, ped_h: 170, segs: 20);
+    g = merge(g, array(col, count: nb - 1, offset: (bw, 0, 0)));
+} else {
+    // lower storeys: wall with two tiers of tall round-arched windows per bay between pilasters
+    let hw = 160;
+    var lholes = [];
+    for i in 0..nb {
+        let xm = (i + 0.5) * bw;
+        let skip = (i < 0.5) * skip_a + (i > nb - 1.5) * skip_b;
+        for t in 0..(2 - 2 * min(1, skip)) {
+            let zs0 = 220 + t * 1000;
+            let zsp = zs0 + 640;
+            var h = [];
+            h = append(h, (xm - hw, zs0));
+            h = append(h, (xm + hw, zs0));
+            for k in 0..9 {
+                let a = k * 22.5;
+                h = append(h, (xm + hw * cos(a), zsp + hw * sin(a)));
+            }
+            lholes = append(lholes, h);
+        }
+    }
+    let nwin = nb - min(nb, skip_a + skip_b);
+    if nwin > 0 {
+        let wl = extrude_shape(outer: [(0, 0), (L, 0), (L, zL1 - zBase), (0, zL1 - zBase)], holes: lholes, height: 40, material: "ST_Facade");
+        g = merge(g, translate(rotate_x(wl, degrees: 90, pivot: (0, 0, 0)), (0, 75, zBase)));
+    } else {
+        g = merge(g, box_bounds(min: (0, 35, zBase), max: (L, 75, zL1), material: "ST_Facade"));
+    }
+    g = merge(g, box_bounds(min: (0, 95, zBase - 1), max: (L, 105, zL1 + 1), material: "ST_PodiumRooms"));
+    for i in 0..(nb + 1) {
+        let xc = clamp(i * bw, 65, L - 65);
+        g = merge(g, box_bounds(min: (xc - 65, 0, zBase - 1), max: (xc + 65, 40, zL1 + 1), material: "ST_Stone"));
+    }
+    let sur = translate(part(POD_ArchBand, ro: hw + 25, ri: hw, lg: 640, depth: 14, segs: 8), (0, 29, 640));
+    let sill = box_bounds(min: (0 - hw - 35, 15, -22), max: (hw + 35, 40, 1), material: "ST_Stone");
+    let mull = box_bounds(min: (-9, 48, 0), max: (9, 60, 640 + hw - 2), material: "ST_Stone");
+    let tran = box_bounds(min: (0 - hw - 5, 48, 631), max: (hw + 5, 60, 649), material: "ST_Stone");
+    let win = translate(merge(sur, sill, mull, tran), (bw * 0.5, 0, zBase + 220));
+    let win2 = merge(win, translate(win, (0, 0, 1000)));
+    for i in 0..nb {
+        let skip = (i < 0.5) * skip_a + (i > nb - 1.5) * skip_b;
+        if skip < 0.5 {
+            g = merge(g, translate(win2, (i * bw, 0, 0)));
+        }
+    }
+}
+out.geo = translate(rotate_z(g, degrees: ang, pivot: (0, 0, 0)), (ax, ay, 0));
+#end
+
+// ---------------------------------------------------------------------------------------------
+// Corner portal (gate tower) on the north neck. Local frame: origin O = neck SW corner, x along the
+// podium north line toward E (width W), y north (depth D), z up. North face (y = D) = street corner.
+#meshpart POD_Portal
+param ox = 0;
+param oy = 0;
+param ex = 1000;
+param ey = 0;
+param nx = 0;
+param ny = 1000;
+let wx = ex - ox;
+let wy = ey - oy;
+let W = sqrt(wx * wx + wy * wy);
+let ux = wx / W;
+let uy = wy / W;
+let D = (nx - ox) * (0 - uy) + (ny - oy) * ux;
+let ang = atan2(uy, ux);
+let AR = 525;
+let ZS = 1300;
+let ZP1 = 2040;
+let ZPE = 2460;
+let ZLG0 = 2800;
+let ZLG1 = 2880;
+let ZU = 4720;
+let ZC = PODIUM_TOP;
+let ZTA = PORTAL_TOP - 95;
+let ZMED = 3880;
+let PW = W * 0.5 - AR;
+let PD = D * 0.5 - AR;
+let RECT = [(0, 0), (W, 0), (W, D), (0, D)];
+var g = empty();
+
+// four corner piers + plinths
+let pier = box_bounds(min: (0, 0, 0), max: (PW, PD, ZP1), material: "ST_Stone");
+g = merge(g, pier, translate(pier, (W - PW, 0, 0)), translate(pier, (0, D - PD, 0)), translate(pier, (W - PW, D - PD, 0)));
+let pl = box_bounds(min: (-25, -25, 0), max: (PW + 25, PD + 25, 130), material: "ST_Stone");
+g = merge(g, pl, translate(pl, (W - PW, 0, 0)), translate(pl, (0, D - PD, 0)), translate(pl, (W - PW, D - PD, 0)));
+
+// arch heads (spandrels) on all four sides: giant round arch through the base
+var sp = [];
+sp = append(sp, (0, ZS));
+sp = append(sp, (0, ZP1));
+sp = append(sp, (2 * AR, ZP1));
+sp = append(sp, (2 * AR, ZS));
+for k in 1..16 {
+    let a = k * 180 / 16;
+    sp = append(sp, (AR + AR * cos(a), ZS + AR * sin(a)));
+}
+let spN = rotate_x(extrude(points: sp, height: PD, material: "ST_Stone"), degrees: 90, pivot: (0, 0, 0));
+g = merge(g, translate(spN, (PW, D, 0)), translate(spN, (PW, PD, 0)));
+let spW = rotate_z(rotate_x(extrude(points: sp, height: PW, material: "ST_Stone"), degrees: 90, pivot: (0, 0, 0)), degrees: 90, pivot: (0, 0, 0));
+g = merge(g, translate(spW, (0, PD, 0)), translate(spW, (W - PW, PD, 0)));
+
+// archivolts + keystones (north, west, east)
+let av = translate(part(POD_ArchBand, ro: AR + 45, ri: AR, lg: 20, depth: 24, segs: 16), (0, 0, ZS));
+let key = box_bounds(min: (-55, -22, ZS + AR - 30), max: (55, 22, ZP1 + 1), material: "ST_Stone");
+let impN = merge(box_bounds(min: (PW - 1, D - PD - 1, ZS - 45), max: (PW + 18, D + 1, ZS + 5), material: "ST_Stone"), box_bounds(min: (W - PW - 18, D - PD - 1, ZS - 45), max: (W - PW + 1, D + 1, ZS + 5), material: "ST_Stone"), box_bounds(min: (PW - 75, D - 1, ZS - 50), max: (PW + 22, D + 16, ZS + 8), material: "ST_Stone"), box_bounds(min: (W - PW - 22, D - 1, ZS - 50), max: (W - PW + 75, D + 16, ZS + 8), material: "ST_Stone"));
+let impW = merge(box_bounds(min: (-1, PD - 1, ZS - 45), max: (PW + 1, PD + 18, ZS + 5), material: "ST_Stone"), box_bounds(min: (-1, D - PD - 18, ZS - 45), max: (PW + 1, D - PD + 1, ZS + 5), material: "ST_Stone"), box_bounds(min: (-16, PD - 75, ZS - 50), max: (1, PD + 22, ZS + 8), material: "ST_Stone"), box_bounds(min: (-16, D - PD - 22, ZS - 50), max: (1, D - PD + 75, ZS + 8), material: "ST_Stone"));
+g = merge(g, impN, mirrored(impW, normal: (1, 0, 0), point: (W * 0.5, 0, 0)));
+let avk = merge(av, key);
+g = merge(g, translate(avk, (W * 0.5, D + 11, 0)));
+g = merge(g, mirrored(translate(rotate_z(avk, degrees: 90, pivot: (0, 0, 0)), (-11, D * 0.5, 0)), normal: (1, 0, 0), point: (W * 0.5, 0, 0)));
+
+// glazed lobby entrance in the south arch (toward the podium) + dark metal frame
+g = merge(g, box_bounds(min: (PW - 1, 300, 0), max: (W - PW + 1, 318, ZS + AR + 5), material: "ST_PodiumRooms"));
+for k in 1..5 {
+    let mx = PW + k * 2 * AR / 5;
+    let dxm = mx - W * 0.5;
+    g = merge(g, box_bounds(min: (mx - 7, 317, 0), max: (mx + 7, 332, ZS + sqrt(AR * AR - dxm * dxm) + 2), material: "ST_DarkMetal"));
+}
+g = merge(g, box_bounds(min: (PW - 1, 317, 560), max: (W - PW + 1, 332, 580), material: "ST_DarkMetal"));
+g = merge(g, box_bounds(min: (PW - 1, 317, ZS - 10), max: (W - PW + 1, 332, ZS + 10), material: "ST_DarkMetal"));
+// warm cove strips under the vault ceiling (small fixtures)
+g = merge(g, box_bounds(min: (PW, PD, ZP1 - 15), max: (W - PW, PD + 10, ZP1 + 1), material: "ST_WarmLight"));
+g = merge(g, box_bounds(min: (PW, D - PD - 10, ZP1 - 15), max: (W - PW, D - PD, ZP1 + 1), material: "ST_WarmLight"));
+g = merge(g, box_bounds(min: (PW, PD + 10, ZP1 - 15), max: (PW + 10, D - PD - 10, ZP1 + 1), material: "ST_WarmLight"));
+g = merge(g, box_bounds(min: (W - PW - 10, PD + 10, ZP1 - 15), max: (W - PW, D - PD - 10, ZP1 + 1), material: "ST_WarmLight"));
+
+// paired giant columns at the corners of the north, west and east faces
+let colA = part(POD_Column, x: 0, y: 0, z0: 0, z1: ZP1, r: 68, ped: 180, ped_h: 200, segs: 18);
+let cpos = [(105, D + 55, 0), (300, D + 55, 0), (W - 300, D + 55, 0), (W - 105, D + 55, 0), (-55, D - 105, 0), (-55, D - 300, 0), (-55, 300, 0), (-55, 105, 0), (W + 55, D - 105, 0), (W + 55, D - 300, 0), (W + 55, 300, 0), (W + 55, 105, 0)];
+g = merge(g, copy_to_points(colA, points: cpos));
+// entablature breaks (ressauts) over the column pairs
+let rA = extrude(points: [(-155, D - 400), (1, D - 400), (1, D - 1), (400, D - 1), (400, D + 155), (-155, D + 155)], height: 310, material: "ST_Stone");
+let rC = extrude(points: [(-195, D - 440), (1, D - 440), (1, D - 1), (440, D - 1), (440, D + 195), (-195, D + 195)], height: 135, material: "ST_Stone");
+g = merge(g, mirrored(merge(translate(rA, (0, 0, 2030)), translate(rC, (0, 0, 2340))), normal: (1, 0, 0), point: (W * 0.5, 0, 0)));
+let rsA = box_bounds(min: (-155, -1, 2030), max: (1, 400, 2340), material: "ST_Stone");
+let rsC = box_bounds(min: (-195, -1, 2340), max: (1, 440, 2475), material: "ST_Stone");
+g = merge(g, mirrored(merge(rsA, rsC), normal: (1, 0, 0), point: (W * 0.5, 0, 0)));
+
+// upper mass + mitred horizontal courses
+g = merge(g, box_bounds(min: (0, 0, ZP1 + 20), max: (W, D, ZC - 10), material: "ST_Stone"));
+g = merge(g, extrude_profile(points: RECT, profile: [(ZP1, 15), (2190, 15), (2190, 5), (2340, 5), (2340, 30), (2380, 30), (2380, 80), (ZPE, 80)], material: "ST_Stone"));
+g = merge(g, extrude_profile(points: RECT, profile: [(ZLG0, 10), (2840, 10), (2840, 45), (ZLG1, 45)], material: "ST_Stone"));
+g = merge(g, extrude_profile(points: RECT, profile: [(ZU, 15), (4800, 15), (4800, 5), (4890, 5), (4890, 45), (4930, 45), (4930, 90), (ZC, 90)], material: "ST_Stone"));
+// attic panels
+g = merge(g, box_bounds(min: (300, D - 1, 2530), max: (W - 300, D + 10, 2730), material: "ST_Stone"));
+g = merge(g, mirrored(box_bounds(min: (-10, 300, 2530), max: (1, D - 300, 2730), material: "ST_Stone"), normal: (1, 0, 0), point: (W * 0.5, 0, 0)));
+
+// upper tier: paired corner pilasters (north), pilasters + close fins with glazing strips (west / east)
+var pil = empty();
+for c in [75, 195] {
+    pil = merge(pil, box_bounds(min: (c - 37, D - 1, ZLG1 + 58), max: (c + 37, D + 30, ZU - 78), material: "ST_Stone"));
+    pil = merge(pil, box_bounds(min: (c - 45, D - 1, ZU - 80), max: (c + 45, D + 42, ZU + 1), material: "ST_Stone"));
+    pil = merge(pil, box_bounds(min: (c - 45, D - 1, ZLG1 - 1), max: (c + 45, D + 42, ZLG1 + 60), material: "ST_Stone"));
+}
+g = merge(g, mirrored(pil, normal: (1, 0, 0), point: (W * 0.5, 0, 0)));
+var side = empty();
+for c in [75, 195, D - 195, D - 75] {
+    side = merge(side, box_bounds(min: (-30, c - 37, ZLG1 + 58), max: (1, c + 37, ZU - 78), material: "ST_Stone"));
+    side = merge(side, box_bounds(min: (-42, c - 45, ZU - 80), max: (1, c + 45, ZU + 1), material: "ST_Stone"));
+    side = merge(side, box_bounds(min: (-42, c - 45, ZLG1 - 1), max: (1, c + 45, ZLG1 + 60), material: "ST_Stone"));
+}
+for k in 0..10 {
+    let c = 300 + k * (D - 600) / 9;
+    side = merge(side, box_bounds(min: (-26, c - 24, ZLG1 + 20), max: (1, c + 24, ZU - 20), material: "ST_Stone"));
+}
+side = merge(side, box_bounds(min: (-5, 270, ZLG1 + 140), max: (1, D - 270, ZU - 140), material: "ST_PodiumRooms"));
+g = merge(g, mirrored(side, normal: (1, 0, 0), point: (W * 0.5, 0, 0)));
+
+// medallion: white moulded ring, gold disc, white 5-petal star-flower in relief, gold centre star
+let mback = translate(rotate_x(cylinder_at(radius: 482, height: 14, bottom_center: (0, 0, 0), segments: 48, material: "ST_Stone"), degrees: -90, pivot: (0, 0, 0)), (W * 0.5, D - 2, ZMED));
+let mring = translate(rotate_x(torus_center(major_radius: 445, tube_radius: 32, segments: 48, tube_segments: 8, center: (0, 0, 0), material: "ST_Stone"), degrees: 90, pivot: (0, 0, 0)), (W * 0.5, D + 14, ZMED));
+let mgold = translate(rotate_x(cylinder_at(radius: 418, height: 20, bottom_center: (0, 0, 0), segments: 48, material: "ST_Gold"), degrees: -90, pivot: (0, 0, 0)), (W * 0.5, D + 8, ZMED));
+let mflower = translate(svg_shape(d: "M0,-62 C62,-96 140,-175 132,-252 C126,-312 60,-342 0,-352 C-60,-342 -126,-312 -132,-252 C-140,-175 -62,-96 0,-62 Z M-59,-19 C-72,-89 -123,-187 -199,-203 C-258,-216 -307,-163 -335,-109 C-344,-49 -336,23 -280,48 C-210,79 -110,29 -59,-19 Z M-36,50 C-107,41 -216,59 -255,126 C-285,178 -250,241 -207,285 C-152,312 -81,326 -41,281 C10,224 -6,114 -36,50 Z M36,50 C6,114 -10,224 41,281 C81,326 152,312 207,285 C250,241 285,178 255,126 C216,59 107,41 36,50 Z M59,-19 C110,29 210,79 280,48 C336,23 344,-49 335,-109 C307,-163 258,-216 199,-203 C123,-187 72,-89 59,-19 Z", view_box: [-400, -400, 800, 800], origin: "center", scale: 1.06, depth: 14, material: "ST_Stone"), (W * 0.5, D + 40, ZMED));
+let mstar = translate(rotate_x(extrude(points: star_profile(center: (0, 0), points: 5, r_outer: 80, r_inner: 34, rotation_degrees: -90), height: 10, material: "ST_Gold"), degrees: -90, pivot: (0, 0, 0)), (W * 0.5, D + 38, ZMED));
+g = merge(g, mback, mring, mgold, mflower, mstar);
+// lettering "State Tower / Bangkok" under the medallion
+let t1 = text_mesh(text: "State Tower", font: "font.google.Playfair_Display", height: 220, depth: 8, material: "ST_Gold");
+let t1c = bounds_center(t1);
+g = merge(g, translate(rotate_z(translate(t1, (0 - t1c.x, 0, 0)), degrees: 180, pivot: (0, 0, 0)), (W * 0.5, D - 1, 3040)));
+let t2 = text_mesh(text: "Bangkok", font: "font.google.Playfair_Display", height: 95, depth: 8, material: "ST_Gold");
+let t2c = bounds_center(t2);
+g = merge(g, translate(rotate_z(translate(t2, (0 - t2c.x, 0, 0)), degrees: 180, pivot: (0, 0, 0)), (W * 0.5, D - 1, 2925)));
+
+// pediment (north) on a gable roof running back to the podium
+let sl = (ZTA - ZC) / (W * 0.5);
+g = merge(g, translate(rotate_x(extrude(points: [(0, ZC - 2), (W, ZC - 2), (W * 0.5, ZTA)], height: D, material: "ST_Stone"), degrees: 90, pivot: (0, 0, 0)), (0, D, 0)));
+let rk = extrude(points: [(-90, ZC - 2 - 90 * sl), (W * 0.5, ZTA - 2), (W + 90, ZC - 2 - 90 * sl), (W + 90, ZC + 93 - 90 * sl), (W * 0.5, ZTA + 93), (-90, ZC + 93 - 90 * sl)], height: 100, material: "ST_Stone");
+g = merge(g, translate(rotate_x(rk, degrees: 90, pivot: (0, 0, 0)), (0, D + 95, 0)));
+let nrm = 12 / sqrt(1 + sl * sl);
+let roofL = extrude_loop(points: [(-60, -10, ZC - 4 - 60 * sl), (W * 0.5, -10, ZTA - 4), (W * 0.5, D - 6, ZTA - 4), (-60, D - 6, ZC - 4 - 60 * sl)], offset: (0 - sl * nrm, 0, nrm), material: "ST_Concrete");
+g = merge(g, mirrored(roofL, normal: (1, 0, 0), point: (W * 0.5, 0, 0)));
+g = merge(g, cylinder_between(start: (W * 0.5, -18, ZTA + 4), end: (W * 0.5, D - 3, ZTA + 4), radius: 16, segments: 8, material: "ST_Stone"));
+
+out.geo = translate(rotate_z(g, degrees: ang, pivot: (0, 0, 0)), (ox, oy, 0));
+#end
+
+// ---------------------------------------------------------------------------------------------
+// Coarse portal mass for LOD1 (detail = 1: arch lintels, pediment rake, medallion disc) and the collider (detail = 0).
+#meshpart POD_PortalMass
+param ox = 0;
+param oy = 0;
+param ex = 1000;
+param ey = 0;
+param nx = 0;
+param ny = 1000;
+param detail = 1;
+let wx = ex - ox;
+let wy = ey - oy;
+let W = sqrt(wx * wx + wy * wy);
+let ux = wx / W;
+let uy = wy / W;
+let D = (nx - ox) * (0 - uy) + (ny - oy) * ux;
+let ang = atan2(uy, ux);
+let AR = 525;
+let ZP1 = 2040;
+let ZC = PODIUM_TOP;
+let ZTA = PORTAL_TOP - 95;
+let PW = W * 0.5 - AR;
+let PD = D * 0.5 - AR;
+let pier = box_bounds(min: (0, 0, 0), max: (PW, PD, ZP1 + 1), material: "ST_Stone");
+var g = merge(pier, translate(pier, (W - PW, 0, 0)), translate(pier, (0, D - PD, 0)), translate(pier, (W - PW, D - PD, 0)));
+g = merge(g, box_bounds(min: (0, 0, ZP1), max: (W, D, ZC), material: "ST_Stone"));
+g = merge(g, translate(rotate_x(extrude(points: [(0, ZC - 2), (W, ZC - 2), (W * 0.5, PORTAL_TOP)], height: D, material: "ST_Stone"), degrees: 90, pivot: (0, 0, 0)), (0, D, 0)));
+if detail > 0 {
+    g = merge(g, box_bounds(min: (PW - 1, D - PD, 1650), max: (W - PW + 1, D, ZP1 + 1), material: "ST_Stone"));
+    g = merge(g, box_bounds(min: (0, PD - 1, 1650), max: (PW, D - PD + 1, ZP1 + 1), material: "ST_Stone"));
+    g = merge(g, box_bounds(min: (W - PW, PD - 1, 1650), max: (W, D - PD + 1, ZP1 + 1), material: "ST_Stone"));
+    g = merge(g, box_bounds(min: (PW - 1, 0, 1650), max: (W - PW + 1, PD, ZP1 + 1), material: "ST_Stone"));
+    g = merge(g, box_bounds(min: (PW, 300, 0), max: (W - PW, 318, 1650), material: "ST_PodiumRooms"));
+    g = merge(g, translate(rotate_x(cylinder_at(radius: 440, height: 30, bottom_center: (0, 0, 0), segments: 20, material: "ST_Gold"), degrees: -90, pivot: (0, 0, 0)), (W * 0.5, D - 2, 3880)));
+}
+out.geo = translate(rotate_z(g, degrees: ang, pivot: (0, 0, 0)), (ox, oy, 0));
+#end
+
+// =============================================================================================
+#mesh ST_Podium
+budget(verts: 250000, indices: 750000);
+sim_box(min: (-9000, -9000, 0), max: (9000, 9000, 6000));
+anchor(mode: "origin");
+let P0 = at(PODIUM_FP, 0);
+let P1 = at(PODIUM_FP, 1);
+let P2 = at(PODIUM_FP, 2);
+let P3 = at(PODIUM_FP, 3);
+let P4 = at(PODIUM_FP, 4);
+let P6 = at(PODIUM_FP, 6);
+let P7 = at(PODIUM_FP, 7);
+let P8 = at(PODIUM_FP, 8);
+// main podium outline without the portal neck (P4, P7 lie on the straight north line P3 -> P8)
+let RING = [(P0.x, P0.y), (P1.x, P1.y), (P2.x, P2.y), (P3.x, P3.y), (P8.x, P8.y)];
+let zBase = 130;
+let zL1 = 2300;
+let zB0 = 2480;
+let zB1 = 2960;
+let zU0 = 3020;
+let zU1 = 4460;
+let zCor = PODIUM_TOP - PARAPET_H;
+
+// facades (CCW runs; west = Charoen Krung colonnade)
+let faceS = part(POD_Face, ax: P0.x, ay: P0.y, bx: P1.x, by: P1.y, skip_a: 1);
+let faceSE = part(POD_Face, ax: P1.x, ay: P1.y, bx: P2.x, by: P2.y);
+let faceE = part(POD_Face, ax: P2.x, ay: P2.y, bx: P3.x, by: P3.y);
+let faceNE = part(POD_Face, ax: P3.x, ay: P3.y, bx: P4.x, by: P4.y);
+let faceNW = part(POD_Face, ax: P7.x, ay: P7.y, bx: P8.x, by: P8.y);
+let faceW = part(POD_Face, ax: P8.x, ay: P8.y, bx: P0.x, by: P0.y, colonnade: 1);
+
+// mitred horizontal courses around the main outline
+let courseBase = extrude_profile(points: RING, profile: [(0, 25), (zBase, 25)], material: "ST_Stone");
+let courseLow = extrude_profile(points: RING, profile: [(zL1, 30), (zL1 + 100, 30), (zL1 + 100, 45), (zB0, 45)], material: "ST_Stone");
+let courseString = extrude_profile(points: RING, profile: [(zB1, 25), (zU0, 25)], material: "ST_Stone");
+let cornice = extrude_profile(points: RING, profile: [(zU1, 15), (zU1 + 100, 15), (zU1 + 100, 5), (zCor - 190, 5), (zCor - 190, 45), (zCor - 145, 45), (zCor - 145, 135), (zCor - 40, 135), (zCor - 40, 158), (zCor, 158)], material: "ST_Facade");
+let parapet = translate(extrude_shape(outer: offset_polygon(points: RING, delta: 125), holes: [offset_polygon(points: RING, delta: 75)], height: PODIUM_TOP - zCor + 2, material: "ST_Stone"), (0, 0, zCor - 2));
+let roof = translate(extrude(points: offset_polygon(points: RING, delta: 80), height: 20, material: "ST_Concrete"), (0, 0, zCor - 10));
+// tower bearing plinths: the tower parts start at z 4998 inside their footprints
+let pl_h = PODIUM_TOP - zCor + 5;
+let plinths = translate(merge(extrude(points: MAIN_FP, height: pl_h, material: "ST_Concrete"), extrude(points: STRIP210_FP, height: pl_h, material: "ST_Concrete"), extrude(points: WING170_FP, height: pl_h, material: "ST_Concrete"), extrude(points: WING160_FP, height: pl_h, material: "ST_Concrete"), extrude(points: WING150_FP, height: pl_h, material: "ST_Concrete")), (0, 0, zCor - 5));
+
+let portal = part(POD_Portal, ox: P7.x, oy: P7.y, ex: P4.x, ey: P4.y, nx: P6.x, ny: P6.y);
+out.geo = merge(faceS, faceSE, faceE, faceNE, faceNW, faceW, courseBase, courseLow, courseString, cornice, parapet, roof, plinths, portal);
+#end
+
+// =============================================================================================
+#mesh ST_Podium lod: 1
+let P0 = at(PODIUM_FP, 0);
+let P1 = at(PODIUM_FP, 1);
+let P2 = at(PODIUM_FP, 2);
+let P3 = at(PODIUM_FP, 3);
+let P4 = at(PODIUM_FP, 4);
+let P6 = at(PODIUM_FP, 6);
+let P7 = at(PODIUM_FP, 7);
+let P8 = at(PODIUM_FP, 8);
+let RING = [(P0.x, P0.y), (P1.x, P1.y), (P2.x, P2.y), (P3.x, P3.y), (P8.x, P8.y)];
+let zL1 = 2300;
+let zB0 = 2480;
+let zB1 = 2960;
+let zU1 = 4460;
+let zCor = PODIUM_TOP - PARAPET_H;
+// west edge pulled 7 m in for the colonnade loggia
+let wl = sqrt((P0.x - P8.x) * (P0.x - P8.x) + (P0.y - P8.y) * (P0.y - P8.y));
+let inx = 0 - (P0.y - P8.y) / wl;
+let iny = (P0.x - P8.x) / wl;
+let sl = sqrt((P1.x - P0.x) * (P1.x - P0.x) + (P1.y - P0.y) * (P1.y - P0.y));
+let sdx = (P1.x - P0.x) / sl;
+let sdy = (P1.y - P0.y) / sl;
+let t0 = 700 / (sdx * inx + sdy * iny);
+let nl = sqrt((P3.x - P8.x) * (P3.x - P8.x) + (P3.y - P8.y) * (P3.y - P8.y));
+let ndx = (P3.x - P8.x) / nl;
+let ndy = (P3.y - P8.y) / nl;
+let t8 = 700 / (ndx * inx + ndy * iny);
+let LOW = [(P0.x + sdx * t0, P0.y + sdy * t0), (P1.x, P1.y), (P2.x, P2.y), (P3.x, P3.y), (P8.x + ndx * t8, P8.y + ndy * t8)];
+let low = extrude(points: LOW, height: zL1 + 1, material: "ST_Facade");
+let pa = at(LOW, 4);
+let pb = at(LOW, 0);
+let loggia = beam_between(start: (pa.x - inx * 6, pa.y - iny * 6, (zL1 + 130) * 0.5), end: (pb.x - inx * 6, pb.y - iny * 6, (zL1 + 130) * 0.5), cross_width: 12, cross_height: zL1 - 130, height_direction: (0, 0, 1), material: "ST_PodiumRooms");
+let mid = extrude_profile(points: RING, profile: [(zL1, 30), (zB0, 30)], material: "ST_Stone");
+let balc = translate(extrude(points: offset_polygon(points: RING, delta: -150), height: zB1 - zB0 + 2, material: "ST_PodiumRooms"), (0, 0, zB0 - 1));
+let upper = extrude_profile(points: RING, profile: [(zB1, 0), (zU1, 0)], material: "ST_Facade");
+let corn = extrude_profile(points: RING, profile: [(zU1, 15), (zCor - 145, 15), (zCor - 145, 150), (zCor, 150)], material: "ST_Facade");
+let parapet = translate(extrude_shape(outer: offset_polygon(points: RING, delta: 125), holes: [offset_polygon(points: RING, delta: 75)], height: PODIUM_TOP - zCor + 2, material: "ST_Stone"), (0, 0, zCor - 2));
+let roof = translate(extrude(points: offset_polygon(points: RING, delta: 80), height: 20, material: "ST_Concrete"), (0, 0, zCor - 10));
+let pl_h = PODIUM_TOP - zCor + 5;
+let plinths = translate(merge(extrude(points: MAIN_FP, height: pl_h, material: "ST_Concrete"), extrude(points: STRIP210_FP, height: pl_h, material: "ST_Concrete"), extrude(points: WING170_FP, height: pl_h, material: "ST_Concrete"), extrude(points: WING160_FP, height: pl_h, material: "ST_Concrete"), extrude(points: WING150_FP, height: pl_h, material: "ST_Concrete")), (0, 0, zCor - 5));
+// colonnade shafts + end piers along Charoen Krung
+let wdx = (P0.x - P8.x) / wl;
+let wdy = (P0.y - P8.y) / wl;
+let nb = round(wl / 870);
+let bw = wl / nb;
+let shaft = cylinder_at(radius: 100, height: zL1 + 1, bottom_center: (P8.x + wdx * bw + inx * 125, P8.y + wdy * bw + iny * 125, 0), segments: 8, material: "ST_Stone");
+let cols = array(shaft, count: nb - 1, offset: (wdx * bw, wdy * bw, 0));
+let portal = part(POD_PortalMass, ox: P7.x, oy: P7.y, ex: P4.x, ey: P4.y, nx: P6.x, ny: P6.y, detail: 1);
+out.geo = merge(low, loggia, mid, balc, upper, corn, parapet, roof, plinths, cols, portal);
+#end
+
+// =============================================================================================
+#mesh ST_Podium collider
+let P0 = at(PODIUM_FP, 0);
+let P1 = at(PODIUM_FP, 1);
+let P2 = at(PODIUM_FP, 2);
+let P3 = at(PODIUM_FP, 3);
+let P4 = at(PODIUM_FP, 4);
+let P6 = at(PODIUM_FP, 6);
+let P7 = at(PODIUM_FP, 7);
+let P8 = at(PODIUM_FP, 8);
+let RING = [(P0.x, P0.y), (P1.x, P1.y), (P2.x, P2.y), (P3.x, P3.y), (P8.x, P8.y)];
+let zL1 = 2300;
+let zRoof = PODIUM_TOP - PARAPET_H + 10;
+// walkable Charoen Krung colonnade: lower block pulled 7 m in behind the columns
+let wl = sqrt((P0.x - P8.x) * (P0.x - P8.x) + (P0.y - P8.y) * (P0.y - P8.y));
+let wdx = (P0.x - P8.x) / wl;
+let wdy = (P0.y - P8.y) / wl;
+let inx = 0 - wdy;
+let iny = wdx;
+let sl = sqrt((P1.x - P0.x) * (P1.x - P0.x) + (P1.y - P0.y) * (P1.y - P0.y));
+let sdx = (P1.x - P0.x) / sl;
+let sdy = (P1.y - P0.y) / sl;
+let t0 = 700 / (sdx * inx + sdy * iny);
+let nl = sqrt((P3.x - P8.x) * (P3.x - P8.x) + (P3.y - P8.y) * (P3.y - P8.y));
+let ndx = (P3.x - P8.x) / nl;
+let ndy = (P3.y - P8.y) / nl;
+let t8 = 700 / (ndx * inx + ndy * iny);
+let LOW = [(P0.x + sdx * t0, P0.y + sdy * t0), (P1.x, P1.y), (P2.x, P2.y), (P3.x, P3.y), (P8.x + ndx * t8, P8.y + ndy * t8)];
+let low = extrude(points: LOW, height: zL1 + 1, material: "ST_Stone");
+let up = translate(extrude(points: RING, height: zRoof - zL1, material: "ST_Stone"), (0, 0, zL1));
+let slab = translate(extrude(points: offset_polygon(points: RING, delta: 125), height: 20, material: "ST_Stone"), (0, 0, zRoof - 20));
+let rim = extrude_shape(outer: offset_polygon(points: RING, delta: 125), holes: [offset_polygon(points: RING, delta: 75)], height: PODIUM_TOP - zRoof + 1, material: "ST_Stone");
+let pl_h = PODIUM_TOP - zRoof + 1;
+let plinths = merge(extrude(points: MAIN_FP, height: pl_h, material: "ST_Stone"), extrude(points: STRIP210_FP, height: pl_h, material: "ST_Stone"), extrude(points: WING170_FP, height: pl_h, material: "ST_Stone"), extrude(points: WING160_FP, height: pl_h, material: "ST_Stone"), extrude(points: WING150_FP, height: pl_h, material: "ST_Stone"));
+let nb = round(wl / 870);
+let bw = wl / nb;
+let col = box_at(size: (200, 200, zL1 + 1), bottom_center: (P8.x + wdx * bw + inx * 125, P8.y + wdy * bw + iny * 125, 0), material: "ST_Stone");
+let cols = array(rotate_z(col, degrees: atan2(wdy, wdx), pivot: (P8.x + wdx * bw + inx * 125, P8.y + wdy * bw + iny * 125, 0)), count: nb - 1, offset: (wdx * bw, wdy * bw, 0));
+let endN = beam_between(start: (P8.x + inx * 351, P8.y + iny * 351, (zL1 + 1) * 0.5), end: (P8.x + wdx * 300 + inx * 351, P8.y + wdy * 300 + iny * 351, (zL1 + 1) * 0.5), cross_width: 702, cross_height: zL1 + 1, height_direction: (0, 0, 1), material: "ST_Stone");
+let endS = beam_between(start: (P0.x - wdx * 300 + inx * 351, P0.y - wdy * 300 + iny * 351, (zL1 + 1) * 0.5), end: (P0.x + inx * 351, P0.y + iny * 351, (zL1 + 1) * 0.5), cross_width: 702, cross_height: zL1 + 1, height_direction: (0, 0, 1), material: "ST_Stone");
+let portal = part(POD_PortalMass, ox: P7.x, oy: P7.y, ex: P4.x, ey: P4.y, nx: P6.x, ny: P6.y, detail: 0);
+out.geo = merge(low, up, slab, translate(merge(rim, plinths), (0, 0, zRoof - 1)), cols, endN, endS, portal);
+#end

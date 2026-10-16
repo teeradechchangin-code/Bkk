@@ -1,0 +1,395 @@
+// ===== ST_TowerMain (Main-block crew) rev 1 =====
+// MAIN_FP block 50 -> 216 m and STRIP210_FP north strip 50 -> 210 m: solid cores, curved-balcony facades (Management kit
+// ST_KIT_BalconyFace, own mitred window walls), SW dark corner strip, upper NW dark slot with white pilaster, roof slabs,
+// cornices and balustrades. World centimetres, Z up, +Y true north; every dimension derives from #meshdefs.
+// Kit z datums alternate 6 cm (za/zb/zc) between runs that meet at a corner or a collinear joint, so overlapping band
+// caps / fins never share a plane; all datums sit 6-18 cm into the podium roof and end inside the roof slabs.
+
+// Recessed window wall (ST_Rooms) on a centreline A->B from z0 to z1 (beam_between: same UV family as the kit wall).
+#meshpart MAIN_Wall
+param ax = 0;
+param ay = 0;
+param bx = 100;
+param by = 0;
+param z0 = 0;
+param z1 = 100;
+out.geo = beam_between(start: (ax, ay, (z0 + z1) * 0.5), end: (bx, by, (z0 + z1) * 0.5), cross_width: 30, cross_height: z1 - z0, height_direction: (0, 0, 1), material: "ST_Rooms");
+#end
+
+// Horizontal dark-metal transom bar A->B repeated n times at pitch fh (floor lines across dark glass).
+#meshpart MAIN_MullionRow
+param ax = 0;
+param ay = 0;
+param bx = 100;
+param by = 0;
+param z0 = 0;
+param n = 1;
+param fh = 345.83;
+let bar = beam_between(start: (ax, ay, z0), end: (bx, by, z0), cross_width: 10, cross_height: 20, height_direction: (0, 0, 1), material: "ST_DarkMetal");
+out.geo = array(bar, count: n, offset: (0, 0, fh));
+#end
+
+// Straight neoclassical balustrade on centreline A->B from base z0: plinth, square balusters, top rail, posts.
+// start_post / end_post put a corner post at A / B (closed loops use start posts only, so corners never double).
+#meshpart MAIN_Balustrade
+param ax = 0;
+param ay = 0;
+param bx = 1000;
+param by = 0;
+param z0 = 0;
+param h = 90;
+param sp = 32;
+param post_sp = 330;
+param start_post = 1;
+param end_post = 0;
+let dx = bx - ax;
+let dy = by - ay;
+let len_ab = sqrt(dx * dx + dy * dy);
+let ux = dx / len_ab;
+let uy = dy / len_ab;
+let ang = atan2(uy, ux);
+let pw = 40;
+let plinth = beam_between(start: (ax, ay, z0 + 7), end: (bx, by, z0 + 7), cross_width: 34, cross_height: 18, height_direction: (0, 0, 1), material: "ST_Stone");
+let rail = beam_between(start: (ax, ay, z0 + h - 7), end: (bx, by, z0 + h - 7), cross_width: 32, cross_height: 14, height_direction: (0, 0, 1), material: "ST_Stone");
+let npost = max(1, round(len_ab / post_sp));
+let psx = len_ab / npost;
+let nb = max(1, floor((psx - pw) / sp));
+let bsp = (psx - pw) / nb;
+let bh = h - 30 + 4;
+let bal = rotate_z(box_center(size: (12, 12, bh), center: (0, 0, 0), material: "ST_Stone"), degrees: ang);
+let first = translate(bal, (ax + ux * (pw * 0.5 + bsp * 0.5), ay + uy * (pw * 0.5 + bsp * 0.5), z0 + 14 + bh * 0.5));
+let bals = array(array(first, count: nb, offset: (ux * bsp, uy * bsp, 0)), count: npost, offset: (ux * psx, uy * psx, 0));
+let post = rotate_z(box_center(size: (pw, pw, h + 10), center: (0, 0, 0), material: "ST_Stone"), degrees: ang);
+var g = merge(plinth, rail, bals);
+if npost > 1 {
+    g = merge(g, array(translate(post, (ax + ux * psx, ay + uy * psx, z0 - 2 + (h + 10) * 0.5)), count: npost - 1, offset: (ux * psx, uy * psx, 0)));
+}
+if start_post > 0 {
+    g = merge(g, translate(post, (ax, ay, z0 - 2 + (h + 10) * 0.5)));
+}
+if end_post > 0 {
+    g = merge(g, translate(post, (bx, by, z0 - 2 + (h + 10) * 0.5)));
+}
+out.geo = g;
+#end
+
+// Roof plant unit: concrete housing with dark louvre band and two fan discs, centred at (cx, cy) on z0, rotated ang.
+#meshpart MAIN_Plant
+param cx = 0;
+param cy = 0;
+param z0 = 0;
+param sx = 600;
+param sy = 400;
+param h = 260;
+param ang = 0;
+let body = box_center(size: (sx, sy, h), center: (0, 0, h * 0.5 - 2), material: "ST_Concrete");
+let louvre = box_center(size: (sx * 0.8, sy + 8, h * 0.45), center: (0, 0, h * 0.5), material: "ST_DarkMetal");
+let fan = cylinder_at(radius: min(sx, sy) * 0.22, height: 30, segments: 16, bottom_center: (0 - sx * 0.25, 0, h - 4), material: "ST_DarkMetal");
+let fan2 = translate(fan, (sx * 0.5, 0, 0));
+out.geo = translate(rotate_z(merge(body, louvre, fan, fan2), degrees: ang), (cx, cy, z0));
+#end
+
+#mesh ST_TowerMain
+budget(verts: 250000, indices: 750000);
+sim_box(min: (-9000, -9000, 0), max: (9000, 9000, 22000));
+anchor(mode: "origin");
+
+// ---------- levels ----------
+let fh = TOWER_FH;
+let zsep = 6;                              // z separation between kit datums of runs meeting at a corner
+let za = PODIUM_TOP - zsep;
+let zb = PODIUM_TOP - zsep * 2;
+let zc = PODIUM_TOP - zsep * 3;
+let zbot = PODIUM_TOP - 10;                // cores / walls / glass start 10 cm into the podium roof
+let nmain = TOWER_FLOORS;                  // 48 floors 50 -> 216 m
+let nstrip = floor((STRIP210_TOP - PODIUM_TOP) / fh);   // 46 floors on the strip (+ roof to 210 m)
+let nwing = floor((WING170_TOP - PODIUM_TOP) / fh);     // 34: first strip-north floor showing above wing 170
+let nslot = round((UPPER_SLOT_Z0 - PODIUM_TOP) / fh);   // 37: upper slot starts on this floor line
+let zslot = za + nslot * fh;
+let zsplit = STRIP210_TOP - 115;           // top of the strip-height cores / walls (inside the strip roof slab)
+let zmtop = MAIN_ROOF - 20;                // top of the main cores / walls / glass (inside the main roof slab)
+let wdep = BALC_D + 15;                    // window-wall centre depth behind the face line (kit wall line)
+let zr8 = zb + nwing * fh;                 // datum of the strip-north upper run
+
+// ---------- footprint vertices (OSM, #meshdefs) ----------
+let mnw = at(MAIN_FP, 0);
+let msw = at(MAIN_FP, 1);
+let mse = at(MAIN_FP, 2);
+let mee = at(MAIN_FP, 3);
+let mne = at(MAIN_FP, 4);
+let se1 = at(STRIP210_FP, 0);
+let skk = at(STRIP210_FP, 1);
+let snw = at(STRIP210_FP, 2);
+
+// ---------- face frames: unit direction (CCW walk) and outward normal (right-hand side) ----------
+// west face frame P(u, s) = msw + wu*u + su*s : u along the face from the SW corner, s depth inward (= along the south face)
+let wlx = snw.x - msw.x;
+let wly = snw.y - msw.y;
+let wlen = sqrt(wlx * wlx + wly * wly);
+let wux = wlx / wlen;
+let wuy = wly / wlen;
+let wox = 0 - wuy;
+let woy = wux;
+let slx = mse.x - msw.x;
+let sly = mse.y - msw.y;
+let slen = sqrt(slx * slx + sly * sly);
+let sux = slx / slen;
+let suy = sly / slen;
+let sox = suy;
+let soy = 0 - sux;
+let clx = mee.x - mse.x;
+let cly = mee.y - mse.y;
+let clen = sqrt(clx * clx + cly * cly);
+let cox = cly / clen;
+let coy = 0 - clx / clen;
+let elx = mne.x - mee.x;
+let ely = mne.y - mee.y;
+let elen = sqrt(elx * elx + ely * ely);
+let eux = elx / elen;
+let euy = ely / elen;
+let eox = euy;
+let eoy = 0 - eux;
+let n1x = skk.x - se1.x;
+let n1y = skk.y - se1.y;
+let n1len = sqrt(n1x * n1x + n1y * n1y);
+let n1ux = n1x / n1len;
+let n1uy = n1y / n1len;
+let n1ox = n1uy;
+let n1oy = 0 - n1ux;
+let n2x = snw.x - skk.x;
+let n2y = snw.y - skk.y;
+let n2len = sqrt(n2x * n2x + n2y * n2y);
+let n2ux = n2x / n2len;
+let n2uy = n2y / n2len;
+let n2ox = n2uy;
+let n2oy = 0 - n2ux;
+let mnx = mnw.x - mne.x;
+let mny = mnw.y - mne.y;
+let mnlen = sqrt(mnx * mnx + mny * mny);
+let mnux = mnx / mnlen;
+let mnuy = mny / mnlen;
+let mnox = mnuy;
+let mnoy = 0 - mnux;
+
+// ---------- mitred window-wall corners at depth wdep: V - (o1 + o2) * wdep / (1 + o1.o2) ----------
+let k_se = wdep / (1 + sox * cox + soy * coy);
+let mseIx = mse.x - (sox + cox) * k_se;
+let mseIy = mse.y - (soy + coy) * k_se;
+let k_ee = wdep / (1 + cox * eox + coy * eoy);
+let meeIx = mee.x - (cox + eox) * k_ee;
+let meeIy = mee.y - (coy + eoy) * k_ee;
+let k_nw = wdep / (1 + n2ox * wox + n2oy * woy);
+let snwIx = snw.x - (n2ox + wox) * k_nw;
+let snwIy = snw.y - (n2oy + woy) * k_nw;
+let k_ne = wdep / (1 + eox * mnox + eoy * mnoy);
+let mneIx = mne.x - (eox + mnox) * k_ne;
+let mneIy = mne.y - (eoy + mnoy) * k_ne;
+
+// ---------- west-face bay grid (photo 1/2 calibrated) ----------
+let u_n = wlen - FIN_T * 0.5;              // north end of the west runs: end fin stays inside the strip (wing 170 from wlen)
+let u_s = STRIP_W;                         // SW dark corner strip width seen on the west face (photos 1/2: ~2.8-3.3 m)
+let nbw = round((u_n - u_s) / BAY_W);
+let bww = (u_n - u_s) / nbw;
+let nbu = round((UPPER_SLOT_U0 - u_s) / bww);
+let u_slot0 = u_s + nbu * bww;             // upper slot start snapped to the bay grid (fins stay continuous)
+let u_pil = u_slot0 + bww;                 // white pilaster on the fin line in the middle of the slot
+let u_mnw = (mnw.x - msw.x) * wux + (mnw.y - msw.y) * wuy;   // main block NW corner (= MAIN_WEST_U1)
+let r10cut = BALC_D + 30;                  // main north top-floor run stops short of the NW corner (slot glass wraps it)
+
+// ---------- curved-balcony facades (Management kit, own window walls) ----------
+// R1 west lower (main + strip end) to the slot floor, R2 west upper (main, beside the slot)
+let r1 = part(ST_KIT_BalconyFace, ax: msw.x + wux * u_n, ay: msw.y + wuy * u_n, bx: msw.x + wux * u_s, by: msw.y + wuy * u_s, z0: za, floors: nslot, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+let r2 = part(ST_KIT_BalconyFace, ax: msw.x + wux * u_slot0, ay: msw.y + wuy * u_slot0, bx: msw.x + wux * u_s, by: msw.y + wuy * u_s, z0: za + nslot * fh, floors: nmain - nslot, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+// R3 south (starts after the SW corner glass), R4 SE chamfer, R5 east
+let r3 = part(ST_KIT_BalconyFace, ax: msw.x + sux * STRIP_W * 0.5, ay: msw.y + suy * STRIP_W * 0.5, bx: mse.x, by: mse.y, z0: zb, floors: nmain, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+let r4 = part(ST_KIT_BalconyFace, ax: mse.x, ay: mse.y, bx: mee.x, by: mee.y, z0: za, floors: nmain, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+let r5 = part(ST_KIT_BalconyFace, ax: mee.x, ay: mee.y, bx: mne.x, by: mne.y, z0: zb, floors: nmain, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+// R6 strip east end (collinear with R5: shifted zsep along + out so the joint fins never share a plane)
+let r6 = part(ST_KIT_BalconyFace, ax: mne.x + (eux + eox) * zsep, ay: mne.y + (euy + eoy) * zsep, bx: se1.x - eux * STRIP_W * 0.5 + eox * zsep, by: se1.y - euy * STRIP_W * 0.5 + eoy * zsep, z0: zc, floors: nstrip, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+// R7 strip north face, east part (full height), R8 strip north face, west part (above wing 170; collinear joint shifted)
+let r7 = part(ST_KIT_BalconyFace, ax: se1.x + n1ux * STRIP_W, ay: se1.y + n1uy * STRIP_W, bx: skk.x, by: skk.y, z0: za, floors: nstrip, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+let r8 = part(ST_KIT_BalconyFace, ax: skk.x + (n2ux + n2ox) * zsep, ay: skk.y + (n2uy + n2oy) * zsep, bx: snw.x + n2ox * zsep, by: snw.y + n2oy * zsep, z0: zr8, floors: nstrip - nwing, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+// R10 main north face above the strip roof (2 floors), stopping short of the NW slot corner
+let r10 = part(ST_KIT_BalconyFace, ax: mne.x, ay: mne.y, bx: mnw.x - mnux * r10cut, by: mnw.y - mnuy * r10cut, z0: za + nstrip * fh, floors: nmain - nstrip, fh: fh, bay_w: BAY_W, balc_d: BALC_D, bow_d: BOW_D, fin_t: FIN_T, wall: 0);
+let facades = merge(r1, r2, r3, r4, r5, r6, r7, r8, r10);
+
+// ---------- recessed window walls (mitred at the corners, wdep behind the face line) ----------
+let w_s = part(MAIN_Wall, ax: msw.x + wux * wdep + sux * (STRIP_W * 0.5 + 20), ay: msw.y + wuy * wdep + suy * (STRIP_W * 0.5 + 20), bx: mseIx, by: mseIy, z0: zbot, z1: zmtop);
+let w_c = part(MAIN_Wall, ax: mseIx, ay: mseIy, bx: meeIx, by: meeIy, z0: zbot, z1: zmtop);
+let w_el = part(MAIN_Wall, ax: meeIx, ay: meeIy, bx: se1.x - eux * (STRIP_W * 0.5 + 10) - eox * wdep, by: se1.y - euy * (STRIP_W * 0.5 + 10) - eoy * wdep, z0: zbot, z1: zsplit);
+let w_eh = part(MAIN_Wall, ax: meeIx, ay: meeIy, bx: mneIx, by: mneIy, z0: zsplit, z1: zmtop);
+let w_n1 = part(MAIN_Wall, ax: se1.x + n1ux * (STRIP_W + 10) - n1ox * wdep, ay: se1.y + n1uy * (STRIP_W + 10) - n1oy * wdep, bx: skk.x - n1ox * wdep, by: skk.y - n1oy * wdep, z0: zbot, z1: zsplit);
+let w_n2 = part(MAIN_Wall, ax: skk.x - n2ox * wdep, ay: skk.y - n2oy * wdep, bx: snwIx, by: snwIy, z0: zbot, z1: zsplit);
+let w_wa = part(MAIN_Wall, ax: msw.x + wux * (u_s + 10) + sux * wdep, ay: msw.y + wuy * (u_s + 10) + suy * wdep, bx: snwIx, by: snwIy, z0: zbot, z1: zsplit);
+let w_wb = part(MAIN_Wall, ax: snwIx, ay: snwIy, bx: msw.x + wux * (wlen - 2) + sux * wdep, by: msw.y + wuy * (wlen - 2) + suy * wdep, z0: zbot, z1: zr8 - zsep);
+let w_wc = part(MAIN_Wall, ax: msw.x + wux * (u_s + 10) + sux * wdep, ay: msw.y + wuy * (u_s + 10) + suy * wdep, bx: msw.x + wux * (u_mnw - wdep) + sux * wdep, by: msw.y + wuy * (u_mnw - wdep) + suy * wdep, z0: zsplit, z1: zmtop);
+let w_mn = part(MAIN_Wall, ax: mneIx, ay: mneIy, bx: mnw.x - mnux * r10cut - mnox * wdep, by: mnw.y - mnuy * r10cut - mnoy * wdep, z0: zsplit, z1: zmtop);
+let walls = merge(w_s, w_c, w_el, w_eh, w_n1, w_n2, w_wa, w_wb, w_wc, w_mn);
+
+// ---------- solid cores (behind the window walls) ----------
+let comb = [(snw.x, snw.y), (msw.x, msw.y), (mse.x, mse.y), (mee.x, mee.y), (se1.x, se1.y)];
+let zcs = zsplit - 10;                     // core split (kept off the wall / glass split planes)
+let core_low = translate(extrude(points: offset_polygon(points: comb, delta: 0 - (BALC_D + 20)), height: zcs - zbot + 4, material: "ST_Concrete"), (0, 0, zbot - 4));
+let core_high = translate(extrude(points: offset_polygon(points: MAIN_FP, delta: 0 - (BALC_D + 20)), height: zmtop - 10 - zcs, material: "ST_Concrete"), (0, 0, zcs));
+// filler behind the strip north face where wing 170 covers it (closes the balcony-depth gap below the R8 run)
+let zfil = zr8 - zsep * 2;
+let filler = beam_between(start: (skk.x + n2ux * 12 - n2ox * 80, skk.y + n2uy * 12 - n2oy * 80, (zbot - 8 + zfil) * 0.5), end: (snw.x - n2ux * (wdep + 10) - n2ox * 80, snw.y - n2uy * (wdep + 10) - n2oy * 80, (zbot - 8 + zfil) * 0.5), cross_width: 160, cross_height: zfil - zbot + 8, height_direction: (0, 0, 1), material: "ST_Concrete");
+let cores = merge(core_low, core_high, filler);
+
+// ---------- dark glass: SW corner strip and upper NW slot (recessed ~1 m) ----------
+let g_sw = beam_between(start: (msw.x + sux * 142.5, msw.y + suy * 142.5, (zbot + zmtop) * 0.5), end: (msw.x + wux * (u_s + 20) + sux * 142.5, msw.y + wuy * (u_s + 20) + suy * 142.5, (zbot + zmtop) * 0.5), cross_width: 85, cross_height: zmtop + 16 - zbot, height_direction: (0, 0, 1), material: "ST_DarkGlass");
+let zgs = zsplit + 12;                     // glass split (off the wall split plane)
+let g_lo = beam_between(start: (msw.x + wux * u_slot0 + sux * 140, msw.y + wuy * u_slot0 + suy * 140, (zslot + 10 + zgs) * 0.5), end: (msw.x + wux * (wlen - wdep) + sux * 140, msw.y + wuy * (wlen - wdep) + suy * 140, (zslot + 10 + zgs) * 0.5), cross_width: 80, cross_height: zgs - zslot - 10, height_direction: (0, 0, 1), material: "ST_DarkGlass");
+let g_hi = beam_between(start: (msw.x + wux * u_slot0 + sux * 145, msw.y + wuy * u_slot0 + suy * 145, (zgs + zmtop + 8) * 0.5), end: (msw.x + wux * u_mnw + sux * 145, msw.y + wuy * u_mnw + suy * 145, (zgs + zmtop + 8) * 0.5), cross_width: 90, cross_height: zmtop + 8 - zgs, height_direction: (0, 0, 1), material: "ST_DarkGlass");
+// floor-line transoms on the glass
+// NE strip corner dark glass (photos 1/2/4: dark strip at the east end of the north face, 50 -> 210 m)
+let k100 = 100 / (1 + n1ox * eox + n1oy * eoy);
+let k185 = 185 / (1 + n1ox * eox + n1oy * eoy);
+let k96 = 96 / (1 + n1ox * eox + n1oy * eoy);
+let ne_pts = [
+    (se1.x + n1ux * (STRIP_W + 20) - n1ox * 100, se1.y + n1uy * (STRIP_W + 20) - n1oy * 100),
+    (se1.x - (n1ox + eox) * k100, se1.y - (n1oy + eoy) * k100),
+    (se1.x - eux * (STRIP_W * 0.5 + 20) - eox * 100, se1.y - euy * (STRIP_W * 0.5 + 20) - eoy * 100),
+    (se1.x - eux * (STRIP_W * 0.5 + 20) - eox * 185, se1.y - euy * (STRIP_W * 0.5 + 20) - eoy * 185),
+    (se1.x - (n1ox + eox) * k185, se1.y - (n1oy + eoy) * k185),
+    (se1.x + n1ux * (STRIP_W + 20) - n1ox * 185, se1.y + n1uy * (STRIP_W + 20) - n1oy * 185)];
+let g_ne = translate(extrude(points: ne_pts, height: zsplit + 5 - (zbot - 20), material: "ST_DarkGlass"), (0, 0, zbot - 20));
+let m_ne = part(MAIN_MullionRow, ax: se1.x - (n1ox + eox) * k96, ay: se1.y - (n1oy + eoy) * k96, bx: se1.x + n1ux * STRIP_W - n1ox * 96, by: se1.y + n1uy * STRIP_W - n1oy * 96, z0: za + fh, n: nstrip - 1, fh: fh);
+let m_sw = part(MAIN_MullionRow, ax: msw.x + sux * 96, ay: msw.y + suy * 96, bx: msw.x + wux * u_s + sux * 96, by: msw.y + wuy * u_s + suy * 96, z0: za + fh, n: nmain - 1, fh: fh);
+let m_sl1 = part(MAIN_MullionRow, ax: msw.x + wux * u_slot0 + sux * 96, ay: msw.y + wuy * u_slot0 + suy * 96, bx: msw.x + wux * u_mnw + sux * 96, by: msw.y + wuy * u_mnw + suy * 96, z0: zslot + fh, n: nmain - nslot - 1, fh: fh);
+let m_sl2 = part(MAIN_MullionRow, ax: msw.x + wux * u_mnw + sux * 96, ay: msw.y + wuy * u_mnw + suy * 96, bx: msw.x + wux * (wlen - wdep) + sux * 96, by: msw.y + wuy * (wlen - wdep) + suy * 96, z0: zslot + fh, n: nstrip - nslot - 1, fh: fh);
+// slot sill (white band across the slot on the slot floor) and the slim white pilaster up the slot middle
+let sill = beam_between(start: (msw.x + wux * u_slot0 + sux * 65, msw.y + wuy * u_slot0 + suy * 65, zslot + 67.5), end: (msw.x + wux * u_n + sux * 65, msw.y + wuy * u_n + suy * 65, zslot + 67.5), cross_width: 170, cross_height: 135, height_direction: (0, 0, 1), material: "ST_Facade");
+let pil_z0 = zslot + 130;
+let pil_z1 = MAIN_ROOF + 140;
+let pilaster = beam_between(start: (msw.x + wux * u_pil - sux * 25, msw.y + wuy * u_pil - suy * 25, (pil_z0 + pil_z1) * 0.5), end: (msw.x + wux * u_pil + sux * 115, msw.y + wuy * u_pil + suy * 115, (pil_z0 + pil_z1) * 0.5), cross_width: 70, cross_height: pil_z1 - pil_z0, height_direction: (0, 0, 1), material: "ST_Facade");
+let glass = merge(g_sw, g_ne, g_lo, g_hi, m_sw, m_ne, m_sl1, m_sl2, sill, pilaster);
+
+// ---------- roofs: concrete slabs, white cornice rings, balustrades ----------
+let ring_main = translate(extrude_shape(outer: offset_polygon(points: MAIN_FP, delta: 15), holes: [offset_polygon(points: MAIN_FP, delta: -80)], height: 110, material: "ST_Facade"), (0, 0, MAIN_ROOF - 80));
+let slab_main = translate(extrude(points: offset_polygon(points: MAIN_FP, delta: -79), height: 60, material: "ST_Concrete"), (0, 0, MAIN_ROOF - 60));
+let ring_strip = translate(extrude_shape(outer: offset_polygon(points: STRIP210_FP, delta: 15), holes: [offset_polygon(points: STRIP210_FP, delta: -80)], height: 150, material: "ST_Facade"), (0, 0, STRIP210_TOP - 120));
+let slab_strip = translate(extrude(points: offset_polygon(points: STRIP210_FP, delta: -79), height: 130, material: "ST_Concrete"), (0, 0, STRIP210_TOP - 130));
+let bm = offset_polygon(points: MAIN_FP, delta: -25);
+let bm0 = at(bm, 0);
+let bm1 = at(bm, 1);
+let bm2 = at(bm, 2);
+let bm3 = at(bm, 3);
+let bm4 = at(bm, 4);
+let zbm = MAIN_ROOF + 30;
+let bal_m = merge(
+    part(MAIN_Balustrade, ax: bm0.x, ay: bm0.y, bx: bm1.x, by: bm1.y, z0: zbm),
+    part(MAIN_Balustrade, ax: bm1.x, ay: bm1.y, bx: bm2.x, by: bm2.y, z0: zbm),
+    part(MAIN_Balustrade, ax: bm2.x, ay: bm2.y, bx: bm3.x, by: bm3.y, z0: zbm),
+    part(MAIN_Balustrade, ax: bm3.x, ay: bm3.y, bx: bm4.x, by: bm4.y, z0: zbm),
+    part(MAIN_Balustrade, ax: bm4.x, ay: bm4.y, bx: bm0.x, by: bm0.y, z0: zbm)
+);
+let bs = offset_polygon(points: STRIP210_FP, delta: -25);
+let bs0 = at(bs, 0);
+let bs1 = at(bs, 1);
+let bs2 = at(bs, 2);
+let bs3 = at(bs, 3);
+let bs4 = at(bs, 4);
+let zbs = STRIP210_TOP + 30;
+let bal_s = merge(
+    part(MAIN_Balustrade, ax: bs4.x, ay: bs4.y, bx: bs0.x, by: bs0.y, z0: zbs),
+    part(MAIN_Balustrade, ax: bs0.x, ay: bs0.y, bx: bs1.x, by: bs1.y, z0: zbs),
+    part(MAIN_Balustrade, ax: bs1.x, ay: bs1.y, bx: bs2.x, by: bs2.y, z0: zbs),
+    part(MAIN_Balustrade, ax: bs2.x, ay: bs2.y, bx: bs3.x, by: bs3.y, z0: zbs, end_post: 0)
+);
+// roof plant on the east part of the main roof (outside ROOFDECK_FP): frame at the E chamfer vertex
+let pax = eux;
+let pay = euy;
+let pbx = 0 - eox;
+let pby = 0 - eoy;
+let pang = atan2(euy, eux);
+let plant = merge(
+    part(MAIN_Plant, cx: mee.x + pax * 450 + pbx * 1050, cy: mee.y + pay * 450 + pby * 1050, z0: MAIN_ROOF, sx: 800, sy: 500, h: 300, ang: pang),
+    part(MAIN_Plant, cx: mee.x + pax * 600 + pbx * 1900, cy: mee.y + pay * 600 + pby * 1900, z0: MAIN_ROOF, sx: 600, sy: 600, h: 250, ang: pang),
+    part(MAIN_Plant, cx: mee.x + pax * 1350 + pbx * 950, cy: mee.y + pay * 1350 + pby * 950, z0: MAIN_ROOF, sx: 300, sy: 160, h: 170, ang: pang),
+    part(MAIN_Plant, cx: mee.x + pax * 1750 + pbx * 950, cy: mee.y + pay * 1750 + pby * 950, z0: MAIN_ROOF, sx: 300, sy: 160, h: 170, ang: pang),
+    part(MAIN_Plant, cx: mee.x + pax * 2150 + pbx * 950, cy: mee.y + pay * 2150 + pby * 950, z0: MAIN_ROOF, sx: 300, sy: 160, h: 170, ang: pang)
+);
+let roofs = merge(ring_main, slab_main, ring_strip, slab_strip, bal_m, bal_s, plant);
+
+out.geo = merge(facades, walls, cores, glass, roofs);
+#end
+
+#mesh ST_TowerMain lod: 1
+// Far display: window-wall beams (same UV family as LOD0), one white band ring per floor, dark strips, pilaster, roofs.
+let fh = TOWER_FH;
+let za = PODIUM_TOP - 6;
+let nstrip = floor((STRIP210_TOP - PODIUM_TOP) / fh);
+let nslot = round((UPPER_SLOT_Z0 - PODIUM_TOP) / fh);
+let msw = at(MAIN_FP, 1);
+let mnw = at(MAIN_FP, 0);
+let snw = at(STRIP210_FP, 2);
+let mse = at(MAIN_FP, 2);
+let mee = at(MAIN_FP, 3);
+let se1 = at(STRIP210_FP, 0);
+let wlx = snw.x - msw.x;
+let wly = snw.y - msw.y;
+let wlen = sqrt(wlx * wlx + wly * wly);
+let wux = wlx / wlen;
+let wuy = wly / wlen;
+let slx = mse.x - msw.x;
+let sly = mse.y - msw.y;
+let slen = sqrt(slx * slx + sly * sly);
+let sux = slx / slen;
+let suy = sly / slen;
+let u_mnw = (mnw.x - msw.x) * wux + (mnw.y - msw.y) * wuy;
+let skk = at(STRIP210_FP, 1);
+let n1x = skk.x - se1.x;
+let n1y = skk.y - se1.y;
+let n1len = sqrt(n1x * n1x + n1y * n1y);
+let n1ux = n1x / n1len;
+let n1uy = n1y / n1len;
+let comb = [(snw.x, snw.y), (msw.x, msw.y), (mse.x, mse.y), (mee.x, mee.y), (se1.x, se1.y)];
+let skc = offset_polygon(points: comb, delta: 0 - BALC_D - 15);
+let skm = offset_polygon(points: MAIN_FP, delta: 0 - BALC_D - 15);
+let zlo = PODIUM_TOP - 10;
+let zhi = STRIP210_TOP - 115;
+var skin = empty();
+for i in 0..len(skc) {
+    let a = at(skc, i);
+    let b = at(skc, mod(i + 1, len(skc)));
+    skin = merge(skin, part(MAIN_Wall, ax: a.x, ay: a.y, bx: b.x, by: b.y, z0: zlo, z1: zhi));
+}
+for i in 0..len(skm) {
+    let a = at(skm, i);
+    let b = at(skm, mod(i + 1, len(skm)));
+    skin = merge(skin, part(MAIN_Wall, ax: a.x, ay: a.y, bx: b.x, by: b.y, z0: zhi, z1: MAIN_ROOF - 20));
+}
+let core = merge(
+    translate(extrude(points: offset_polygon(points: comb, delta: 0 - BALC_D - 20), height: zhi - 10 - zlo, material: "ST_Concrete"), (0, 0, zlo - 4)),
+    translate(extrude(points: offset_polygon(points: MAIN_FP, delta: 0 - BALC_D - 20), height: MAIN_ROOF - 30 - zhi, material: "ST_Concrete"), (0, 0, zhi - 10)));
+let band_c = translate(extrude_shape(outer: comb, holes: [offset_polygon(points: comb, delta: 0 - BALC_D - 10)], height: 135, material: "ST_Facade"), (0, 0, za));
+let band_m = translate(extrude_shape(outer: MAIN_FP, holes: [offset_polygon(points: MAIN_FP, delta: 0 - BALC_D - 10)], height: 135, material: "ST_Facade"), (0, 0, za + nstrip * fh));
+let bands = merge(array(band_c, count: nstrip, offset: (0, 0, fh)), array(band_m, count: TOWER_FLOORS - nstrip, offset: (0, 0, fh)));
+let g_sw = beam_between(start: (msw.x - sux * 10, msw.y - suy * 10, (PODIUM_TOP + MAIN_ROOF) * 0.5), end: (msw.x + wux * STRIP_W - sux * 10, msw.y + wuy * STRIP_W - suy * 10, (PODIUM_TOP + MAIN_ROOF) * 0.5), cross_width: 40, cross_height: MAIN_ROOF - PODIUM_TOP - 20, height_direction: (0, 0, 1), material: "ST_DarkGlass");
+let g_ne = beam_between(start: (se1.x + n1uy * 10, se1.y - n1ux * 10, (PODIUM_TOP + STRIP210_TOP - 20) * 0.5), end: (se1.x + n1ux * STRIP_W + n1uy * 10, se1.y + n1uy * STRIP_W - n1ux * 10, (PODIUM_TOP + STRIP210_TOP - 20) * 0.5), cross_width: 40, cross_height: STRIP210_TOP - 40 - PODIUM_TOP, height_direction: (0, 0, 1), material: "ST_DarkGlass");
+let zs = za + nslot * fh;
+let g_sl = beam_between(start: (msw.x + wux * UPPER_SLOT_U0 - sux * 10, msw.y + wuy * UPPER_SLOT_U0 - suy * 10, (zs + 140 + STRIP210_TOP - 30) * 0.5), end: (msw.x + wux * (wlen - BALC_D) - sux * 10, msw.y + wuy * (wlen - BALC_D) - suy * 10, (zs + 140 + STRIP210_TOP - 30) * 0.5), cross_width: 40, cross_height: STRIP210_TOP - 170 - zs, height_direction: (0, 0, 1), material: "ST_DarkGlass");
+let g_sh = beam_between(start: (msw.x + wux * UPPER_SLOT_U0 - sux * 10, msw.y + wuy * UPPER_SLOT_U0 - suy * 10, (STRIP210_TOP + MAIN_ROOF - 40) * 0.5), end: (msw.x + wux * u_mnw - sux * 10, msw.y + wuy * u_mnw - suy * 10, (STRIP210_TOP + MAIN_ROOF - 40) * 0.5), cross_width: 40, cross_height: MAIN_ROOF - 40 - STRIP210_TOP, height_direction: (0, 0, 1), material: "ST_DarkGlass");
+let u_pil = (UPPER_SLOT_U0 + UPPER_SLOT_U1) * 0.5;
+let pil = beam_between(start: (msw.x + wux * u_pil - sux * 35, msw.y + wuy * u_pil - suy * 35, (zs + 125 + MAIN_ROOF + 120) * 0.5), end: (msw.x + wux * u_pil + sux * 100, msw.y + wuy * u_pil + suy * 100, (zs + 125 + MAIN_ROOF + 120) * 0.5), cross_width: 70, cross_height: MAIN_ROOF - 5 - zs, height_direction: (0, 0, 1), material: "ST_Facade");
+let roof_m = translate(extrude(points: offset_polygon(points: MAIN_FP, delta: -30), height: 60, material: "ST_Concrete"), (0, 0, MAIN_ROOF - 60));
+let par_m = translate(extrude_shape(outer: offset_polygon(points: MAIN_FP, delta: 10), holes: [offset_polygon(points: MAIN_FP, delta: -40)], height: 210, material: "ST_Facade"), (0, 0, MAIN_ROOF - 90));
+let roof_s = translate(extrude(points: offset_polygon(points: STRIP210_FP, delta: -30), height: 60, material: "ST_Concrete"), (0, 0, STRIP210_TOP - 60));
+let par_s = translate(extrude_shape(outer: offset_polygon(points: STRIP210_FP, delta: 10), holes: [offset_polygon(points: STRIP210_FP, delta: -40)], height: 200, material: "ST_Facade"), (0, 0, STRIP210_TOP - 90));
+out.geo = merge(skin, core, bands, g_sw, g_ne, g_sl, g_sh, pil, roof_m, par_m, roof_s, par_s);
+#end
+
+#mesh ST_TowerMain collider
+let snw = at(STRIP210_FP, 2);
+let msw = at(MAIN_FP, 1);
+let mse = at(MAIN_FP, 2);
+let mee = at(MAIN_FP, 3);
+let se1 = at(STRIP210_FP, 0);
+let comb = [(snw.x, snw.y), (msw.x, msw.y), (mse.x, mse.y), (mee.x, mee.y), (se1.x, se1.y)];
+let low = translate(extrude(points: comb, height: STRIP210_TOP - PODIUM_TOP + 2, material: "ST_Concrete"), (0, 0, PODIUM_TOP - 2));
+let high = translate(extrude(points: MAIN_FP, height: MAIN_ROOF - STRIP210_TOP, material: "ST_Concrete"), (0, 0, STRIP210_TOP));
+let par_m = translate(extrude_shape(outer: MAIN_FP, holes: [offset_polygon(points: MAIN_FP, delta: -40)], height: 120, material: "ST_Concrete"), (0, 0, MAIN_ROOF));
+let par_s = translate(extrude_shape(outer: STRIP210_FP, holes: [offset_polygon(points: STRIP210_FP, delta: -40)], height: 110, material: "ST_Concrete"), (0, 0, STRIP210_TOP));
+out.geo = merge(low, high, par_m, par_s);
+#end

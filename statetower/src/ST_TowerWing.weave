@@ -1,0 +1,468 @@
+// ===== ST_TowerWing (Wing crew) rev 1 =====
+// Stepped north wing of State Tower: WING170_FP 50 -> 170 m, WING160_FP 50 -> 160 m, WING150_FP 50 -> 150 m.
+// Solid cores (one combined prism per height band), curved-balcony facades (Management kit ST_KIT_BalconyFace) on every
+// exposed straight run, the lower dark slot in wing 150, concrete roofs with white balustrades and the three
+// neoclassical pediment ensembles (attic storey with round-arched windows between pilasters, entablature, gable with
+// raking cornices; blue emblem disc in the top tympanum).
+// World centimetres, Z up, +X east, +Y true north. Every outline / height derives from #meshdefs.
+//
+// Photo reading (P1 night + P2 day through the dossier's fitted cameras):
+//  - The three gables face NORTH (+WEST_DIR, the wing's north faces), not west: P2 (bearing ~308 deg) sees them 1.6x
+//    narrower than P1 (~317 deg) while the west face is ~1.0x -> facing ~23-34 deg. Their classical rake (~22 deg) and
+//    full step widths (35 / 21.5 / 23.3 m) then match both photos at once.
+//  - Each attic is one step high (cornice = next roof level): attic = WING160_TOP - WING150_TOP.
+//    Apexes: ~164.7 / ~174.3 / ~187.0 m (photo: ~164 / ~174 / ~186 m).
+//  - Top: the attic fills wing 170's roof south of the NW chamfer (its west / east sides continue the balcony bays to
+//    the cornice, as both photos show); front gable spans the full wing width with the lit blue emblem.
+//  - Middle: front across wing 160 at u = WING_MID_U, back on wing 170's north face; tall central arched window rising
+//    into the tympanum (P1, P2). Lowest: front at u = WING_LOW_U from the west face, back on wing 160's north face.
+
+// ---------------------------------------------------------------------------------------------------------------
+// Straight neoclassical balustrade on centreline A->B from base z0: plinth, square balusters, top rail, posts
+// (start posts only, so a chain of runs never doubles a corner post). Same section family as the main crew's.
+#meshpart WING_Balustrade
+param ax = 0;
+param ay = 0;
+param bx = 1000;
+param by = 0;
+param z0 = 0;
+param h = 90;
+param sp = 32;
+param post_sp = 330;
+let dx = bx - ax;
+let dy = by - ay;
+let len_ab = sqrt(dx * dx + dy * dy);
+let npost = max(1, round(len_ab / post_sp));
+let psx = len_ab / npost;
+let pw = 40;
+let nb = max(1, floor((psx - pw) / sp));
+let bsp = (psx - pw) / nb;
+let bh = h - 26;
+let plinth = box_bounds(min: (0, -17, -2), max: (len_ab, 17, 16), material: "ST_Stone");
+let rail = box_bounds(min: (0, -16, h - 14), max: (len_ab, 16, h), material: "ST_Stone");
+let b0 = box_bounds(min: (pw * 0.5 + bsp * 0.5 - 6, -6, 14), max: (pw * 0.5 + bsp * 0.5 + 6, 6, 14 + bh), material: "ST_Stone");
+let bals = array(array(b0, count: nb, offset: (bsp, 0, 0)), count: npost, offset: (psx, 0, 0));
+let post = box_bounds(min: (-20, -20, -2), max: (20, 20, h + 8), material: "ST_Stone");
+let posts = array(post, count: npost, offset: (psx, 0, 0));
+out.geo = translate(rotate_z_to(merge(plinth, rail, bals, posts), direction: (dx, dy, 0)), (ax, ay, z0));
+#end
+
+// ---------------------------------------------------------------------------------------------------------------
+// Plan polygons of the wing with per-edge offsets. Edge kinds: 0 exposed (d_exp), 1 shared with a taller wing part
+// (d_sh), 2 the north-strip junction (1253,21)-(-1970,1376) (d_jn), 3 the top-attic front line (d_fr).
+// mode 0: prism z0..z1 in `mat`; mode 1: balustrades along the kind-0 edges (offset lines) at base z0.
+//  which 0: whole wing (W170+W160+W150)   1: W170+W160   2: W170   3: W160   4: W150
+//        5: top attic (W170 south of its NW chamfer)   6: W170 roof terrace in front of the top attic
+#meshpart WING_Plan
+param which = 0;
+param mode = 0;
+param z0 = 0;
+param z1 = 100;
+param mat = "ST_FacadeShade";
+param d_exp = -180;
+param d_sh = 180;
+param d_jn = 2;
+param d_fr = -50;
+let east = (0 - WEST_OUT.x, 0 - WEST_OUT.y);
+// top-attic front line: from the wing-170 NW chamfer start (u ~6048) due east to the wing-170 east face
+let tf_a = at(WING170_FP, 3);
+let e6a = at(WING170_FP, 5);
+let e6t = at(WING170_FP, 0) - e6a;
+let qv = e6a - tf_a;
+let tf_s = (qv.x * e6t.y - qv.y * e6t.x) / (east.x * e6t.y - east.y * e6t.x);
+let tf_b = tf_a + east * tf_s;
+let P = pick(which,
+    [at(WING170_FP, 5), at(WING150_FP, 1), at(WING150_FP, 2), at(WING150_FP, 3), at(WING150_FP, 4), at(WING150_FP, 5), at(WING150_FP, 6), at(WING170_FP, 4)],
+    [at(WING170_FP, 5), at(WING160_FP, 1), at(WING160_FP, 2), at(WING160_FP, 3), at(WING160_FP, 4), at(WING170_FP, 4)],
+    WING170_FP,
+    WING160_FP,
+    WING150_FP,
+    [at(WING170_FP, 5), tf_b, tf_a, at(WING170_FP, 4)],
+    [tf_b, at(WING170_FP, 0), at(WING170_FP, 1), at(WING170_FP, 2), tf_a]);
+let K = pick(which, [0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 0, 0, 0, 2], [0, 0, 0, 0, 2, 0], [0, 0, 0, 0, 0, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 1, 1, 1], [0, 3, 0, 2], [0, 0, 0, 0, 3]);
+let n = len(P);
+var Q = [];
+for i in 0..n {
+    let ia = mod(i + n - 1, n);
+    let pa = at(P, ia);
+    let pb = at(P, i);
+    let pc = at(P, mod(i + 1, n));
+    let d1 = pick(at(K, ia), d_exp, d_sh, d_jn, d_fr);
+    let d2 = pick(at(K, i), d_exp, d_sh, d_jn, d_fr);
+    let t1 = normalize(pb - pa);
+    let t2 = normalize(pc - pb);
+    let p1 = pa + (t1.y, 0 - t1.x) * d1;
+    let p2 = pb + (t2.y, 0 - t2.x) * d2;
+    let wv = p2 - p1;
+    let s = (wv.x * t2.y - wv.y * t2.x) / (t1.x * t2.y - t1.y * t2.x);
+    Q = append(Q, p1 + t1 * s);
+}
+var g = empty();
+if mode == 0 {
+    g = translate(extrude(points: Q, height: z1 - z0, material: mat), (0, 0, z0));
+} else {
+    for i in 0..n {
+        if at(K, i) == 0 {
+            let qa = at(Q, i);
+            let qb = at(Q, mod(i + 1, n));
+            g = merge(g, part(WING_Balustrade, ax: qa.x, ay: qa.y, bx: qb.x, by: qb.y, z0: z0));
+        }
+    }
+}
+out.geo = g;
+#end
+
+// ---------------------------------------------------------------------------------------------------------------
+// One facade run A->B (CCW walk, outside on the right): kit floors i0..n-1 from datum zd, then the roof parapet band
+// (solid scalloped band from the last floor line to top + 20 cm curb). zw > 0 (faces exposed above a lower roof): the
+// window wall is carried down from the first floor line to zw (inside the lower roof slab).
+#meshpart WING_Run
+param ax = 0;
+param ay = 0;
+param bx = 1000;
+param by = 0;
+param zd = PODIUM_TOP - 6;
+param i0 = 0;
+param n = 10;
+param top = 15000;
+param bw = BAY_W;
+param zw = 0;
+let za = zd + i0 * TOWER_FH;
+let zp = zd + n * TOWER_FH;
+let ph = top + 20 - zp;
+let fl = part(ST_KIT_BalconyFace, ax: ax, ay: ay, bx: bx, by: by, z0: za, floors: n - i0, fh: TOWER_FH, bay_w: bw, balc_d: BALC_D, bow_d: BOW_D, band_h: PARAPET_H + SLAB_T, fin_t: FIN_T, fins: 1, wall: 1);
+let pp = part(ST_KIT_BalconyFace, ax: ax, ay: ay, bx: bx, by: by, z0: zp, floors: 1, fh: ph, bay_w: bw, balc_d: BALC_D, bow_d: BOW_D, band_h: ph, fin_t: FIN_T, fins: 0, wall: 0);
+var g = merge(fl, pp);
+if zw > 0 {
+    let dx = bx - ax;
+    let dy = by - ay;
+    let ln = sqrt(dx * dx + dy * dy);
+    let ox = dy / ln;
+    let oy = 0 - dx / ln;
+    let wd = BALC_D + 15;
+    let low = beam_between(start: (ax - ox * wd, ay - oy * wd, (zw + za) * 0.5), end: (bx - ox * wd, by - oy * wd, (zw + za) * 0.5), cross_width: 30, cross_height: za - zw, height_direction: (0, 0, 1), material: "ST_Rooms");
+    g = merge(g, low);
+}
+out.geo = g;
+#end
+
+// ---------------------------------------------------------------------------------------------------------------
+// All curved-balcony facade runs of the wing. Kit datums alternate za / zb (6 cm) between runs meeting at a corner so
+// overlapping band caps never share a plane; the west face uses za like the main crew's west runs (rows line up).
+// Collinear joints: the later run starts one fin width in, so the two end fins sit side by side (never coincide);
+// at the north-strip junction the wing's end fins stay inside the wing.
+#meshpart WING_Facades
+let FH = TOWER_FH;
+let za = PODIUM_TOP - 6;
+let zb = PODIUM_TOP - 12;
+let N150 = floor((WING150_TOP - PODIUM_TOP) / FH);
+let N160 = floor((WING160_TOP - PODIUM_TOP) / FH);
+let N170 = floor((WING170_TOP - PODIUM_TOP) / FH);
+let TOPA = WING170_TOP + WING160_TOP - WING150_TOP;
+let NTOP = floor((TOPA - PODIUM_TOP) / FH);
+let fin = FIN_T;
+let sw2 = (WEST_SW.x, WEST_SW.y);
+let dir2 = (WEST_DIR.x, WEST_DIR.y);
+let east = (0 - WEST_OUT.x, 0 - WEST_OUT.y);
+let a0 = at(WING170_FP, 0);
+let a1 = at(WING170_FP, 1);
+let a2 = at(WING170_FP, 2);
+let a3 = at(WING170_FP, 3);
+let a4 = at(WING170_FP, 4);
+let a5 = at(WING170_FP, 5);
+let b0 = at(WING160_FP, 0);
+let b1 = at(WING160_FP, 1);
+let b2 = at(WING160_FP, 2);
+let b3 = at(WING160_FP, 3);
+let b4 = at(WING160_FP, 4);
+let b5 = at(WING160_FP, 5);
+let c0 = at(WING150_FP, 0);
+let c1 = at(WING150_FP, 1);
+let c2 = at(WING150_FP, 2);
+let c3 = at(WING150_FP, 3);
+let c4 = at(WING150_FP, 4);
+let c5 = at(WING150_FP, 5);
+let c6 = at(WING150_FP, 6);
+let c7 = at(WING150_FP, 7);
+// top-attic front point on the east face (same construction as WING_Plan)
+let e6t = a0 - a5;
+let qv = a5 - a3;
+let tf_b = a3 + east * ((qv.x * e6t.y - qv.y * e6t.x) / (east.x * e6t.y - east.y * e6t.x));
+// lower slot edges on the wing-150 west face line
+let uc6 = dot(c6 - sw2, dir2);
+let uc7 = dot(c7 - sw2, dir2);
+let s0 = c7 + (c6 - c7) * ((LOWER_SLOT_U0 - uc7) / (uc6 - uc7));
+let s1 = c7 + (c6 - c7) * ((LOWER_SLOT_U1 - uc7) / (uc6 - uc7));
+// ---- west face (photos 1/2 face): W170 up to the top-attic cornice, W160, W150 split around the lower slot
+let e4b = a4 + normalize(a3 - a4) * (fin * 0.5);
+let r_e4 = part(WING_Run, ax: a3.x, ay: a3.y, bx: e4b.x, by: e4b.y, zd: za, n: NTOP, top: TOPA);
+let f5b = b5 + normalize(b4 - b5) * fin;
+let r_f5 = part(WING_Run, ax: b4.x, ay: b4.y, bx: f5b.x, by: f5b.y, zd: za, n: N160, top: WING160_TOP);
+let r_g7a = part(WING_Run, ax: c6.x, ay: c6.y, bx: s1.x, by: s1.y, zd: za, n: N150, top: WING150_TOP, bw: BAY_W * 0.75);
+let g7e = c7 + normalize(c6 - c7) * fin;
+let r_g7b = part(WING_Run, ax: s0.x, ay: s0.y, bx: g7e.x, by: g7e.y, zd: za, n: N150, top: WING150_TOP);
+let zsp = za + N150 * FH;
+let slot_par = part(ST_KIT_BalconyFace, ax: s1.x, ay: s1.y, bx: s0.x, by: s0.y, z0: zsp, floors: 1, fh: WING150_TOP + 20 - zsp, bay_w: BAY_W * 0.85, balc_d: BALC_D, bow_d: BOW_D, band_h: WING150_TOP + 20 - zsp, fin_t: FIN_T, fins: 0, wall: 0);
+// ---- east face: W170 (split at the top-attic front), W160, W150
+let e6s = a5 + normalize(a0 - a5) * (fin * 0.5);
+let r_e6a = part(WING_Run, ax: e6s.x, ay: e6s.y, bx: tf_b.x, by: tf_b.y, zd: za, n: NTOP, top: TOPA);
+let e6c = tf_b + normalize(a0 - tf_b) * fin;
+let r_e6b = part(WING_Run, ax: e6c.x, ay: e6c.y, bx: a0.x, by: a0.y, zd: za, n: N170, top: WING170_TOP);
+let f1s = b0 + normalize(b1 - b0) * fin;
+let r_f1 = part(WING_Run, ax: f1s.x, ay: f1s.y, bx: b1.x, by: b1.y, zd: za, n: N160, top: WING160_TOP);
+let g1s = c0 + normalize(c1 - c0) * fin;
+let r_g1 = part(WING_Run, ax: g1s.x, ay: g1s.y, bx: c1.x, by: c1.y, zd: za, n: N150, top: WING150_TOP);
+// ---- faceted north end of W150 (full height)
+let r_g2 = part(WING_Run, ax: c1.x, ay: c1.y, bx: c2.x, by: c2.y, zd: zb, n: N150, top: WING150_TOP);
+let r_g3 = part(WING_Run, ax: c2.x, ay: c2.y, bx: c3.x, by: c3.y, zd: za, n: N150, top: WING150_TOP);
+let r_g4 = part(WING_Run, ax: c3.x, ay: c3.y, bx: c4.x, by: c4.y, zd: zb, n: N150, top: WING150_TOP);
+let r_g5 = part(WING_Run, ax: c4.x, ay: c4.y, bx: c5.x, by: c5.y, zd: za, n: N150, top: WING150_TOP);
+let r_g6 = part(WING_Run, ax: c5.x, ay: c5.y, bx: c6.x, by: c6.y, zd: zb, n: N150, top: WING150_TOP);
+// ---- W160 faces exposed above the 150 m roof, W170 faces exposed above the 160 m roof
+let r_f2 = part(WING_Run, ax: b1.x, ay: b1.y, bx: b2.x, by: b2.y, zd: zb, i0: N150, n: N160, top: WING160_TOP);
+let r_f3 = part(WING_Run, ax: b2.x, ay: b2.y, bx: b3.x, by: b3.y, zd: za, i0: N150, n: N160, top: WING160_TOP);
+let r_f4 = part(WING_Run, ax: b3.x, ay: b3.y, bx: b4.x, by: b4.y, zd: zb, i0: N150, n: N160, top: WING160_TOP);
+let r_e1 = part(WING_Run, ax: a0.x, ay: a0.y, bx: a1.x, by: a1.y, zd: zb, i0: N160, n: N170, top: WING170_TOP);
+let r_e2 = part(WING_Run, ax: a1.x, ay: a1.y, bx: a2.x, by: a2.y, zd: za, i0: N160, n: N170, top: WING170_TOP);
+let r_e3 = part(WING_Run, ax: a2.x, ay: a2.y, bx: a3.x, by: a3.y, zd: zb, i0: N160, n: N170, top: WING170_TOP);
+out.geo = merge(r_e4, r_f5, r_g7a, r_g7b, slot_par, r_e6a, r_e6b, r_f1, r_g1, r_g2, r_g3, r_g4, r_g5, r_g6, r_f2, r_f3, r_f4, r_e1, r_e2, r_e3);
+#end
+
+// ---------------------------------------------------------------------------------------------------------------
+// Lower dark slot in wing 150 (west face, u LOWER_SLOT_U0..U1, podium -> LOWER_SLOT_Z1): dark glass recessed 1 m behind
+// the face line, floor-line transoms and two mullions. Authored in the west-face frame (x = u, y = outward, z up).
+#meshpart WING_Slot
+param lo = 0;
+let FH = TOWER_FH;
+let za = PODIUM_TOP - 6;
+let N150 = floor((WING150_TOP - PODIUM_TOP) / FH);
+let du = LOWER_SLOT_U1 - LOWER_SLOT_U0;
+let zbot = PODIUM_TOP - 10;
+var g = empty();
+if lo == 0 {
+    let glass = box_bounds(min: (LOWER_SLOT_U0 + 11, -120, zbot), max: (LOWER_SLOT_U1 - 11, -100, LOWER_SLOT_Z1), material: "ST_DarkGlass");
+    let tr = box_bounds(min: (LOWER_SLOT_U0 + 11, -100, za + 55), max: (LOWER_SLOT_U1 - 11, -92, za + 67), material: "ST_DarkMetal");
+    let trs = array(tr, count: N150, offset: (0, 0, FH));
+    let mu = box_bounds(min: (LOWER_SLOT_U0 + du / 3 - 4, -100, zbot), max: (LOWER_SLOT_U0 + du / 3 + 4, -93, LOWER_SLOT_Z1), material: "ST_DarkMetal");
+    let mus = array(mu, count: 2, offset: (du / 3, 0, 0));
+    g = merge(glass, trs, mus);
+} else {
+    g = box_bounds(min: (LOWER_SLOT_U0, -70, zbot), max: (LOWER_SLOT_U1, -30, LOWER_SLOT_Z1), material: "ST_DarkGlass");
+}
+out.geo = translate(rotate_z_to(g, direction: WEST_DIR), WEST_SW);
+#end
+
+// ---------------------------------------------------------------------------------------------------------------
+// Neoclassical pediment ensemble in a local frame: x 0..w along the front (west -> east), y = 0 the front face
+// (+y outward = north), z = 0 the roof it stands on. Attic storey of nwin round-arched windows between pilasters,
+// plinth, entablature (architrave / frieze / cornice), gable (tympanum in the front plate, raking cornices, short roof
+// prism), optional solid body behind (d > 0) with returned mouldings, optional tall central window into the tympanum,
+// optional emblem disc. lo 1/2: far-display / collider massing.
+#meshpart WING_Pavilion
+param w = 2400;
+param d = 300;
+param h = 1000;
+param rk = 0.4;
+param nwin = 3;
+param tallmid = 0;
+param emblem = 0;
+param roofd = 220;
+param lit0 = -1;
+param lit1 = -1;
+param lo = 0;
+let t = 60;
+let rise = rk * w * 0.5;
+let ww = 360;
+let r = ww * 0.5;
+let zs = 90;
+let crown = 740;
+let tcrown = h + rise * 0.35;
+let spc = w / nwin;
+let imid = floor(nwin / 2);
+let tymp = [(0, 0), (w, 0), (w, h), (w * 0.5, h + rise), (0, h)];
+var g = empty();
+if lo > 0 {
+    let blk = box_bounds(min: (0, 0 - max(d, t), 0), max: (w, 0, h), material: "ST_Stone");
+    let gab = extrude_loop(points: [(0, 0, h), (w, 0, h), (w * 0.5, 0, h + rise)], offset: (0, 0 - roofd, 0), material: "ST_Stone");
+    g = merge(blk, gab);
+    if emblem * (lo == 1) > 0 {
+        let em_disc = rotate_x(cylinder_center(radius: 210, height: 24, segments: 12, center: (0, 0, 0), material: "ST_BlueLED"), degrees: 90);
+        g = merge(g, translate(em_disc, (w * 0.5, 0, h + rise * 0.4)));
+    }
+} else {
+    var holes = [];
+    var det = empty();
+    for i in 0..nwin {
+        let cx = spc * (i + 0.5);
+        let cr = select(crown, tcrown, tallmid * (i == imid));
+        let zsp = cr - r;
+        let arc_pts = arc_profile(center: (cx, zsp), radius: r, start: 0, end: 180, count: 13);
+        let hole = concat_points([(cx - r, zs), (cx + r, zs)], arc_pts);
+        holes = append(holes, hole);
+        let gm = select("ST_DarkGlass", "ST_Rooms", (i == lit0) + (i == lit1));
+        let pane = translate(rotate_x(extrude(points: hole, height: 6, material: gm), degrees: 90), (0, -40, 0));
+        let vo = arc_profile(center: (cx, zsp), radius: r + 26, start: 0, end: 180, count: 13);
+        let vi = reverse_points(arc_profile(center: (cx, zsp), radius: r, start: 0, end: 180, count: 13));
+        let volt = translate(rotate_x(extrude(points: concat_points(vo, vi), height: 10, material: "ST_Stone"), degrees: 90), (0, 10, 0));
+        let jl = box_bounds(min: (cx - r - 26, -2, zs), max: (cx - r, 8, zsp), material: "ST_Stone");
+        let jr = box_bounds(min: (cx + r, -2, zs), max: (cx + r + 26, 8, zsp), material: "ST_Stone");
+        let keyst = translate(rotate_x(extrude(points: [(cx - 22, cr - 6), (cx + 22, cr - 6), (cx + 30, cr + 46), (cx - 30, cr + 46)], height: 16, material: "ST_Stone"), degrees: 90), (0, 16, 0));
+        let wsill = box_bounds(min: (cx - r - 34, -2, zs - 26), max: (cx + r + 34, 20, zs), material: "ST_Stone");
+        det = merge(det, pane, volt, jl, jr, keyst, wsill);
+    }
+    // front plate: attic wall + tympanum, pierced by the arched windows
+    let fwall = rotate_x(extrude_shape(outer: tymp, holes: holes, height: t, material: "ST_Stone"), degrees: 90);
+    // pilasters (wider at the corners): base, shaft, capital
+    let zc = h - 240;
+    var pil = empty();
+    for i in 0..(nwin + 1) {
+        let px = pick(min(i, 1) + (i == nwin), 60, spc * i, w - 60);
+        let pw = select(100, 120, (i == 0) + (i == nwin));
+        let shaft = box_bounds(min: (px - pw * 0.5, -2, 70), max: (px + pw * 0.5, 20, zc - 40), material: "ST_Stone");
+        let pcap = box_bounds(min: (px - pw * 0.5 - 16, -2, zc - 46), max: (px + pw * 0.5 + 16, 30, zc), material: "ST_Stone");
+        let pbase = box_bounds(min: (px - pw * 0.5 - 12, -2, 66), max: (px + pw * 0.5 + 12, 28, 110), material: "ST_Stone");
+        pil = merge(pil, shaft, pcap, pbase);
+    }
+    // entablature (split around the tall central window when it rises into the tympanum)
+    let cxm = spc * (imid + 0.5);
+    let gapl = cxm - r - 46;
+    let gapr = cxm + r + 46;
+    var ent = empty();
+    if tallmid > 0 {
+        ent = merge(
+            box_bounds(min: (-12, -2, h - 240), max: (gapl, 12, h - 180), material: "ST_Stone"),
+            box_bounds(min: (gapr, -2, h - 240), max: (w + 12, 12, h - 180), material: "ST_Stone"),
+            box_bounds(min: (-30, -2, h - 90), max: (gapl, 30, h - 55), material: "ST_Stone"),
+            box_bounds(min: (gapr, -2, h - 90), max: (w + 30, 30, h - 55), material: "ST_Stone"),
+            box_bounds(min: (-62, -2, h - 55), max: (gapl, 62, h), material: "ST_Stone"),
+            box_bounds(min: (gapr, -2, h - 55), max: (w + 62, 62, h), material: "ST_Stone"));
+    } else {
+        ent = merge(
+            box_bounds(min: (-12, -2, h - 240), max: (w + 12, 12, h - 180), material: "ST_Stone"),
+            box_bounds(min: (-30, -2, h - 90), max: (w + 30, 30, h - 55), material: "ST_Stone"),
+            box_bounds(min: (-62, -2, h - 55), max: (w + 62, 62, h), material: "ST_Stone"));
+    }
+    let plinth = box_bounds(min: (-16, -2, -2), max: (w + 16, 16, 80), material: "ST_Stone");
+    // raking cornices (corona + bed moulding) along the gable edges, short gable roof prism behind the tympanum
+    let cs = sqrt(1 + rk * rk);
+    let corona = sweep_box_path(points: [(-62, 30, h - rk * 62 + 20 * cs), (w * 0.5, 30, h + rise + 20 * cs), (w + 62, 30, h - rk * 62 + 20 * cs)], width: 64, height: 52, up: (0, 0, 1), material: "ST_Stone");
+    let bedm = sweep_box_path(points: [(-30, 14, h - rk * 30 - 10 * cs), (w * 0.5, 14, h + rise - 10 * cs), (w + 30, 14, h - rk * 30 - 10 * cs)], width: 32, height: 30, up: (0, 0, 1), material: "ST_Stone");
+    let gab = extrude_loop(points: [(0, 0 - t, h), (w, 0 - t, h), (w * 0.5, 0 - t, h + rise)], offset: (0, t - roofd, 0), material: "ST_Stone");
+    g = merge(fwall, det, pil, ent, plinth, corona, bedm, gab);
+    if d > 0 {
+        let body = box_bounds(min: (0, 0 - d, -2), max: (w, 0 - t, h), material: "ST_Stone");
+        let sl = merge(
+            box_bounds(min: (-16, 0 - d, -2), max: (0, -2, 80), material: "ST_Stone"),
+            box_bounds(min: (-12, 0 - d, h - 240), max: (0, -2, h - 180), material: "ST_Stone"),
+            box_bounds(min: (-30, 0 - d, h - 90), max: (0, -2, h - 55), material: "ST_Stone"),
+            box_bounds(min: (-62, 0 - d, h - 55), max: (0, -2, h), material: "ST_Stone"));
+        let sr = merge(
+            box_bounds(min: (w, 0 - d, -2), max: (w + 16, -2, 80), material: "ST_Stone"),
+            box_bounds(min: (w, 0 - d, h - 240), max: (w + 12, -2, h - 180), material: "ST_Stone"),
+            box_bounds(min: (w, 0 - d, h - 90), max: (w + 30, -2, h - 55), material: "ST_Stone"),
+            box_bounds(min: (w, 0 - d, h - 55), max: (w + 62, -2, h), material: "ST_Stone"));
+        g = merge(g, body, sl, sr);
+    }
+    if emblem > 0 {
+        let ze = h + rise * 0.4;
+        let em_disc = translate(rotate_x(cylinder_center(radius: 210, height: 24, segments: 40, center: (0, 0, 0), material: "ST_BlueLED"), degrees: 90), (w * 0.5, 0, ze));
+        let em_ring = translate(rotate_x(extrude_shape(outer: circle_profile(center: (0, 0), radius: 250, count: 40), holes: [circle_profile(center: (0, 0), radius: 212, count: 40)], height: 22, material: "ST_Stone"), degrees: 90), (w * 0.5, 20, ze));
+        let em_star = translate(rotate_x(extrude(points: star_profile(center: (0, 0), points: 5, r_outer: 150, r_inner: 60, rotation_degrees: 90), height: 6, material: "ST_Facade"), degrees: 90), (w * 0.5, 18, ze));
+        g = merge(g, em_disc, em_ring, em_star);
+    }
+}
+out.geo = g;
+#end
+
+// ---------------------------------------------------------------------------------------------------------------
+// The three pediment ensembles placed on the wing roofs (all fronts face +WEST_DIR; local x runs east).
+#meshpart WING_Pavilions
+param lo = 0;
+let WING_MID_U = 6990;   // PHOTO (P1 + P2 fitted cameras): middle gable front line, u along WEST_DIR from WEST_SW
+let WING_LOW_U = 7683;   // PHOTO: lowest gable front line
+let WING_LOW_W = 2330;   // PHOTO: lowest gable width (from 1 m inside the west face line)
+let RK = 0.4;            // PHOTO: gable rake rise / half-width (~21.8 deg, all three gables)
+let MID_IN = 140;        // middle front corners kept clear of the wing-160 chamfer balustrades
+let ATT_H = WING160_TOP - WING150_TOP;
+let sw2 = (WEST_SW.x, WEST_SW.y);
+let dir2 = (WEST_DIR.x, WEST_DIR.y);
+let out2 = (WEST_OUT.x, WEST_OUT.y);
+let east = (0 - WEST_OUT.x, 0 - WEST_OUT.y);
+let east3 = (0 - WEST_OUT.x, 0 - WEST_OUT.y, 0);
+// top: on the wing-170 roof, front at the NW chamfer start across the full wing width, 14 cm proud of the kit ends
+let tf_a = at(WING170_FP, 3);
+let e6a = at(WING170_FP, 5);
+let e6t = at(WING170_FP, 0) - e6a;
+let qv = e6a - tf_a;
+let tf_b = tf_a + east * ((qv.x * e6t.y - qv.y * e6t.x) / (east.x * e6t.y - east.y * e6t.x));
+let topw = length(tf_b - tf_a);
+let ftop = tf_a + dir2 * 14;
+let p_top = translate(rotate_z_to(part(WING_Pavilion, w: topw, d: 0, h: ATT_H, rk: RK, nwin: 5, emblem: 1, roofd: 200, lit0: 1, lit1: 2, lo: lo), direction: east3), (ftop.x, ftop.y, WING170_TOP));
+// middle: on the wing-160 roof between its two north chamfers, back on wing 170's north face
+let m_a0 = at(WING160_FP, 3);
+let m_a1 = at(WING160_FP, 4);
+let m_b0 = at(WING160_FP, 1);
+let m_b1 = at(WING160_FP, 2);
+let ua0 = dot(m_a0 - sw2, dir2);
+let ua1 = dot(m_a1 - sw2, dir2);
+let ub0 = dot(m_b0 - sw2, dir2);
+let ub1 = dot(m_b1 - sw2, dir2);
+let pmw = m_a0 + (m_a1 - m_a0) * ((WING_MID_U - ua0) / (ua1 - ua0));
+let pme = m_b0 + (m_b1 - m_b0) * ((WING_MID_U - ub0) / (ub1 - ub0));
+let midw = length(pme - pmw) - 2 * MID_IN;
+let fmid = pmw + east * MID_IN;
+let midd = WING_MID_U - dot(at(WING170_FP, 2) - sw2, dir2) + 4;
+let p_mid = translate(rotate_z_to(part(WING_Pavilion, w: midw, d: midd, h: ATT_H, rk: RK, nwin: 3, tallmid: 1, roofd: 250, lo: lo), direction: east3), (fmid.x, fmid.y, WING160_TOP));
+// lowest: on the wing-150 roof, west end 1 m inside the west face line, back on wing 160's north face
+let flow = sw2 + dir2 * WING_LOW_U - out2 * 100;
+let lowd = WING_LOW_U - dot(at(WING160_FP, 3) - sw2, dir2) + 4;
+let p_low = translate(rotate_z_to(part(WING_Pavilion, w: WING_LOW_W, d: lowd, h: ATT_H, rk: RK, nwin: 3, roofd: lowd, lo: lo), direction: east3), (flow.x, flow.y, WING150_TOP));
+out.geo = merge(p_top, p_mid, p_low);
+#end
+
+// ===============================================================================================================
+#mesh ST_TowerWing
+budget(verts: 250000, indices: 750000);
+sim_box(min: (-9000, -9000, 0), max: (9000, 9000, 19000));
+anchor(mode: "origin");
+let TOPA = WING170_TOP + WING160_TOP - WING150_TOP;   // top-attic cornice: one step height above wing 170
+// solid cores: one combined prism per height band, 180+ cm behind the face lines (2 cm steps keep band faces apart);
+// tops end inside the roof slabs, junction edge embedded 2 cm into the north strip
+let core1 = part(WING_Plan, which: 0, z0: PODIUM_TOP - 14, z1: WING150_TOP - 10, mat: "ST_FacadeShade", d_exp: 0 - (BALC_D + 30));
+let core2 = part(WING_Plan, which: 1, z0: WING150_TOP - 20, z1: WING160_TOP - 10, mat: "ST_FacadeShade", d_exp: 0 - (BALC_D + 32));
+let core3 = part(WING_Plan, which: 2, z0: WING160_TOP - 20, z1: WING170_TOP - 10, mat: "ST_FacadeShade", d_exp: 0 - (BALC_D + 34));
+let core4 = part(WING_Plan, which: 5, z0: WING170_TOP - 20, z1: TOPA - 10, mat: "ST_FacadeShade", d_exp: 0 - (BALC_D + 36), d_fr: -50);
+// roof slabs: 50 cm inside the exposed face lines (under the scalloped parapet bands), reaching 180 cm under the
+// taller neighbour's balcony zone so its balconies get a floor
+let roof150 = part(WING_Plan, which: 4, z0: WING150_TOP - 30, z1: WING150_TOP, mat: "ST_Concrete", d_exp: -50, d_sh: 180);
+let roof160 = part(WING_Plan, which: 3, z0: WING160_TOP - 30, z1: WING160_TOP, mat: "ST_Concrete", d_exp: -50, d_sh: 180);
+let roof170 = part(WING_Plan, which: 2, z0: WING170_TOP - 30, z1: WING170_TOP, mat: "ST_Concrete", d_exp: -50);
+let roofT = part(WING_Plan, which: 5, z0: TOPA - 30, z1: TOPA, mat: "ST_Concrete", d_exp: -50, d_fr: -40);
+// white balustrades 60 cm inside the exposed roof edges, on the parapet curbs
+let rails150 = part(WING_Plan, which: 4, mode: 1, z0: WING150_TOP + 20, d_exp: -60, d_sh: 0);
+let rails160 = part(WING_Plan, which: 3, mode: 1, z0: WING160_TOP + 20, d_exp: -60, d_sh: 0);
+let rails170 = part(WING_Plan, which: 6, mode: 1, z0: WING170_TOP + 20, d_exp: -60, d_fr: -55);
+let railsT = part(WING_Plan, which: 5, mode: 1, z0: TOPA + 20, d_exp: -60, d_fr: -220, d_jn: 0);
+let facades = part(WING_Facades);
+let slot = part(WING_Slot);
+let pediments = part(WING_Pavilions);
+out.geo = merge(core1, core2, core3, core4, roof150, roof160, roof170, roofT, rails150, rails160, rails170, railsT, facades, slot, pediments);
+#end
+
+#mesh ST_TowerWing lod: 1
+let TOPA = WING170_TOP + WING160_TOP - WING150_TOP;
+let m150 = part(WING_Plan, which: 4, z0: PODIUM_TOP - 10, z1: WING150_TOP + 20, mat: "ST_Facade", d_exp: -40, d_sh: 60);
+let m160 = part(WING_Plan, which: 3, z0: PODIUM_TOP - 10, z1: WING160_TOP + 20, mat: "ST_Facade", d_exp: -42, d_sh: 60);
+let m170 = part(WING_Plan, which: 2, z0: PODIUM_TOP - 10, z1: WING170_TOP + 20, mat: "ST_Facade", d_exp: -44);
+let mT = part(WING_Plan, which: 5, z0: WING170_TOP + 20, z1: TOPA + 20, mat: "ST_Facade", d_exp: -44, d_fr: 14);
+out.geo = merge(m150, m160, m170, mT, part(WING_Slot, lo: 1), part(WING_Pavilions, lo: 1));
+#end
+
+#mesh ST_TowerWing collider
+let TOPA = WING170_TOP + WING160_TOP - WING150_TOP;
+let c150 = part(WING_Plan, which: 4, z0: PODIUM_TOP - 10, z1: WING150_TOP + 20, mat: "ST_Concrete", d_exp: 0, d_sh: 60);
+let c160 = part(WING_Plan, which: 3, z0: PODIUM_TOP - 10, z1: WING160_TOP + 20, mat: "ST_Concrete", d_exp: 0, d_sh: 60);
+let c170 = part(WING_Plan, which: 2, z0: PODIUM_TOP - 10, z1: WING170_TOP + 20, mat: "ST_Concrete", d_exp: 0);
+let cT = part(WING_Plan, which: 5, z0: WING170_TOP + 20, z1: TOPA + 20, mat: "ST_Concrete", d_exp: 0, d_fr: 14);
+out.geo = merge(c150, c160, c170, cT, part(WING_Pavilions, lo: 2));
+#end
