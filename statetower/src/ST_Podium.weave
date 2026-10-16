@@ -1,4 +1,4 @@
-// ===== ST_Podium - State Tower podium + corner portal (Podium crew, rev 3 = rework round 2) =====
+// ===== ST_Podium - State Tower podium + corner portal (Podium crew, rev 4 = QC/QA round 3 fixes: free-standing portal pairs, LOD1 bands, west bay grid after the P8 niche) =====
 // World centimetres, Z up, +X east, +Y true north; authored directly in WORLD coordinates from #meshdefs.
 // Owns GRADE -> PODIUM_TOP over PODIUM_FP plus the corner portal on the north neck (to PORTAL_TOP).
 // Photo calibration (P1 night / P2 day through the dossier cameras, P3 street):
@@ -25,7 +25,7 @@
 //      plinths 48.85 -> 50.0 m; tower z0 4982-4998 sits inside the plinths (Management to rule, MASTER_BRIEF s.4/6).
 //   D5 P8: the old flat 3 m pier became a 4.5 m x 2.15 m corner niche with two free-standing giant columns
 //      (P2 red marker ~4.2-4.5 m; P3 x 160-230); its left jamb is the NW fin screen's deep end fin, so the first
-//      west arched bay (right of the niche) is a 3.7 m half bay (bay rhythm kept at 9.6 m over the colonnade).
+//      west arched bay (right of the niche) runs from the niche jamb to X0 = 12 m (rev 4: grid starts after the niche, 8 x ~9.3 m bays).
 //   D6 portal ledge 28.6-29.4 m and lettering +0.4 m (lettering 29.7-32.6 m): the raised entablature (QC b) would
 //      otherwise cut through "Bangkok"; the medallion stays at 38.8 m (gap 1.36 m, P3 ~1.5 m).
 
