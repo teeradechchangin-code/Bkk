@@ -27,11 +27,12 @@ def rename_for_integration(text, comp):
 
 def main():
     integration = "--integration" in sys.argv
+    excluded = [a.split("=", 1)[1] for a in sys.argv if a.startswith("--exclude=")]
     parts = [read("world/00_base.weave"), read("src/ST_defs.weave"), read("src/ST_kit.weave")]
     placed = []
     for c in COMPONENTS:
         path = os.path.join(ROOT, "src", c + ".weave")
-        if os.path.exists(path):
+        if os.path.exists(path) and c not in excluded:
             text = read("src/" + c + ".weave")
             if integration:
                 text = rename_for_integration(text, c)
