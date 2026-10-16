@@ -1,14 +1,21 @@
-// ===== ST_Crown rev A - Crown crew (Subcontractors & Labor) =====
+// ===== ST_Crown rev B (rework round 1) - Crown crew (Subcontractors & Labor) =====
 // Everything inside / above ROOFDECK_FP from MAIN_ROOF - 2 up, plus the round Sky Bar off the main block's NW corner.
 // World centimetres, Z up, +X east, +Y true north. All heights / footprints come from the shared #meshdefs.
 // Photo reading (P1 night target, P2 day, P4 crown drone):
 //  - dome terrace storey 216 -> 220 m: white plinth + fascia, inset warm glazing band between white piers, Sirocco deck
-//    edged by a white balustrade (plinth, vase balusters, posts, rail, small warm lamp heads)
+//    edged by a white balustrade (plinth, vase balusters, posts, rail, small warm lamp heads), a few tables on the NW/W deck
 //  - drum: stylobate, 12 PAIRS of white classical columns (24) with warm glazing behind, entablature + corona cornice
-//  - blue LED panel band with white mullions at the dome springing, gold lip, ribbed gold dome (superellipse n 1.65, P1/P2 fit)
-//  - small gold lantern, spire, orb; tip exactly DOME_TIP
-//  - Sky Bar: round cantilevered platform (white rim, groove, soffit), dark metal rail, island bar with blue LED rings, stools,
-//    grand stair down from the terrace NW corner
+//  - blue LED panel band (28 panels, 40 cm white mullions) at the dome springing, gold lip with a scalloped hem
+//  - gold dome: 28 bulged gores (broad lit flutes / dark grooves of P1) on the superellipse n 1.65 fitted on P1/P2
+//  - gold lantern (warm-lit core), cupola, slender spire, orb, warm aviation lamp, spike; tip exactly DOME_TIP
+//  - Sky Bar: round cantilevered platform (white double-banded rim, soffit), dark metal rail, island bar with a blue
+//    fascia, stools, white-walled stair down from the terrace NW corner
+// Rev B: soffit kept >= MAIN_ROOF - 80 (main cornice band); bar / stools / fixtures / emitters derived from the defs;
+//        stair axis turned (derived search) for >= 10 cm clearance to the main cornice ring; 8 material slots;
+//        LOD1 keeps the terrace glazing band and LED band pattern; collider has the Sky Bar rim barrier + island bar.
+// Interfaces (ST_TowerMain): inside the circle SKYBAR_R about SKYBAR_C the Sky Bar slab occupies MAIN_ROOF - 40 ->
+//        MAIN_ROOF + 150 and its soffit cone MAIN_ROOF - 75 -> MAIN_ROOF - 36; the stair, its head landings and cheek
+//        walls stand on the main roof between terrace vertex 17 and the platform (keep-out, see the crew report).
 
 // ---------- generic closed ring (annulus) solid, lathed about (cx, cy) ----------
 #meshpart CROWN_Ring
@@ -102,6 +109,284 @@ let abacus = box_at(size: (140, 140, 20), bottom_center: (0, 0, zcap + 12), mate
 out.geo = merge(plinth, torus_base, shaft, astragal, echinus, abacus);
 #end
 
+// ---------- dome terrace storey shell (shared by LOD0 / LOD1): plinth, inset warm glazing band, fascia ----------
+// detail 1 (LOD0): fascia ring + FacadeShade deck inside the 40 cm inset line + white piers across the glazing band.
+// detail 0 (LOD1): plinth / glazing band / solid fascia block (same z splits, so the lit band survives the LOD switch).
+#meshpart CROWN_TerraceShell
+param detail = 1;
+let zr = MAIN_ROOF - 2;              // storey base, embedded 2 cm in the main roof
+let zt = ROOFDECK_TOP;               // Sirocco terrace deck
+let zg0 = zr + 62;                   // glazing band bottom (white plinth below)
+let zg1 = zt - 110;                  // glazing band top (white fascia above)
+let nfp = len(ROOFDECK_FP);
+let fp_in = offset_polygon(points: ROOFDECK_FP, delta: -40);
+var g = merge(
+    translate(extrude(points: ROOFDECK_FP, height: zg0 - zr, material: "ST_Facade"), (0, 0, zr)),
+    translate(extrude(points: fp_in, height: zg1 - zg0, material: "ST_DrumGlass"), (0, 0, zg0)));
+if detail > 0 {
+    g = merge(g,
+        translate(extrude_shape(outer: ROOFDECK_FP, holes: [fp_in], height: zt - zg1, material: "ST_Facade"), (0, 0, zg1)),
+        translate(extrude(points: fp_in, height: zt - zg1, material: "ST_FacadeShade"), (0, 0, zg1)));
+    for e in 0..nfp {
+        let p1 = at(ROOFDECK_FP, e);
+        let p2 = at(ROOFDECK_FP, mod(e + 1, nfp));
+        let el = sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
+        let ex = (p2.x - p1.x) / el;
+        let ey = (p2.y - p1.y) / el;
+        let nx = 0 - ey;
+        let ny = ex;
+        let np = max(1, round(el / BAY_W));
+        for i in 0..np {
+            let s = clamp(i * el / np, 29, el - 29);
+            let px = p1.x + ex * s;
+            let py = p1.y + ey * s;
+            g = merge(g, beam_between(start: (px + nx * 4, py + ny * 4, (zg0 + zg1) * 0.5), end: (px + nx * 50, py + ny * 50, (zg0 + zg1) * 0.5), cross_width: 50, cross_height: zg1 - zg0, height_direction: (0, 0, 1), material: "ST_Facade"));
+        }
+    }
+} else {
+    g = merge(g, translate(extrude(points: ROOFDECK_FP, height: zt - zg1, material: "ST_Facade"), (0, 0, zg1)));
+}
+out.geo = g;
+#end
+
+// ---------- LED band at the dome springing (shared): white sill, blue panels, white top band, white mullions ----------
+// Panels fill DRUM_TOP + 16 -> LED_BAND_TOP - 18; nfl mullions (40 cm) on the gore grooves (P1: ~13-14 panels per half).
+#meshpart CROWN_LedBand
+param detail = 1;
+param az = 132;
+param nfl = 28;
+let cx = DOME_C.x;
+let cy = DOME_C.y;
+let seg = select(32, 64, detail);
+let lz1 = DRUM_TOP + 16;
+let lz2 = LED_BAND_TOP - 18;
+var g = merge(
+    part(CROWN_Ring, cx: cx, cy: cy, z0: DRUM_TOP - 2, z1: lz1, r_in: DOME_R - 40, r_out: DOME_R + 42, seg: seg, mat: "ST_Facade"),
+    part(CROWN_Ring, cx: cx, cy: cy, z0: lz1, z1: lz2, r_in: DOME_R - 40, r_out: DOME_R + 20, seg: seg, mat: "ST_BlueLED"),
+    part(CROWN_Ring, cx: cx, cy: cy, z0: lz2, z1: LED_BAND_TOP, r_in: DOME_R - 40, r_out: DOME_R + 38, seg: seg, mat: "ST_Facade"));
+if detail > 0 {
+    for k in 0..nfl {
+        let a = az + 180 / nfl + k * 360 / nfl;
+        g = merge(g, beam_between(start: (cx + (DOME_R + 10) * cos(a), cy + (DOME_R + 10) * sin(a), (lz1 + lz2) * 0.5), end: (cx + (DOME_R + 30) * cos(a), cy + (DOME_R + 30) * sin(a), (lz1 + lz2) * 0.5), cross_width: 40, cross_height: lz2 - lz1 + 4, height_direction: (0, 0, 1), material: "ST_Facade"));
+    }
+}
+out.geo = g;
+#end
+
+// ---------- gold dome (shared): superellipse n 1.65 (fitted on P1/P2) from LED_BAND_TOP to DOME_TOP ----------
+// detail 1 (LOD0): nfl bulged gores (+gore_b at mid-gore at the springing, fading to 0 at the crown) with hard grooves on
+//   the LED mullion lines, so the cornice uplights give P1's broad lit flutes / dark grooves; gold lip; scalloped hem of
+//   nfl half-elliptic lobes hanging over the LED band's top rail, centred on the gores.
+// detail 0 (LOD1): smooth 32-segment lathe of the same profile.
+#meshpart CROWN_Dome
+param detail = 1;
+param az = 132;
+param nfl = 28;
+let cx = DOME_C.x;
+let cy = DOME_C.y;
+let dome_h = DOME_TOP - LED_BAND_TOP;
+let dome_n = 1.65;
+let fstep = 360 / nfl;
+var g = empty();
+if detail > 0 {
+    let ppg = 8;                                    // ring points per gore (groove at point 0)
+    let npts = nfl * ppg;
+    let gore_b = 24;                                // mid-gore bulge at the springing (QC: +20-25 cm)
+    let nsec = 24;
+    let th_max = asin(pow(0.995, dome_n / 2));      // last ring at 99.5 % of the dome height (under the lantern base)
+    var secs = [];
+    for i in 0..(nsec + 1) {
+        var zz = LED_BAND_TOP - 6;
+        var r0 = DOME_R;
+        var bb = gore_b;
+        if i > 0 {
+            let th = th_max * (i - 1) / (nsec - 1);
+            let f = pow(sin(th), 2 / dome_n);
+            zz = LED_BAND_TOP + dome_h * f;
+            r0 = DOME_R * pow(cos(th), 2 / dome_n);
+            bb = gore_b * (1 - pow(f, 1.5));
+        }
+        var ring = [];
+        for p in 0..npts {
+            let ph = az + fstep * 0.5 + p * 360 / npts;
+            let rr = r0 + bb * sqrt(sin(180 * mod(p, ppg) / ppg));
+            ring = append(ring, (cx + rr * cos(ph), cy + rr * sin(ph), zz));
+        }
+        secs = append(secs, ring);
+    }
+    let shell = loft_solid(sections: secs, closed: "yes", cap_start: "yes", cap_end: "yes", material: "ST_Gold");
+    let lip = translate(lathe_z(profile: [(LED_BAND_TOP - 2, DOME_R - 20), (LED_BAND_TOP - 2, DOME_R + 58), (LED_BAND_TOP + 8, DOME_R + 58), (LED_BAND_TOP + 18, DOME_R + 12), (LED_BAND_TOP + 18, DOME_R - 20), (LED_BAND_TOP - 2, DOME_R - 20)], segments: 64, material: "ST_Gold"), (cx, cy, 0));
+    // scalloped hem: tangential half-ellipse lobes 12 cm thick, inner face 6 cm outside the LED top band,
+    // top embedded 6 cm in the lip, bottom ~40 cm below the LED band's top rail (P1)
+    let lob_r0 = DOME_R + 44;
+    let lob_hw = 0.25 * 2 * (lob_r0 + 6) * sin(fstep * 0.5);
+    let lob_z = LED_BAND_TOP + 4;
+    let lob_d = 62;
+    var lob_pts = [];
+    for j in 0..13 {
+        let t = j * 180 / 12;
+        lob_pts = append(lob_pts, (lob_r0, lob_hw * cos(t), lob_z - lob_d * sin(t)));
+    }
+    let lobe = extrude_loop(points: lob_pts, offset: (12, 0, 0), material: "ST_Gold");
+    var hem = empty();
+    for k in 0..nfl {
+        hem = merge(hem, translate(rotate_z(lobe, degrees: az + k * fstep, pivot: (0, 0, 0)), (cx, cy, 0)));
+    }
+    g = merge(shell, lip, hem);
+} else {
+    var dprof = [];
+    dprof = append(dprof, (LED_BAND_TOP - 6, 0));
+    dprof = append(dprof, (LED_BAND_TOP - 6, DOME_R));
+    for i in 0..10 {
+        let th = i * 90 / 10;
+        dprof = append(dprof, (LED_BAND_TOP + dome_h * pow(sin(th), 2 / dome_n), DOME_R * pow(cos(th), 2 / dome_n)));
+    }
+    dprof = append(dprof, (DOME_TOP, 0));
+    g = translate(lathe_z(profile: dprof, segments: 32, material: "ST_Gold"), (cx, cy, 0));
+}
+out.geo = g;
+#end
+
+// ---------- lantern + spire + orb + aviation lamp + spike (shared); tip exactly DOME_TIP ----------
+// Fixed head under DOME_TIP (88 cm): orb r 20 (centre DOME_TIP - 70), warm lamp r 10 (centre DOME_TIP - 42), 34 cm spike.
+// Stack below it (QC P1/P4 calibration, 392 cm at lk = 1): base ring 25 (sunk 20 into the crown), lantern drum 120
+// (warm-lit core + 8 gold posts), cap 14, cupola 55, slender spire ~178. lk scales the stack to the defs span.
+#meshpart CROWN_Lantern
+param detail = 1;
+param az = 132;
+let cx = DOME_C.x;
+let cy = DOME_C.y;
+let head = 88;
+let lk = clamp((DOME_TIP - DOME_TOP - head) / 392, 0.3, 1.5);
+let zl0 = DOME_TOP + 25 * lk;
+let zl1 = zl0 + 120 * lk;
+let zl2 = zl1 + 14 * lk;
+let zl3 = zl2 + 55 * lk;
+let z_orb = DOME_TIP - 70;
+let z_lamp = DOME_TIP - 42;
+var g = empty();
+if detail > 0 {
+    var posts = empty();
+    for k in 0..8 {
+        let a = az + 22.5 + k * 45;
+        posts = merge(posts, cylinder_at(radius: 8, height: zl1 - zl0 + 2, bottom_center: (cx + 70 * cos(a), cy + 70 * sin(a), zl0 - 1), segments: 8, material: "ST_Gold"));
+    }
+    g = merge(
+        translate(lathe_z(profile: [(DOME_TOP - 20, 0), (DOME_TOP - 20, 110), (zl0 - 10 * lk, 110), (zl0, 98), (zl0, 0)], segments: 32, material: "ST_Gold"), (cx, cy, 0)),
+        cylinder_at(radius: 62, height: zl1 - zl0 + 4, bottom_center: (cx, cy, zl0 - 2), segments: 24, material: "ST_DrumGlass"),
+        posts,
+        cylinder_at(radius: 95, height: zl2 - zl1, bottom_center: (cx, cy, zl1), segments: 32, material: "ST_Gold"),
+        translate(lathe_z(profile: [(zl2 - 1, 0), (zl2 - 1, 82), (zl2 + 14 * lk, 76), (zl2 + 30 * lk, 58), (zl2 + 44 * lk, 34), (zl3, 16), (zl3, 0)], segments: 24, material: "ST_Gold"), (cx, cy, 0)),
+        cylinder_at(r_bot: 14, r_top: 4, height: (z_orb - 18) - (zl3 - 6), bottom_center: (cx, cy, zl3 - 6), segments: 12, material: "ST_Gold"),
+        sphere_center(radius: 20, center: (cx, cy, z_orb), segments: 16, material: "ST_Gold"),
+        sphere_center(radius: 10, center: (cx, cy, z_lamp), segments: 12, material: "ST_WarmLight"),
+        cylinder_at(r_bot: 4, r_top: 0, height: DOME_TIP - (z_lamp + 8), bottom_center: (cx, cy, z_lamp + 8), segments: 8, material: "ST_Gold"));
+} else {
+    g = merge(
+        cylinder_at(radius: 90, height: zl2 - (DOME_TOP - 20), bottom_center: (cx, cy, DOME_TOP - 20), segments: 8, material: "ST_Gold"),
+        cylinder_at(r_bot: 18, r_top: 0, height: DOME_TIP - (zl2 - 2), bottom_center: (cx, cy, zl2 - 2), segments: 6, material: "ST_Gold"));
+}
+out.geo = g;
+#end
+
+// ---------- Sky Bar far display / collision (shared by LOD1 and the collider) ----------
+// Same stair-axis derivation as LOD0: from the terrace corner nearest SKYBAR_C, turned 0..20 deg toward the terrace so
+// both cheek walls (half width hw + ct) enter the platform as far as possible from the main block's roof edges.
+// mode 0 (LOD1): sloped stair block, platform disc + rim, blue bar ring + counter.
+// mode 1 (collider): stair ramp, platform disc, rim barrier (open at the stair), island bar.
+#meshpart CROWN_SkyBarLink
+param mode = 0;
+param hw = 150;                      // stair half width (= LOD0 hw)
+param ct = 25;                       // cheek wall thickness (= LOD0 ct)
+let sx = SKYBAR_C.x;
+let sy = SKYBAR_C.y;
+let SR = SKYBAR_R;
+let zr = MAIN_ROOF - 2;
+let zsd = MAIN_ROOF + 150;           // Sky Bar deck top (= LOD0)
+let bar_r = SR * 0.65;               // island bar outer radius (= LOD0)
+let nfp = len(ROOFDECK_FP);
+let nmf = len(MAIN_FP);
+var ks = 0;
+var kd = 1000000000;
+for i in 0..nfp {
+    let p = at(ROOFDECK_FP, i);
+    let d = sqrt((p.x - sx) * (p.x - sx) + (p.y - sy) * (p.y - sy));
+    if d < kd {
+        kd = d;
+        ks = i;
+    }
+}
+let pc = at(ROOFDECK_FP, ks);
+let a0 = atan2(sy - pc.y, sx - pc.x);
+var phi_s = 0;
+var worst_s = 1000000000;
+for k in 0..21 {
+    let au = a0 + k;
+    let ux = cos(au);
+    let uy = sin(au);
+    let cax = (sx - pc.x) * ux + (sy - pc.y) * uy;
+    let clat = (sx - pc.x) * (0 - uy) + (sy - pc.y) * ux;
+    var worst = -1000000000;
+    var valid = 1;
+    for side in 0..2 {
+        let lc = (side * 2 - 1) * (hw + ct);
+        let q = SR * SR - (clat - lc) * (clat - lc);
+        if q > 0 {
+            let se = cax - sqrt(q);
+            let qx = pc.x + ux * se - uy * lc;
+            let qy = pc.y + uy * se + ux * lc;
+            for e in 0..nmf {
+                let m1 = at(MAIN_FP, e);
+                let m2 = at(MAIN_FP, mod(e + 1, nmf));
+                let ml = sqrt((m2.x - m1.x) * (m2.x - m1.x) + (m2.y - m1.y) * (m2.y - m1.y));
+                worst = max(worst, ((m2.y - m1.y) * (qx - m1.x) - (m2.x - m1.x) * (qy - m1.y)) / ml);
+            }
+        } else {
+            valid = 0;
+        }
+    }
+    if valid > 0 {
+        if worst < worst_s {
+            worst_s = worst;
+            phi_s = k;
+        }
+    }
+}
+let sa = a0 + phi_s;
+let ux = cos(sa);
+let uy = sin(sa);
+let nx = 0 - uy;
+let ny = ux;
+let cax = (sx - pc.x) * ux + (sy - pc.y) * uy;
+let clat = (sx - pc.x) * nx + (sy - pc.y) * ny;
+let s_end = max(cax - sqrt(SR * SR - (clat - hw) * (clat - hw)), cax - sqrt(SR * SR - (clat + hw) * (clat + hw))) + 12;
+let r_cb = SR - 12.5;
+let lg = hw + ct - 2;
+let g1 = sa + 180 + asin((lg + clat) / r_cb);
+let g2 = sa + 180 - asin((lg - clat) / r_cb) + 360;
+var g = empty();
+if mode == 0 {
+    let half = hw + ct;
+    let se = s_end + 28;
+    let blk = extrude_loop(points: [(pc.x - nx * half, pc.y - ny * half, zr), (pc.x + ux * se - nx * half, pc.y + uy * se - ny * half, zr), (pc.x + ux * se - nx * half, pc.y + uy * se - ny * half, zsd + 100), (pc.x - nx * half, pc.y - ny * half, ROOFDECK_TOP + 105)], offset: (nx * half * 2, ny * half * 2, 0), material: "ST_Stone");
+    let disc = cylinder_at(radius: SR, height: (zsd + 52) - (zsd - 190), bottom_center: (sx, sy, zsd - 190), segments: 32, material: "ST_Facade");
+    let bar = merge(
+        part(CROWN_Ring, cx: sx, cy: sy, z0: zsd + 48, z1: zsd + 90, r_in: bar_r - 70, r_out: bar_r + 6, seg: 32, mat: "ST_BlueLED"),
+        part(CROWN_Ring, cx: sx, cy: sy, z0: zsd + 90, z1: zsd + 113, r_in: bar_r - 84, r_out: bar_r + 18, seg: 32, mat: "ST_DarkMetal"));
+    g = merge(blk, disc, bar);
+} else {
+    let se = s_end + 28;
+    let ramp = extrude_loop(points: [(pc.x - nx * hw, pc.y - ny * hw, zr), (pc.x + ux * se - nx * hw, pc.y + uy * se - ny * hw, zr), (pc.x + ux * se - nx * hw, pc.y + uy * se - ny * hw, zsd), (pc.x - nx * hw, pc.y - ny * hw, ROOFDECK_TOP)], offset: (nx * hw * 2, ny * hw * 2, 0), material: "ST_Facade");
+    let disc = cylinder_at(radius: SR, height: 190, bottom_center: (sx, sy, zsd - 190), segments: 16, material: "ST_Facade");
+    let rim_o = arc_profile(center: (sx, sy), radius: SR, start_degrees: g1, end_degrees: g2, count: 14);
+    let rim_i = arc_profile(center: (sx, sy), radius: SR - 25, start_degrees: g1, end_degrees: g2, count: 14);
+    let barrier = translate(extrude(points: concat_points(rim_o, reverse_points(rim_i)), height: 115, material: "ST_Facade"), (0, 0, zsd));
+    let bar = cylinder_at(radius: bar_r, height: 113, bottom_center: (sx, sy, zsd), segments: 12, material: "ST_Stone");
+    g = merge(ramp, disc, barrier, bar);
+}
+out.geo = g;
+#end
+
 #mesh ST_Crown
 budget(verts: 250000, indices: 750000);
 sim_box(min: (-9000, -9000, 0), max: (9000, 9000, 25000));
@@ -113,42 +398,25 @@ let cy = DOME_C.y;
 let sx = SKYBAR_C.x;
 let sy = SKYBAR_C.y;
 let nfp = len(ROOFDECK_FP);
+let nmf = len(MAIN_FP);
 let zr = MAIN_ROOF - 2;              // storey base, embedded 2 cm in the main roof
 let zt = ROOFDECK_TOP;               // Sirocco terrace deck
-let zg0 = zr + 62;                   // glazing band bottom (white plinth below)
-let zg1 = zt - 110;                  // glazing band top (white fascia above)
+let ent_h = 220;                     // drum entablature depth (architrave + frieze + corona)
 let zsty = DRUM_BASE + 64;           // stylobate top = column base
-let zarch = DRUM_TOP - 220;          // entablature soffit
+let zarch = DRUM_TOP - ent_h;        // entablature soffit
 let rc = DRUM_R - 60;                // column centre radius
 let rglass = DRUM_R - 250;           // drum glazing radius
 let az_view = 132;                   // math azimuth of the photo-1 line of sight (bearing 318): a wide bay faces it
+let n_flute = 28;                    // dome gores = LED panels (P1: ~13-14 across the visible half)
+let r_fx = DRUM_R + 12;              // cornice floodlight fixtures on the corona's outer edge (top edge DRUM_R + 28)
 let zsd = MAIN_ROOF + 150;           // Sky Bar deck top
+let SR = SKYBAR_R;
 let hw = 150;                        // stair half width
 let ct = 25;                         // stair cheek wall thickness
+let bar_r = SR * 0.65;               // island bar outer radius (P4: blue bar ring ~0.67 x the platform diameter)
 
 // ---------- (1) dome terrace storey: plinth, inset warm glazing band, piers, fascia, deck ----------
-let fp_in = offset_polygon(points: ROOFDECK_FP, delta: -40);
-let st_plinth = translate(extrude(points: ROOFDECK_FP, height: zg0 - zr, material: "ST_Facade"), (0, 0, zr));
-let st_glaze = translate(extrude(points: fp_in, height: zg1 - zg0, material: "ST_DrumGlass"), (0, 0, zg0));
-let st_fascia = translate(extrude_shape(outer: ROOFDECK_FP, holes: [fp_in], height: zt - zg1, material: "ST_Facade"), (0, 0, zg1));
-let st_deck = translate(extrude(points: fp_in, height: zt - zg1, material: "ST_FacadeShade"), (0, 0, zg1));
-var piers = empty();
-for e in 0..nfp {
-    let p1 = at(ROOFDECK_FP, e);
-    let p2 = at(ROOFDECK_FP, mod(e + 1, nfp));
-    let el = sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
-    let ex = (p2.x - p1.x) / el;
-    let ey = (p2.y - p1.y) / el;
-    let nx = 0 - ey;
-    let ny = ex;
-    let np = max(1, round(el / BAY_W));
-    for i in 0..np {
-        let s = clamp(i * el / np, 29, el - 29);
-        let px = p1.x + ex * s;
-        let py = p1.y + ey * s;
-        piers = merge(piers, beam_between(start: (px + nx * 4, py + ny * 4, (zg0 + zg1) * 0.5), end: (px + nx * 50, py + ny * 50, (zg0 + zg1) * 0.5), cross_width: 50, cross_height: zg1 - zg0, height_direction: (0, 0, 1), material: "ST_Facade"));
-    }
-}
+let terrace_shell = part(CROWN_TerraceShell, detail: 1);
 
 // ---------- terrace balustrade on the 20 cm inset line, open at the stair corner ----------
 var rail_q = [];
@@ -184,10 +452,50 @@ let kprev = mod(ks + nfp - 1, nfp);
 let knext = mod(ks + 1, nfp);
 let pp = at(ROOFDECK_FP, kprev);
 let pn = at(ROOFDECK_FP, knext);
-let sux = (sx - pc.x) / kd;            // stair axis (down toward the Sky Bar)
-let suy = (sy - pc.y) / kd;
+// stair axis: turned 0..20 deg from the Sky Bar centre line so both cheek walls enter the platform as far as possible
+// inside the main block's roof edges (main cornice ring = 0..80 cm inside MAIN_FP; same search as CROWN_SkyBarLink)
+let a0 = atan2(sy - pc.y, sx - pc.x);
+var phi_s = 0;
+var worst_s = 1000000000;
+for k in 0..21 {
+    let au = a0 + k;
+    let ux = cos(au);
+    let uy = sin(au);
+    let cax_k = (sx - pc.x) * ux + (sy - pc.y) * uy;
+    let clat_k = (sx - pc.x) * (0 - uy) + (sy - pc.y) * ux;
+    var worst = -1000000000;
+    var valid = 1;
+    for side in 0..2 {
+        let lc = (side * 2 - 1) * (hw + ct);
+        let q = SR * SR - (clat_k - lc) * (clat_k - lc);
+        if q > 0 {
+            let se = cax_k - sqrt(q);
+            let qx = pc.x + ux * se - uy * lc;
+            let qy = pc.y + uy * se + ux * lc;
+            for e in 0..nmf {
+                let m1 = at(MAIN_FP, e);
+                let m2 = at(MAIN_FP, mod(e + 1, nmf));
+                let mlen = sqrt((m2.x - m1.x) * (m2.x - m1.x) + (m2.y - m1.y) * (m2.y - m1.y));
+                worst = max(worst, ((m2.y - m1.y) * (qx - m1.x) - (m2.x - m1.x) * (qy - m1.y)) / mlen);
+            }
+        } else {
+            valid = 0;
+        }
+    }
+    if valid > 0 {
+        if worst < worst_s {
+            worst_s = worst;
+            phi_s = k;
+        }
+    }
+}
+let sa = a0 + phi_s;
+let sux = cos(sa);                     // stair axis (down toward the Sky Bar)
+let suy = sin(sa);
 let snx = 0 - suy;                     // stair lateral axis
 let sny = sux;
+let cax = (sx - pc.x) * sux + (sy - pc.y) * suy;     // Sky Bar centre in the stair frame
+let clat = (sx - pc.x) * snx + (sy - pc.y) * sny;
 let lpp = sqrt((pp.x - pc.x) * (pp.x - pc.x) + (pp.y - pc.y) * (pp.y - pc.y));
 let lpn = sqrt((pn.x - pc.x) * (pn.x - pc.x) + (pn.y - pc.y) * (pn.y - pc.y));
 let epx = (pp.x - pc.x) / lpp;
@@ -216,40 +524,55 @@ for e in 0..nfp {
     terrace_bal = merge(terrace_bal, part(CROWN_Balustrade, ax: ax, ay: ay, bx: bx, by: by, z: zt, h: 110, post_sp: 250, bal_sp: 30, end_post: select(0, 1, is_last), lamp_every: 2));
 }
 
-// ---------- Sirocco tables (east / south-west decks), white cloth tops with small warm lamps ----------
+// ---------- Sirocco tables on the NW / W deck along the terrace's west edge (vertex ks -> ks+1), white tops, warm lamps ----------
+// grid in the stair-corner frame, kept >= 60 cm clear of the stylobate (DRUM_R + 80) and the balustrade, and clear of
+// the stair-head approach corridor
 let table = merge(
     cylinder_at(radius: 30, height: 4, bottom_center: (0, 0, zt - 1), segments: 10, material: "ST_DarkMetal"),
     cylinder_at(radius: 5, height: 70, bottom_center: (0, 0, zt + 2), segments: 8, material: "ST_DarkMetal"),
     cylinder_at(r_bot: 44, r_top: 46, height: 6, bottom_center: (0, 0, zt + 70), segments: 16, material: "ST_Stone"),
     cylinder_at(r_bot: 5, r_top: 6, height: 11, bottom_center: (0, 0, zt + 75), segments: 8, material: "ST_WarmLight"));
-let table_off = [(871, -2165), (623, -2059), (977, -1916), (729, -1811), (1083, -1668), (1189, -1420), (-1613, -1106), (-1861, -1001), (-1755, -752), (1791, -1383), (1897, -1134), (1649, -1029), (2251, -992), (2003, -886), (2357, -744), (2109, -638), (2215, -389), (2072, -35)];
-var table_pts = [];
-for t in table_off {
-    table_pts = append(table_pts, (cx + t.x, cy + t.y, 0));
+var terrace_tables = empty();
+for i in 0..2 {
+    for j in 0..18 {
+        let ta = 150 + i * 170;
+        let tb = 330 + j * 180;
+        let tx = pc.x + epx * ta + enx * tb;
+        let ty = pc.y + epy * ta + eny * tb;
+        let tdd = sqrt((tx - cx) * (tx - cx) + (ty - cy) * (ty - cy));
+        let tlat = abs((tx - pc.x) * snx + (ty - pc.y) * sny);
+        if tdd >= DRUM_R + 186 {
+            if tlat >= hw + ct + 110 {
+                if tb <= lpn - 140 {
+                    terrace_tables = merge(terrace_tables, translate(table, (tx, ty, 0)));
+                }
+            }
+        }
+    }
 }
-let terrace_tables = copy_to_points(table, points: table_pts);
 
 // ---------- (2) Sky Bar: cantilevered round platform, rim, rail, island bar, stools ----------
-let SR = SKYBAR_R;
+// slab bottom MAIN_ROOF - 40 and soffit bottom MAIN_ROOF - 75 stay inside the main cornice band (>= MAIN_ROOF - 80)
 let sb_slab = translate(lathe_z(profile: [(zsd - 190, 0), (zsd - 190, SR), (zsd - 105, SR), (zsd - 105, SR - 22), (zsd - 85, SR - 22), (zsd - 85, SR), (zsd - 8, SR), (zsd - 8, 0)], segments: 64, material: "ST_Facade"), (sx, sy, 0));
-let sb_soffit = translate(lathe_z(profile: [(zsd - 310, 0), (zsd - 310, SR - 260), (zsd - 186, SR - 44), (zsd - 186, 0)], segments: 64, material: "ST_FacadeShade"), (sx, sy, 0));
+let sb_soffit = translate(lathe_z(profile: [(MAIN_ROOF - 75, 0), (MAIN_ROOF - 75, SR - 200), (zsd - 186, SR - 44), (zsd - 186, 0)], segments: 64, material: "ST_FacadeShade"), (sx, sy, 0));
 let sb_deck = cylinder_at(radius: SR - 15, height: 20, bottom_center: (sx, sy, zsd - 20), segments: 64, material: "ST_FacadeShade");
-let ga = atan2(pc.y - sy, pc.x - sx);                 // direction from the Sky Bar centre to the stair
-let hg = asin((hw + ct + 10) / SR);
-let g1 = ga + hg;
-let g2 = ga - hg + 360;
-let sb_curb = sweep_box_path(points: arc_points(center: (sx, sy, zsd - 8 + 30), radius: SR - 12.5, start_degrees: g1, end_degrees: g2, count: 56, plane: "xy"), width: 25, height: 60, up: (0, 0, 1), material: "ST_Facade");
+// rim curb / rail open at the stair: the curb ends embed 2 cm into the cheek walls' outer faces
+let r_cb = SR - 12.5;
+let lg = hw + ct - 2;
+let g1 = sa + 180 + asin((lg + clat) / r_cb);
+let g2 = sa + 180 - asin((lg - clat) / r_cb) + 360;
+let sb_curb = sweep_box_path(points: arc_points(center: (sx, sy, zsd - 8 + 30), radius: r_cb, start_degrees: g1, end_degrees: g2, count: 56, plane: "xy"), width: 25, height: 60, up: (0, 0, 1), material: "ST_Facade");
 let rail_post = cylinder_at(radius: 3.5, height: 66, bottom_center: (0, 0, zsd + 50), segments: 6, material: "ST_DarkMetal");
-let sb_posts = copy_to_points(rail_post, points: arc_points(center: (sx, sy, 0), radius: SR - 12, start_degrees: g1 + 1, end_degrees: g2 - 1, count: 40, plane: "xy"));
+let n_post = max(8, round((g2 - g1) * 3.14159 / 180 * (SR - 12) / 70));
+let sb_posts = copy_to_points(rail_post, points: arc_points(center: (sx, sy, 0), radius: SR - 12, start_degrees: g1 + 1, end_degrees: g2 - 1, count: n_post, plane: "xy"));
 let sb_rails = merge(
     torus_center(major_radius: SR - 12, tube_radius: 4, segments: 64, tube_segments: 6, start_degrees: g1, end_degrees: g2, center: (sx, sy, zsd + 114), material: "ST_DarkMetal"),
     torus_center(major_radius: SR - 12, tube_radius: 2.5, segments: 64, tube_segments: 5, start_degrees: g1, end_degrees: g2, center: (sx, sy, zsd + 84), material: "ST_DarkMetal"));
-let bar_r = 380;                                       // island bar outer radius (P4: the blue ring is ~half the platform)
+// island bar: white counter ring with a blue-lit outer fascia (P4), dark counter top, back-bar column + canopy
 let sb_bar = merge(
-    part(CROWN_Ring, cx: sx, cy: sy, z0: zsd - 4, z1: zsd + 105, r_in: bar_r - 80, r_out: bar_r, seg: 64, mat: "ST_Stone"),
-    part(CROWN_Ring, cx: sx, cy: sy, z0: zsd + 105, z1: zsd + 113, r_in: bar_r - 94, r_out: bar_r + 18, seg: 64, mat: "ST_DarkMetal"),
-    part(CROWN_Ring, cx: sx, cy: sy, z0: zsd + 84, z1: zsd + 98, r_in: bar_r - 6, r_out: bar_r + 6, seg: 64, mat: "ST_BlueLED"),
-    part(CROWN_Ring, cx: sx, cy: sy, z0: zsd + 6, z1: zsd + 16, r_in: bar_r - 6, r_out: bar_r + 4, seg: 64, mat: "ST_BlueLED"),
+    part(CROWN_Ring, cx: sx, cy: sy, z0: zsd - 4, z1: zsd + 105, r_in: bar_r - 70, r_out: bar_r, seg: 64, mat: "ST_Stone"),
+    part(CROWN_Ring, cx: sx, cy: sy, z0: zsd + 30, z1: zsd + 90, r_in: bar_r - 4, r_out: bar_r + 6, seg: 64, mat: "ST_BlueLED"),
+    part(CROWN_Ring, cx: sx, cy: sy, z0: zsd + 105, z1: zsd + 113, r_in: bar_r - 84, r_out: bar_r + 18, seg: 64, mat: "ST_DarkMetal"),
     cylinder_at(radius: 140, height: 100, bottom_center: (sx, sy, zsd - 4), segments: 32, material: "ST_Stone"),
     cylinder_at(radius: 85, height: 115, bottom_center: (sx, sy, zsd + 94), segments: 24, material: "ST_DarkMetal"),
     cylinder_at(radius: 115, height: 12, bottom_center: (sx, sy, zsd + 207), segments: 32, material: "ST_Stone"),
@@ -258,11 +581,10 @@ let stool = merge(
     cylinder_at(radius: 16, height: 3, bottom_center: (0, 0, zsd - 1), segments: 10, material: "ST_DarkMetal"),
     cylinder_at(radius: 3, height: 72, bottom_center: (0, 0, zsd + 1), segments: 6, material: "ST_DarkMetal"),
     cylinder_at(radius: 19, height: 7, bottom_center: (0, 0, zsd + 72), segments: 12, material: "ST_Stone"));
-let sb_stools = copy_to_points(stool, points: arc_points(center: (sx, sy, 0), radius: bar_r + 66, start_degrees: 0, end_degrees: 345, count: 24, plane: "xy"));
 
 // ---------- grand stair from the terrace corner down to the Sky Bar ----------
 let n_st = 16;
-let s_end = kd - sqrt(SR * SR - hw * hw) + 12;          // flight ends 12 cm inside the platform edge
+let s_end = max(cax - sqrt(SR * SR - (clat - hw) * (clat - hw)), cax - sqrt(SR * SR - (clat + hw) * (clat + hw))) + 12;   // flight ends 12 cm inside the platform edge
 let s_tr = s_end / n_st;
 let s_rise = (zt - zsd) / (n_st + 1);
 var stair = empty();
@@ -272,25 +594,33 @@ for k in 0..n_st {
     let d1 = (k + 1) * s_tr;
     stair = merge(stair, beam_between(start: (pc.x + sux * d0, pc.y + suy * d0, (zr + top) * 0.5), end: (pc.x + sux * d1, pc.y + suy * d1, (zr + top) * 0.5), cross_width: hw * 2, cross_height: top - zr, height_direction: (0, 0, 1), material: "ST_Stone"));
 }
+// stools on the far side of the bar, leaving the stair approach open
+let r_st = min(bar_r + 60, SR - 90);
+let a_in = atan2(pc.y + suy * s_end - sy, pc.x + sux * s_end - sx);
+let n_stool = max(8, round(r_st * 6.28318 * 300 / 360 / 95));
+let sb_stools = copy_to_points(stool, points: arc_points(center: (sx, sy, 0), radius: r_st, start_degrees: a_in + 30, end_degrees: a_in + 330, count: n_stool, plane: "xy"));
 // head landings: the two triangles between the stair head and the terrace edges (deck level)
 let sp_sign = sign(wp);
 let sn_sign = sign(wn);
 let land_p = translate(extrude(points: [(pc.x, pc.y), (pc.x + snx * sp_sign * hw, pc.y + sny * sp_sign * hw), (pc.x + epx * hw / abs(wp), pc.y + epy * hw / abs(wp))], height: zt - zr, material: "ST_Stone"), (0, 0, zr));
 let land_n = translate(extrude(points: [(pc.x, pc.y), (pc.x + snx * sn_sign * hw, pc.y + sny * sn_sign * hw), (pc.x + enx * hw / abs(wn), pc.y + eny * hw / abs(wn))], height: zt - zr, material: "ST_Stone"), (0, 0, zr));
-// solid white cheek walls (P4 white stair enclosure), top 105 cm above the landing / deck
+// solid white cheek walls (P4 white stair enclosure), top 105 cm above the landing / deck; each ends 40 cm inside the rim
 let ds_p = (hw + ct) * dp / abs(wp);
 let ds_n = (hw + ct) * dn / abs(wn);
-let ce = s_end + 18;
+let lm_p = sp_sign * (hw + ct * 0.5);
+let lm_n = sn_sign * (hw + ct * 0.5);
+let ce_p = max(s_end + 6, cax - sqrt((SR - 40) * (SR - 40) - (lm_p - clat) * (lm_p - clat)));
+let ce_n = max(s_end + 6, cax - sqrt((SR - 40) * (SR - 40) - (lm_n - clat) * (lm_n - clat)));
 let cheek_p = extrude_loop(points: [
     (pc.x + sux * ds_p + snx * sp_sign * hw, pc.y + suy * ds_p + sny * sp_sign * hw, zr),
-    (pc.x + sux * ce + snx * sp_sign * hw, pc.y + suy * ce + sny * sp_sign * hw, zr),
-    (pc.x + sux * ce + snx * sp_sign * hw, pc.y + suy * ce + sny * sp_sign * hw, zsd + 100),
+    (pc.x + sux * ce_p + snx * sp_sign * hw, pc.y + suy * ce_p + sny * sp_sign * hw, zr),
+    (pc.x + sux * ce_p + snx * sp_sign * hw, pc.y + suy * ce_p + sny * sp_sign * hw, zsd + 100),
     (pc.x + snx * sp_sign * hw, pc.y + sny * sp_sign * hw, zt + 105),
     (pc.x + sux * ds_p + snx * sp_sign * hw, pc.y + suy * ds_p + sny * sp_sign * hw, zt + 105)], offset: (snx * sp_sign * ct, sny * sp_sign * ct, 0), material: "ST_Facade");
 let cheek_n = extrude_loop(points: [
     (pc.x + sux * ds_n + snx * sn_sign * hw, pc.y + suy * ds_n + sny * sn_sign * hw, zr),
-    (pc.x + sux * ce + snx * sn_sign * hw, pc.y + suy * ce + sny * sn_sign * hw, zr),
-    (pc.x + sux * ce + snx * sn_sign * hw, pc.y + suy * ce + sny * sn_sign * hw, zsd + 100),
+    (pc.x + sux * ce_n + snx * sn_sign * hw, pc.y + suy * ce_n + sny * sn_sign * hw, zr),
+    (pc.x + sux * ce_n + snx * sn_sign * hw, pc.y + suy * ce_n + sny * sn_sign * hw, zsd + 100),
     (pc.x + snx * sn_sign * hw, pc.y + sny * sn_sign * hw, zt + 105),
     (pc.x + sux * ds_n + snx * sn_sign * hw, pc.y + suy * ds_n + sny * sn_sign * hw, zt + 105)], offset: (snx * sn_sign * ct, sny * sn_sign * ct, 0), material: "ST_Facade");
 let stair_all = merge(stair, land_p, land_n, cheek_p, cheek_n);
@@ -326,13 +656,14 @@ for k in 0..96 {
     let a = az_view + k * 3.75;
     modillions = merge(modillions, beam_between(start: (cx + (DRUM_R + 6) * cos(a), cy + (DRUM_R + 6) * sin(a), zarch + 160), end: (cx + (DRUM_R + 34) * cos(a), cy + (DRUM_R + 34) * sin(a), zarch + 160), cross_width: 18, cross_height: 18, height_direction: (0, 0, 1), material: "ST_Facade"));
 }
-// four dark floodlight fixtures on the cornice ledge (carry the DomeUp emitters)
+// eight dark floodlight fixtures on the corona's outer edge, 45 deg apart and 22.5 deg off the photo-1 sightline
+// (carry the DomeUp0-7 emitters)
 var flood_fx = empty();
-for k in 0..4 {
-    let a = az_view + k * 90;
+for k in 0..8 {
+    let a = az_view + 22.5 + k * 45;
     flood_fx = merge(flood_fx, translate(rotate_z(merge(
-        box_at(size: (40, 34, 14), bottom_center: (0, 0, DRUM_TOP - 2), material: "ST_DarkMetal"),
-        box_at(size: (22, 30, 18), bottom_center: (-4, 0, DRUM_TOP + 10), material: "ST_DarkMetal")), degrees: a, pivot: (0, 0, 0)), (cx + 1560 * cos(a), cy + 1560 * sin(a), 0)));
+        box_at(size: (30, 34, 14), bottom_center: (0, 0, DRUM_TOP - 2), material: "ST_DarkMetal"),
+        box_at(size: (20, 28, 18), bottom_center: (-3, 0, DRUM_TOP + 10), material: "ST_DarkMetal")), degrees: a, pivot: (0, 0, 0)), (cx + r_fx * cos(a), cy + r_fx * sin(a), 0)));
 }
 // cyan uplight boxes at the base of the wide bays (P4)
 var bay_lights = empty();
@@ -341,158 +672,59 @@ for k in 0..12 {
     bay_lights = merge(bay_lights, translate(rotate_z(box_at(size: (40, 70, 34), bottom_center: (0, 0, zsty - 2), material: "ST_BlueLED"), degrees: a, pivot: (0, 0, 0)), (cx + (rc + 10) * cos(a), cy + (rc + 10) * sin(a), 0)));
 }
 
-// ---------- (4) LED band at the dome springing: white sill, blue panels, white mullions, white top band ----------
-let led_sill = part(CROWN_Ring, cx: cx, cy: cy, z0: DRUM_TOP - 2, z1: DRUM_TOP + 16, r_in: DOME_R - 40, r_out: DOME_R + 42, seg: 64, mat: "ST_Facade");
-let led_panels = part(CROWN_Ring, cx: cx, cy: cy, z0: DRUM_TOP + 16, z1: LED_BAND_TOP - 18, r_in: DOME_R - 40, r_out: DOME_R + 20, seg: 64, mat: "ST_BlueLED");
-let led_top = part(CROWN_Ring, cx: cx, cy: cy, z0: LED_BAND_TOP - 18, z1: LED_BAND_TOP, r_in: DOME_R - 40, r_out: DOME_R + 38, seg: 64, mat: "ST_Facade");
-var led_mull = empty();
-for k in 0..32 {
-    let a = az_view + 5.625 + k * 11.25;
-    led_mull = merge(led_mull, beam_between(start: (cx + (DOME_R + 10) * cos(a), cy + (DOME_R + 10) * sin(a), (DRUM_TOP + LED_BAND_TOP) * 0.5), end: (cx + (DOME_R + 30) * cos(a), cy + (DOME_R + 30) * sin(a), (DRUM_TOP + LED_BAND_TOP) * 0.5), cross_width: 22, cross_height: LED_BAND_TOP - DRUM_TOP - 32, height_direction: (0, 0, 1), material: "ST_Facade"));
-}
+// ---------- (4) LED band, (5) gored gold dome + lip + scalloped hem, (6) lantern / spire / tip ----------
+let led_band = part(CROWN_LedBand, detail: 1, az: az_view, nfl: n_flute);
+let dome_all = part(CROWN_Dome, detail: 1, az: az_view, nfl: n_flute);
+let lantern = part(CROWN_Lantern, detail: 1, az: az_view);
 
-// ---------- (5) gold dome: superellipse (n 1.65, fitted on P1/P2), gold lip, 32 meridian ribs ----------
-let dome_h = DOME_TOP - LED_BAND_TOP;
-let dome_n = 1.65;
-var dprof = [];
-dprof = append(dprof, (LED_BAND_TOP - 6, 0));
-dprof = append(dprof, (LED_BAND_TOP - 6, DOME_R));
-for i in 0..28 {
-    let th = i * 90 / 28;
-    dprof = append(dprof, (LED_BAND_TOP + dome_h * pow(sin(th), 2 / dome_n), DOME_R * pow(cos(th), 2 / dome_n)));
-}
-dprof = append(dprof, (DOME_TOP, 0));
-let dome = translate(lathe_z(profile: dprof, segments: 64, material: "ST_Gold"), (cx, cy, 0));
-let dome_lip = translate(lathe_z(profile: [(LED_BAND_TOP - 2, DOME_R - 20), (LED_BAND_TOP - 2, DOME_R + 58), (LED_BAND_TOP + 8, DOME_R + 58), (LED_BAND_TOP + 18, DOME_R + 12), (LED_BAND_TOP + 18, DOME_R - 20), (LED_BAND_TOP - 2, DOME_R - 20)], segments: 64, material: "ST_Gold"), (cx, cy, 0));
-var rib_path = [];
-for j in 0..16 {
-    let th = 2 + j * 80 / 15;
-    let rr = DOME_R * pow(cos(th), 2 / dome_n);
-    let zz = dome_h * pow(sin(th), 2 / dome_n);
-    let gx = pow(rr / DOME_R, dome_n - 1) / DOME_R;
-    let gz = pow(zz / dome_h, dome_n - 1) / dome_h;
-    let gl = sqrt(gx * gx + gz * gz);
-    let rib_r = 12 - 7 * j / 15;
-    rib_path = append(rib_path, (rr + gx / gl * rib_r * 0.3, 0, LED_BAND_TOP + zz + gz / gl * rib_r * 0.3), size: rib_r);
-}
-let rib = pipe_path(points: rib_path, segments: 6, caps: "both", material: "ST_Gold");
-var ribs = empty();
-for k in 0..32 {
-    ribs = merge(ribs, translate(rotate_z(rib, degrees: az_view + 5.625 + k * 11.25, pivot: (0, 0, 0)), (cx, cy, 0)));
-}
+// ---------- (7) lights: 8 warm dome uplights on the cornice fixtures (wide, modest; Management balances in engine) ----------
+emitter("DomeUp0", at: (cx + r_fx * cos(az_view + 22.5), cy + r_fx * sin(az_view + 22.5), DRUM_TOP + 36), axis: (-0.25 * cos(az_view + 22.5), -0.25 * sin(az_view + 22.5), 0.97), color: "#ffcf86", intensity: 10, radius: 2600, kind: "spot", cone_inner: 55, cone_outer: 85, cast_shadow: false);
+emitter("DomeUp1", at: (cx + r_fx * cos(az_view + 67.5), cy + r_fx * sin(az_view + 67.5), DRUM_TOP + 36), axis: (-0.25 * cos(az_view + 67.5), -0.25 * sin(az_view + 67.5), 0.97), color: "#ffcf86", intensity: 10, radius: 2600, kind: "spot", cone_inner: 55, cone_outer: 85, cast_shadow: false);
+emitter("DomeUp2", at: (cx + r_fx * cos(az_view + 112.5), cy + r_fx * sin(az_view + 112.5), DRUM_TOP + 36), axis: (-0.25 * cos(az_view + 112.5), -0.25 * sin(az_view + 112.5), 0.97), color: "#ffcf86", intensity: 10, radius: 2600, kind: "spot", cone_inner: 55, cone_outer: 85, cast_shadow: false);
+emitter("DomeUp3", at: (cx + r_fx * cos(az_view + 157.5), cy + r_fx * sin(az_view + 157.5), DRUM_TOP + 36), axis: (-0.25 * cos(az_view + 157.5), -0.25 * sin(az_view + 157.5), 0.97), color: "#ffcf86", intensity: 10, radius: 2600, kind: "spot", cone_inner: 55, cone_outer: 85, cast_shadow: false);
+emitter("DomeUp4", at: (cx + r_fx * cos(az_view + 202.5), cy + r_fx * sin(az_view + 202.5), DRUM_TOP + 36), axis: (-0.25 * cos(az_view + 202.5), -0.25 * sin(az_view + 202.5), 0.97), color: "#ffcf86", intensity: 10, radius: 2600, kind: "spot", cone_inner: 55, cone_outer: 85, cast_shadow: false);
+emitter("DomeUp5", at: (cx + r_fx * cos(az_view + 247.5), cy + r_fx * sin(az_view + 247.5), DRUM_TOP + 36), axis: (-0.25 * cos(az_view + 247.5), -0.25 * sin(az_view + 247.5), 0.97), color: "#ffcf86", intensity: 10, radius: 2600, kind: "spot", cone_inner: 55, cone_outer: 85, cast_shadow: false);
+emitter("DomeUp6", at: (cx + r_fx * cos(az_view + 292.5), cy + r_fx * sin(az_view + 292.5), DRUM_TOP + 36), axis: (-0.25 * cos(az_view + 292.5), -0.25 * sin(az_view + 292.5), 0.97), color: "#ffcf86", intensity: 10, radius: 2600, kind: "spot", cone_inner: 55, cone_outer: 85, cast_shadow: false);
+emitter("DomeUp7", at: (cx + r_fx * cos(az_view + 337.5), cy + r_fx * sin(az_view + 337.5), DRUM_TOP + 36), axis: (-0.25 * cos(az_view + 337.5), -0.25 * sin(az_view + 337.5), 0.97), color: "#ffcf86", intensity: 10, radius: 2600, kind: "spot", cone_inner: 55, cone_outer: 85, cast_shadow: false);
 
-// ---------- (6) lantern + spire + orb; tip exactly DOME_TIP ----------
-var lantern_posts = empty();
-for k in 0..8 {
-    let a = az_view + k * 45;
-    lantern_posts = merge(lantern_posts, cylinder_at(radius: 9, height: 96, bottom_center: (cx + 66 * cos(a), cy + 66 * sin(a), DOME_TOP + 16), segments: 8, material: "ST_Gold"));
-}
-let lantern = merge(
-    cylinder_at(radius: 118, height: 55, bottom_center: (cx, cy, DOME_TOP - 35), segments: 32, material: "ST_Gold"),
-    cylinder_at(radius: 62, height: 96, bottom_center: (cx, cy, DOME_TOP + 18), segments: 24, material: "ST_DarkGlass"),
-    lantern_posts,
-    cylinder_at(radius: 86, height: 14, bottom_center: (cx, cy, DOME_TOP + 110), segments: 32, material: "ST_Gold"),
-    translate(lathe_z(profile: [(DOME_TOP + 122, 0), (DOME_TOP + 122, 72), (DOME_TOP + 140, 66), (DOME_TOP + 158, 48), (DOME_TOP + 170, 24), (DOME_TOP + 176, 0)], segments: 24, material: "ST_Gold"), (cx, cy, 0)),
-    cylinder_at(r_bot: 16, r_top: 5, height: DOME_TIP - 55 - (DOME_TOP + 170), bottom_center: (cx, cy, DOME_TOP + 170), segments: 12, material: "ST_Gold"),
-    sphere_center(radius: 14, center: (cx, cy, DOME_TIP - 45), segments: 16, material: "ST_Gold"),
-    cylinder_at(r_bot: 5, r_top: 0, height: 40, bottom_center: (cx, cy, DOME_TIP - 40), segments: 8, material: "ST_Gold"));
-
-// ---------- (7) lights: 4 warm uplights grazing the dome (one faces the photo-1 view) + 4 warm downlights under the colonnade soffit ----------
-emitter("DomeUp0", at: (cx + 1560 * cos(az_view), cy + 1560 * sin(az_view), DRUM_TOP + 36), axis: (-0.42 * cos(az_view), -0.42 * sin(az_view), 0.91), color: "#ffcf86", intensity: 20, radius: 2600, kind: "spot", cone_inner: 40, cone_outer: 70, cast_shadow: false);
-emitter("DomeUp1", at: (cx + 1560 * cos(az_view + 90), cy + 1560 * sin(az_view + 90), DRUM_TOP + 36), axis: (-0.42 * cos(az_view + 90), -0.42 * sin(az_view + 90), 0.91), color: "#ffcf86", intensity: 20, radius: 2600, kind: "spot", cone_inner: 40, cone_outer: 70, cast_shadow: false);
-emitter("DomeUp2", at: (cx + 1560 * cos(az_view + 180), cy + 1560 * sin(az_view + 180), DRUM_TOP + 36), axis: (-0.42 * cos(az_view + 180), -0.42 * sin(az_view + 180), 0.91), color: "#ffcf86", intensity: 20, radius: 2600, kind: "spot", cone_inner: 40, cone_outer: 70, cast_shadow: false);
-emitter("DomeUp3", at: (cx + 1560 * cos(az_view + 270), cy + 1560 * sin(az_view + 270), DRUM_TOP + 36), axis: (-0.42 * cos(az_view + 270), -0.42 * sin(az_view + 270), 0.91), color: "#ffcf86", intensity: 20, radius: 2600, kind: "spot", cone_inner: 40, cone_outer: 70, cast_shadow: false);
-emitter("DrumGlow0", at: (cx + 1430 * cos(az_view + 45), cy + 1430 * sin(az_view + 45), zarch - 20), color: "#ffc47a", intensity: 3, radius: 800, cast_shadow: false);
-emitter("DrumGlow1", at: (cx + 1430 * cos(az_view + 135), cy + 1430 * sin(az_view + 135), zarch - 20), color: "#ffc47a", intensity: 3, radius: 800, cast_shadow: false);
-emitter("DrumGlow2", at: (cx + 1430 * cos(az_view + 225), cy + 1430 * sin(az_view + 225), zarch - 20), color: "#ffc47a", intensity: 3, radius: 800, cast_shadow: false);
-emitter("DrumGlow3", at: (cx + 1430 * cos(az_view + 315), cy + 1430 * sin(az_view + 315), zarch - 20), color: "#ffc47a", intensity: 3, radius: 800, cast_shadow: false);
-
-let terrace = merge(st_plinth, st_glaze, st_fascia, st_deck, piers, terrace_bal, terrace_tables);
+let terrace = merge(terrace_shell, terrace_bal, terrace_tables);
 let skybar = merge(sb_slab, sb_soffit, sb_deck, sb_curb, sb_posts, sb_rails, sb_bar, sb_stools, stair_all);
 let drum = merge(stylobate, columns, drum_glass, mullions, drum_trim, entablature, modillions, flood_fx, bay_lights);
-let led_band = merge(led_sill, led_panels, led_top, led_mull);
-let dome_all = merge(dome, dome_lip, ribs, lantern);
-out.geo = merge(terrace, skybar, drum, led_band, dome_all);
+out.geo = merge(terrace, skybar, drum, led_band, dome_all, lantern);
 #end
 
 #mesh ST_Crown lod: 1
-// far display: terrace prism, drum (glass core + 12 column-pair slabs + entablature), LED band, dome, spire, Sky Bar disc + stair block
+// far display: terrace storey (plinth / lit glazing band / fascia), drum (stylobate, glass core, 12 column-pair slabs,
+// entablature), LED band (white / blue / white), smooth dome, lantern + spire, Sky Bar disc + bar ring + stair block
 let cx = DOME_C.x;
 let cy = DOME_C.y;
-let sx = SKYBAR_C.x;
-let sy = SKYBAR_C.y;
-let zr = MAIN_ROOF - 2;
-let zsd = MAIN_ROOF + 150;
-let terrace = translate(extrude(points: ROOFDECK_FP, height: ROOFDECK_TOP - zr, material: "ST_Facade"), (0, 0, zr));
+let az_view = 132;                   // = LOD0 az_view
+let ent_h = 220;                     // = LOD0 entablature depth
+let zarch = DRUM_TOP - ent_h;
+let terrace = part(CROWN_TerraceShell, detail: 0);
+let stylobate = cylinder_at(radius: DRUM_R + 80, height: 66, bottom_center: (cx, cy, DRUM_BASE - 2), segments: 24, material: "ST_Stone");
 let drum_core = cylinder_at(radius: DRUM_R - 250, height: DRUM_TOP - DRUM_BASE, bottom_center: (cx, cy, DRUM_BASE - 2), segments: 24, material: "ST_DrumGlass");
 var cols = empty();
 for k in 0..12 {
-    let a = 132 + 15 + k * 30;
-    cols = merge(cols, translate(rotate_z(box_at(size: (110, 400, DRUM_TOP - 220 - DRUM_BASE), bottom_center: (0, 0, DRUM_BASE), material: "ST_Stone"), degrees: a, pivot: (0, 0, 0)), (cx + (DRUM_R - 60) * cos(a), cy + (DRUM_R - 60) * sin(a), 0)));
+    let a = az_view + 15 + k * 30;
+    cols = merge(cols, translate(rotate_z(box_at(size: (110, 400, zarch - DRUM_BASE), bottom_center: (0, 0, DRUM_BASE), material: "ST_Stone"), degrees: a, pivot: (0, 0, 0)), (cx + (DRUM_R - 60) * cos(a), cy + (DRUM_R - 60) * sin(a), 0)));
 }
-let entab = cylinder_at(radius: DRUM_R + 30, height: 220, bottom_center: (cx, cy, DRUM_TOP - 220), segments: 32, material: "ST_Facade");
-let led = cylinder_at(radius: DOME_R + 20, height: LED_BAND_TOP - DRUM_TOP, bottom_center: (cx, cy, DRUM_TOP - 2), segments: 32, material: "ST_BlueLED");
-var dprof = [];
-dprof = append(dprof, (LED_BAND_TOP - 6, 0));
-dprof = append(dprof, (LED_BAND_TOP - 6, DOME_R));
-for i in 0..10 {
-    let th = i * 90 / 10;
-    dprof = append(dprof, (LED_BAND_TOP + (DOME_TOP - LED_BAND_TOP) * pow(sin(th), 2 / 1.65), DOME_R * pow(cos(th), 2 / 1.65)));
-}
-dprof = append(dprof, (DOME_TOP, 0));
-let dome = translate(lathe_z(profile: dprof, segments: 32, material: "ST_Gold"), (cx, cy, 0));
-let spire = cylinder_at(r_bot: 60, r_top: 0, height: DOME_TIP - DOME_TOP + 20, bottom_center: (cx, cy, DOME_TOP - 20), segments: 8, material: "ST_Gold");
-let skybar = cylinder_at(radius: SKYBAR_R, height: zsd + 52 - (zsd - 190), bottom_center: (sx, sy, zsd - 190), segments: 32, material: "ST_Facade");
-// stair as one sloped block: terrace corner nearest the Sky Bar -> platform (keeps the platform attached at LOD1)
-var ks = 0;
-var kd = 1000000000;
-for i in 0..len(ROOFDECK_FP) {
-    let p = at(ROOFDECK_FP, i);
-    let d = sqrt((p.x - sx) * (p.x - sx) + (p.y - sy) * (p.y - sy));
-    if d < kd {
-        kd = d;
-        ks = i;
-    }
-}
-let pc = at(ROOFDECK_FP, ks);
-let ux = (sx - pc.x) / kd;
-let uy = (sy - pc.y) / kd;
-let nx = 0 - uy;
-let ny = ux;
-let se = kd - SKYBAR_R + 40;
-let stair = extrude_loop(points: [(pc.x - nx * 175, pc.y - ny * 175, zr), (pc.x + ux * se - nx * 175, pc.y + uy * se - ny * 175, zr), (pc.x + ux * se - nx * 175, pc.y + uy * se - ny * 175, zsd + 100), (pc.x - nx * 175, pc.y - ny * 175, ROOFDECK_TOP + 105)], offset: (nx * 350, ny * 350, 0), material: "ST_Stone");
-out.geo = merge(terrace, drum_core, cols, entab, led, dome, spire, skybar, stair);
+let entab = cylinder_at(radius: DRUM_R + 30, height: ent_h, bottom_center: (cx, cy, zarch), segments: 32, material: "ST_Facade");
+let led = part(CROWN_LedBand, detail: 0);
+let dome = part(CROWN_Dome, detail: 0);
+let spire = part(CROWN_Lantern, detail: 0);
+let skybar = part(CROWN_SkyBarLink, mode: 0);
+out.geo = merge(terrace, stylobate, drum_core, cols, entab, led, dome, spire, skybar);
 #end
 
 #mesh ST_Crown collider
-// coarse walk/collision proxy: terrace prism, drum cylinder, dome frustum, Sky Bar disc, stair ramp
+// coarse walk/collision proxy: terrace prism, drum cylinder, dome frustum, Sky Bar disc + rim barrier + island bar, stair ramp
 let cx = DOME_C.x;
 let cy = DOME_C.y;
-let sx = SKYBAR_C.x;
-let sy = SKYBAR_C.y;
 let zr = MAIN_ROOF - 2;
-let zsd = MAIN_ROOF + 150;
 let terrace = translate(extrude(points: ROOFDECK_FP, height: ROOFDECK_TOP - zr, material: "ST_Facade"), (0, 0, zr));
 let drum = cylinder_at(radius: DRUM_R + 40, height: DRUM_TOP - DRUM_BASE + 2, bottom_center: (cx, cy, DRUM_BASE - 2), segments: 16, material: "ST_Facade");
 let dome = cylinder_at(r_bot: DOME_R, r_top: 400, height: DOME_TOP - DRUM_TOP, bottom_center: (cx, cy, DRUM_TOP - 2), segments: 12, material: "ST_Gold");
-let skybar = cylinder_at(radius: SKYBAR_R, height: 190, bottom_center: (sx, sy, zsd - 190), segments: 16, material: "ST_Facade");
-// stair ramp: terrace corner nearest the Sky Bar -> platform deck
-var ks = 0;
-var kd = 1000000000;
-for i in 0..len(ROOFDECK_FP) {
-    let p = at(ROOFDECK_FP, i);
-    let d = sqrt((p.x - sx) * (p.x - sx) + (p.y - sy) * (p.y - sy));
-    if d < kd {
-        kd = d;
-        ks = i;
-    }
-}
-let pc = at(ROOFDECK_FP, ks);
-let ux = (sx - pc.x) / kd;
-let uy = (sy - pc.y) / kd;
-let nx = 0 - uy;
-let ny = ux;
-let se = kd - SKYBAR_R + 40;
-let ramp = extrude_loop(points: [(pc.x - nx * 150, pc.y - ny * 150, zr), (pc.x + ux * se - nx * 150, pc.y + uy * se - ny * 150, zr), (pc.x + ux * se - nx * 150, pc.y + uy * se - ny * 150, zsd), (pc.x - nx * 150, pc.y - ny * 150, ROOFDECK_TOP)], offset: (nx * 300, ny * 300, 0), material: "ST_Facade");
-out.geo = merge(terrace, drum, dome, skybar, ramp);
+let skybar = part(CROWN_SkyBarLink, mode: 1);
+out.geo = merge(terrace, drum, dome, skybar);
 #end
