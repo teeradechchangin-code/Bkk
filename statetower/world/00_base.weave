@@ -4,25 +4,26 @@
 section "Night (client photo 1)"
 // Night sky model (ST_NightSky below) graded to photo 1's deep teal-blue (#02335b top .. #53698c horizon).
 // The day sky model at low sun gave an orange sunset band that photo 1 does not have.
-knob SetSunRotation = 135
-knob SetSunTilt = 2
-knob SetSunIntensity = 0.05
-knob SetSunColor = #5070b0
-knob SetSkyLightIntensity = 0.8
-knob SetSkyLightColor = #3a5a86
+// Sun = low warm city-glow fill from the west (river side) so the cream facade reads mid grey-beige like photo 1 (#5a5046).
+knob SetSunRotation = 180
+knob SetSunTilt = 12
+knob SetSunIntensity = 0.18
+knob SetSunColor = #c9a88a
+knob SetSkyLightIntensity = 1.3
+knob SetSkyLightColor = #7c8496
 knob SetSkyboxSunVisible = 0
 knob SetSkyboxStarIntensity = 0
 knob SetSkyboxCloudCoverage = 0
 knob SetSkyboxExposure = 4
-knob SetSkyboxTint = #3f7cc8
-knob SetSkyboxSaturation = 1.2
+knob SetSkyboxTint = #3478b0
+knob SetSkyboxSaturation = 1.0
 knob SetSkyboxHaze = 0.4
 knob SetSkyboxGroundColor = #141a26
 knob SetDistanceFogEnabled = 1
-knob SetFogColor = #1d2c40
+knob SetFogColor = #3e5878
 knob SetFogStartDistance = 900
 knob SetFogEndDistance = 1600
-knob SetFogSkyboxAffect = 0
+knob SetFogSkyboxAffect = 12
 knob SetBloomIntensity = 0.7
 #end
 
@@ -38,14 +39,14 @@ display ST_SkyControl : ST_NightSky { model = "cube" position = (0, 0, -400) siz
 material ST_Facade { base = "LibFacadePlaster" tint = "#EDE5D3" roughness = 0.7 }
 material ST_FacadeShade { base = "LibFacadePlaster" tint = "#B9B1A0" roughness = 0.8 }
 material ST_Stone { base = "LibFacadePlaster" tint = "#E6DECB" roughness = 0.5 }
-material ST_Gold { base = "LibBrushedMetal" tint = "#E7B44C" metallic = 0.95 roughness = 0.28 }
+material ST_Gold { base = "LibBrushedMetal" tint = "#F2A830" metallic = 0.6 roughness = 0.42 }
 material ST_DarkGlass { base = "Glass" tint = "#1A242E" }
-material ST_Rooms { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#B8B0A0" glassTint = "#2E3640" roomH = 3.4 bayW = 1.6 }
+material ST_Rooms { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#B8B0A0" glassTint = "#4A3C2C" roomH = 3.4 bayW = 1.6 }
 material ST_DrumGlass { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#E6DECB" glassTint = "#5E5240" roomH = 6.0 bayW = 2.0 }
 material ST_PodiumRooms { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#E6DECB" glassTint = "#3A3A36" roomH = 4.5 bayW = 2.0 }
 material ST_DarkMetal { base = "LibDarkMetal" metallic = 0.5 roughness = 0.45 }
 material ST_Concrete { base = "LibConcrete" }
-material ST_BlueLED { base = "MetalDetail" tint = "#3D6DFF" emission = 2.0 }
+material ST_BlueLED { base = "MetalDetail" tint = "#2F64FF" emission = 1.4 }
 material ST_WarmLight { base = "MetalDetail" tint = "#FFD08A" emission = 1.2 }
 
 // imported_material_asset {"asset_id":"material_fb592569381239b0b44c41329f4d9e76ca6cdc6713afc3ce3eff3e981ae9767c","source_digest":"fb592569381239b0b44c41329f4d9e76ca6cdc6713afc3ce3eff3e981ae9767c","catalog_key":null,"local_root":"LibFacadePlaster","local_digest":"6fbe019a2367296f1eabe71b2abe373879ff8d1315650e0c21d8936685d1c32d"}

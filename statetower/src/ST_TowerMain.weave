@@ -1,9 +1,11 @@
-// ===== ST_TowerMain (Main-block crew) rev 1 =====
+// ===== ST_TowerMain (Main-block crew) rev 2 =====
 // MAIN_FP block 50 -> 216 m and STRIP210_FP north strip 50 -> 210 m: solid cores, curved-balcony facades (Management kit
-// ST_KIT_BalconyFace, own mitred window walls), SW dark corner strip, upper NW dark slot with white pilaster, roof slabs,
-// cornices and balustrades. World centimetres, Z up, +Y true north; every dimension derives from #meshdefs.
-// Kit z datums alternate 6 cm (za/zb/zc) between runs that meet at a corner or a collinear joint, so overlapping band
-// caps / fins never share a plane; all datums sit 6-18 cm into the podium roof and end inside the roof slabs.
+// ST_KIT_BalconyFace with wall: 0 + own mitred ST_Rooms window walls), dark glass at the SW corner (full height), at the
+// NE strip corner (full height, photos 1/2/4) and in the upper NW slot (white pilaster up its middle), roof slabs,
+// white cornice rings and balustrades, roof plant east of ROOFDECK_FP. World cm, Z up, +Y true north; every dimension
+// derives from #meshdefs. Kit z datums alternate 6 cm (za/zb/zc) between runs that meet at a corner or a collinear
+// joint (collinear joints also shift 6 cm along/out), so overlapping band caps / fins never share a plane; all datums
+// sit 6-18 cm into the podium roof and the run tops end inside the roof slabs.
 
 // Recessed window wall (ST_Rooms) on a centreline A->B from z0 to z1 (beam_between: same UV family as the kit wall).
 #meshpart MAIN_Wall
