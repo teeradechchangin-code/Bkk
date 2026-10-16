@@ -107,3 +107,21 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
 - A component passes only when Engineering, Site Operation and QC/QA all accept, with no blocker and no major finding.
 - After 3 rework rounds, open items go to Management, which rules, fixes or carries them into scene QC. They are logged, not hidden.
 - Then **scene QC** in the engine at CAM_NIGHT / CAM_DAY (dossier §3) against `night` / `day`. The loop continues until QC/QA accepts.
+
+## 6. Management log: component acceptance and rulings
+
+**ST_TowerWing: ACCEPTED in round 1.** Engineering, Site Operation and QC/QA all accepted.
+- Budget:
+
+  | Variant | Verts |
+  |---|---|
+  | LOD0 | 59,262 |
+  | LOD1 | 4,570 |
+  | Collider | 294 |
+
+- **D1 (ruling on crew deviations).** The crew measured photos 1 and 2 through the fitted cameras. The 1.6× foreshortening difference between the two photos shows that the three neoclassical pediments face **north**, not west. Management accepts this:
+  - The pediments face north.
+  - Pediment apexes are 164.7 / 174.3 / 187.0 m; PED_H is superseded for the wing.
+  - The top attic of wing 170 has balcony-bay sides up to a 180 m cornice.
+- The crew declared its photo constants locally in `WING_Pavilions`.
+- The north strip's north facade between 167.5 m and 180 m is hidden behind the top attic. This is accepted as an interface: no overlap, so no change is required of the main crew.

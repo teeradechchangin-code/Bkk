@@ -322,19 +322,19 @@ var phi_s = 0;
 var worst_s = 1000000000;
 for k in 0..21 {
     let au = a0 + k;
-    let ux = cos(au);
-    let uy = sin(au);
-    let cax = (sx - pc.x) * ux + (sy - pc.y) * uy;
-    let clat = (sx - pc.x) * (0 - uy) + (sy - pc.y) * ux;
+    let uxk = cos(au);
+    let uyk = sin(au);
+    let cax_k = (sx - pc.x) * uxk + (sy - pc.y) * uyk;
+    let clat_k = (sx - pc.x) * (0 - uyk) + (sy - pc.y) * uxk;
     var worst = -1000000000;
     var valid = 1;
     for side in 0..2 {
         let lc = (side * 2 - 1) * (hw + ct);
-        let q = SR * SR - (clat - lc) * (clat - lc);
+        let q = SR * SR - (clat_k - lc) * (clat_k - lc);
         if q > 0 {
-            let se = cax - sqrt(q);
-            let qx = pc.x + ux * se - uy * lc;
-            let qy = pc.y + uy * se + ux * lc;
+            let se_k = cax_k - sqrt(q);
+            let qx = pc.x + uxk * se_k - uyk * lc;
+            let qy = pc.y + uyk * se_k + uxk * lc;
             for e in 0..nmf {
                 let m1 = at(MAIN_FP, e);
                 let m2 = at(MAIN_FP, mod(e + 1, nmf));
@@ -459,19 +459,19 @@ var phi_s = 0;
 var worst_s = 1000000000;
 for k in 0..21 {
     let au = a0 + k;
-    let ux = cos(au);
-    let uy = sin(au);
-    let cax_k = (sx - pc.x) * ux + (sy - pc.y) * uy;
-    let clat_k = (sx - pc.x) * (0 - uy) + (sy - pc.y) * ux;
+    let uxk = cos(au);
+    let uyk = sin(au);
+    let cax_k = (sx - pc.x) * uxk + (sy - pc.y) * uyk;
+    let clat_k = (sx - pc.x) * (0 - uyk) + (sy - pc.y) * uxk;
     var worst = -1000000000;
     var valid = 1;
     for side in 0..2 {
         let lc = (side * 2 - 1) * (hw + ct);
         let q = SR * SR - (clat_k - lc) * (clat_k - lc);
         if q > 0 {
-            let se = cax_k - sqrt(q);
-            let qx = pc.x + ux * se - uy * lc;
-            let qy = pc.y + uy * se + ux * lc;
+            let se_k = cax_k - sqrt(q);
+            let qx = pc.x + uxk * se_k - uyk * lc;
+            let qy = pc.y + uyk * se_k + uxk * lc;
             for e in 0..nmf {
                 let m1 = at(MAIN_FP, e);
                 let m2 = at(MAIN_FP, mod(e + 1, nmf));
