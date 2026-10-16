@@ -185,3 +185,8 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
 - **~17:00 ICT (10:00 UTC):** Management takes the best current file of every component, accepted or not.
 - **~17:00 – 17:50 ICT (10:00 – 10:50 UTC):** final integration at (0,0,0), scene QC against photo 1 (CAM_NIGHT) and photo 2, Management lighting fixes, `submit_pending_world` to the client's editor, final commit and push.
 - Open findings are logged in this brief, not hidden.
+
+**Preview delivery (client request, 16:2x ICT).**
+- The full four-component build was submitted to the client's editor and loaded: podium, main block, wing and crown, all at (0,0,0), with the night lighting.
+- It is an integration copy, so its meshes are named `IT_*`.
+- At the time of submission, Podium (round 3) and Crown (round 4) each had two accepts and QC/QA still pending.
