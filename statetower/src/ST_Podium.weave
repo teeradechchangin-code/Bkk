@@ -140,11 +140,12 @@ param pier_off = 110;
 param upper = 1;
 param lower = 1;
 // display LOD (default 0 = LOD0 unchanged). lod 1 (near-mid): 8-segment engaged columns, 5 / 8-segment sub / head
-// arches without their short legs, the column bases merged into the balcony pedestal, solid arched-bay screens with
-// one ST_PodiumRooms decal per window (same 7-row grid; the hidden glazing behind them dropped), colonnette decals at
-// ~90 cm (30 wide), 4-segment lower window heads without the transom bar, 8-segment colonnade.
-// lod 2 (mid-far): 6-sided engaged columns under one capital block per pair, 2 / 3-segment polyline arches,
-// lower windows as arched ST_PodiumRooms panels on a solid wall, plain 8-sided colonnade shafts, no shopfront mullions.
+// arches, the column bases merged into the balcony pedestal, solid arched-bay screens with one ST_PodiumRooms decal
+// per window (same 7-row grid; the hidden glazing behind them dropped), balcony colonnettes at ~90 cm (30 wide, same
+// stone / void ratio), 4-segment lower window heads, 10-segment colonnade.
+// lod 2 (mid-far): 6-sided engaged columns under one capital block per pair, 2 / 3-segment polyline arches without
+// their short legs, colonnette decals, lower windows as arched ST_PodiumRooms panels on a solid wall, plain 8-sided
+// colonnade shafts, no shopfront mullions.
 param lod = 0;
 let cseg = pick(lod, 16, 8, 6);
 let sseg = pick(lod, 8, 5, 2);
@@ -152,7 +153,7 @@ let oseg = pick(lod, 12, 8, 3);
 let wseg = pick(lod, 8, 4, 2);
 let bsp = pick(lod, 45, 90, 90);
 let bhw = pick(lod, 8, 15, 15);
-let kseg = pick(lod, 20, 8, 8);
+let kseg = pick(lod, 20, 10, 8);
 let dx = bx - ax;
 let dy = by - ay;
 let L = sqrt(dx * dx + dy * dy);
@@ -278,9 +279,9 @@ for i in 0..nb {
             g = merge(g, translate(rotate_x(plane(width: h2.x - h0.x, height: h2.y - h0.y, material: "ST_PodiumRooms"), degrees: 90, pivot: (0, 0, 0)), (x0 + (h0.x + h2.x) * 0.5, 33, zU0 + (h0.y + h2.y) * 0.5)));
         }
     }
-    let sub = part(POD_ArchBand, ro: ro_s, ri: ro_s - 38, lg: 30, depth: 30, segs: sseg, legs: select(1, 0, lod > 0.5));
+    let sub = part(POD_ArchBand, ro: ro_s, ri: ro_s - 38, lg: 30, depth: 30, segs: sseg, legs: select(1, 0, lod > 1.5));
     let sub2 = merge(translate(sub, (x0 + wp * 0.25 + 1.5, 30, 0)), translate(sub, (x0 + wp * 0.75 - 1.5, 30, 0)));
-    let oarch = translate(part(POD_ArchBand, ro: ro_o, ri: ro_o - 40, lg: 40, depth: 36, segs: oseg, legs: select(1, 0, lod > 0.5)), (x0 + wp * 0.5, 27, zU0 + zs_h));
+    let oarch = translate(part(POD_ArchBand, ro: ro_o, ri: ro_o - 40, lg: 40, depth: 36, segs: oseg, legs: select(1, 0, lod > 1.5)), (x0 + wp * 0.5, 27, zU0 + zs_h));
     g = merge(g, translate(sub2, (0, 0, zU0 + zs_h)), translate(sub2, (0, 0, zU0 + zs_m)), oarch);
 }
 
@@ -292,11 +293,11 @@ for i in 0..nb {
     let xe = clamp(boff + (i + 1) * bw, xlo, xhi) - 128;
     let n = max(1, floor((xe - xs) / bsp));
     let sp = (xe - xs) / n;
-    if lod < 0.5 {
+    if lod < 1.5 {
         let bal = box_bounds(min: (xs + sp * 0.5 - bhw, 22, zB0 + 68), max: (xs + sp * 0.5 + bhw, 38, zB1 - 58), material: "ST_Stone");
         g = merge(g, array(bal, count: n, offset: (sp, 0, 0)));
     } else {
-        // lod >= 1: colonnette decals (30 wide at ~90 cm, same stone / void ratio) on the colonnette front plane
+        // lod 2: colonnette decals (30 wide at ~90 cm) on the colonnette front plane, between the rails
         let balp = translate(rotate_x(plane(width: bhw * 2, height: zB1 - zB0 - 126, material: "ST_Stone"), degrees: 90, pivot: (0, 0, 0)), (xs + sp * 0.5, 22, (zB0 + zB1 + 10) * 0.5));
         g = merge(g, array(balp, count: n, offset: (sp, 0, 0)));
     }
@@ -393,10 +394,6 @@ if colonnade > 0 {
         let mull = box_bounds(min: (-9, 48, 0), max: (9, 60, 640 + hw - 2), material: "ST_Stone");
         let tran = box_bounds(min: (0 - hw - 5, 48, 631), max: (hw + 5, 60, 649), material: "ST_Stone");
         win = translate(merge(sur, sill, mull, tran), (bw * 0.5, 0, zBase + 220));
-        if lod > 0.5 {
-            // lod 1: no transom bar (18 cm, inside the reveal)
-            win = translate(merge(sur, sill, mull), (bw * 0.5, 0, zBase + 220));
-        }
     } else {
         // lod 2: the arched opening as a thin ST_PodiumRooms panel (polyline head), 2 cm proud of the wall face (y 35)
         var ap = [];
@@ -984,8 +981,8 @@ if lod < 0.5 {
     lt1 = svg_shape(d: ld1, view_box: [-10, -110, 790, 150], origin: "bottom_center", scale: 1.25, stroke: 13, depth: 8, material: "ST_Gold");
     lt2 = svg_shape(d: ld2, view_box: [-10, -110, 532, 150], origin: "bottom_center", scale: 0.62, stroke: 8, depth: 8, material: "ST_Gold");
 } else {
-    lt1 = svg_shape(d: ld1, view_box: [-10, -110, 790, 150], origin: "bottom_center", scale: 1.25, stroke: 13, depth: 8, tolerance: 6, material: "ST_Gold");
-    lt2 = svg_shape(d: ld2, view_box: [-10, -110, 532, 150], origin: "bottom_center", scale: 0.62, stroke: 8, depth: 8, tolerance: 6, material: "ST_Gold");
+    lt1 = svg_shape(d: ld1, view_box: [-10, -110, 790, 150], origin: "bottom_center", scale: 1.25, stroke: 13, depth: 8, tolerance: 4, material: "ST_Gold");
+    lt2 = svg_shape(d: ld2, view_box: [-10, -110, 532, 150], origin: "bottom_center", scale: 0.62, stroke: 8, depth: 8, tolerance: 4, material: "ST_Gold");
 }
 // (rev 3: +40 cm so "Bangkok" clears the raised ledge; baselines 31.3 / 29.95 m)
 g = merge(g, translate(rotate_z(lt1, degrees: 180, pivot: (0, 0, 0)), (W * 0.5, ym - 1, 3130 - 40 * 1.25)));
@@ -1126,6 +1123,8 @@ out.geo = merge(faceS, faceSE, faceE, faceNE, faceNW, finNW, faceW, cornerP8, co
 // LOD1 (near-mid, ~60 % of LOD0): every LOD0 part and feature in the LOD0 frame, reduced through the parts' LOD
 // params (see POD_Face / POD_Portal / POD_FinScreen / POD_CornerP8 headers).
 #mesh ST_Podium lod: 1
+// (Management rev: LOD blocks may declare a budget; without one the engine caps a LOD block at 50000 / 90000)
+budget(verts: 70000, indices: 130000);
 let P0 = at(PODIUM_FP, 0);
 let P1 = at(PODIUM_FP, 1);
 let P2 = at(PODIUM_FP, 2);

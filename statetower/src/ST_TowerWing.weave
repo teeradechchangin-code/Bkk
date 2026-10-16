@@ -562,6 +562,7 @@ out.geo = merge(core1, core2, core3, core4, roof150, roof160, roof170, roofT, ra
 #end
 
 #mesh ST_TowerWing lod: 1
+budget(verts: 38500, indices: 70000);
 // Mid display (~62 % of LOD0): the LOD0 recipe with kit arc_n 3 (3-sample bows; apex 6 cm inside the face line), fins
 // on every bay boundary, balustrades with a third of the balusters (sp 96), slot glass + mullions (no transoms), pediments
 // with 7-sample arches and a 20-segment emblem (no keystones, pilaster bases, bed moulding or side returns). Hidden
@@ -587,6 +588,7 @@ out.geo = merge(core1, core2, core3, core4, roof150, roof160, roof170, roofT, ra
 #end
 
 #mesh ST_TowerWing lod: 2
+budget(verts: 20700, indices: 36000);
 // Far-mid display (~28 % of LOD0): one flat white band per floor (kit arc_n 1 with bow 6: 6 cm inside the LOD0 bow-apex
 // face line, like the LOD1 bow apexes; same datums), chevron parapet bands on the roof edges (arc_n 2, LOD0 bow), fins on
 // every 2nd bay boundary (run ends kept), window wall, slot glass + mullions, solid rails for the balustrades, pediments
@@ -611,6 +613,7 @@ out.geo = merge(core1, core2, core3, core4, roof150, roof160, roof170, roofT, ra
 #end
 
 #mesh ST_TowerWing lod: 3
+budget(verts: 3600, indices: 6500);
 // Far display (~4-5 % of LOD0): one ST_Rooms window-wall prism per height band on the kit wall line, one solid white
 // band slab per floor on the LOD0 datum, parapet rings, concrete roofs, the lower dark slot and the pediment massing
 // with the emblem disc.
