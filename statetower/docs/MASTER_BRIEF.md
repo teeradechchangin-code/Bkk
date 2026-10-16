@@ -179,3 +179,9 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
     - inside the Crown's stair corridor (a ≤ 4 m band from the nearest ROOFDECK_FP vertex to the Sky Bar circle, over the main roof slab).
   - The Sky Bar soffit exists only outside offset(MAIN_FP, −60), plus under the cantilever and inside the main cornice-ring band.
   - ST_TowerMain's slot post and top storey are capped by its own ring and slab, independent of the Crown.
+
+**D5: Client time-box (client instruction): 3 hours from about 07:52 UTC; deliver what is done.**
+- **Until ~09:50 UTC:** crews and reviewers continue (Podium round 2/3, Crown rounds 4/5).
+- **~09:50 UTC:** Management takes the best current file of every component, accepted or not.
+- **~09:50 – 10:40 UTC:** final integration at (0,0,0), scene QC against photo 1 (CAM_NIGHT) and photo 2, Management lighting fixes, `submit_pending_world` to the client's editor, final commit and push.
+- Open findings are logged in this brief, not hidden.
