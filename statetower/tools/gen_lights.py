@@ -10,8 +10,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DOME_C = (-348, -2104)
 DOME_R = 1420
-LED_BAND_TOP = 23250
-DOME_TOP = 24450
+LED_BAND_TOP = 23300
+DOME_TOP = 24240
 
 # North strip (STRIP210_FP) north face, west and east segments (CCW order, outside on the right).
 STRIP_N = [((1253, 21), (-1970, 1376)), ((3439, -897), (1253, 21))]
