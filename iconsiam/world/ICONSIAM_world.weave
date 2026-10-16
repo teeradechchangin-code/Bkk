@@ -8,16 +8,14 @@ object grid {
 section "Water"
 knob SetWaterEnabled = 1
 knob SetWaterSeaLevelCm = -200
-// QC r3 (QC-A/ENG): calm long-exposure river, darker than the blue-hour sky (Photo A water/sky luma ~0.7)
-knob SetWaterAmplitudeCm = 1.2
-knob SetWaterSteepness = 0.1
-knob SetWaterWavelengthCm = 2500
-knob SetWaterReflectionDistortion = 0.2
+// QC r3: a mirror-calm river reflected the bright blue-hour horizon as a white sheet (Management check, rev 35);
+// keep the original wave field and only tone the reflection down (the sun now sits off the river cameras' axis).
+knob SetWaterAmplitudeCm = 2.5
 knob SetWaterShallowColor = #3b3640
 knob SetWaterDeepColor = #1d2230
 knob SetWaterMurkDensity = 1.6
 knob SetWaterTransparency = 0.15
-knob SetWaterReflectionStrength = 0.5
+knob SetWaterReflectionStrength = 0.75
 section "Dusk (match reference photos)"
 // Sun just set behind the complex: azimuth is measured from +X toward +Y, so 165 = compass bearing ~285 (W/WNW).
 // River-facing E/SE/S faces get no direct sun; the warm glow sits at the screen-left horizon in Photo A.
