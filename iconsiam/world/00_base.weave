@@ -15,7 +15,7 @@ knob SetWaterShallowColor = #3b3640
 knob SetWaterDeepColor = #1d2230
 knob SetWaterMurkDensity = 1.6
 knob SetWaterTransparency = 0.15
-knob SetWaterReflectionStrength = 0.75
+knob SetWaterReflectionStrength = 0.4
 section "Dusk (match reference photos)"
 // Sun just set behind the complex: azimuth is measured from +X toward +Y, so 165 = compass bearing ~285 (W/WNW).
 // River-facing E/SE/S faces get no direct sun; the warm glow sits at the screen-left horizon in Photo A.
