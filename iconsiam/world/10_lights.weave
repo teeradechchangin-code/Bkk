@@ -432,42 +432,106 @@ pointLight ICS_CrownLight05 {
     light_specular_scale = 0.4
     cast_shadow = false
 }
+pointLight ICS_CrownRimWash00 {
+    position = (906, -5042, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash01 {
+    position = (2761, -4430, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash02 {
+    position = (4131, -3517, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash03 {
+    position = (4827, -2429, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash04 {
+    position = (4751, -1316, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash05 {
+    position = (3914, -332, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash06 {
+    position = (2433, 386, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash07 {
+    position = (512, 741, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
 pointLight ICS_MOBoxLight00 {
-    position = (6478, 9092, 900)
-    radius = 1400
-    intensity = 50
+    position = (6478, 9092, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 pointLight ICS_MOBoxLight01 {
-    position = (7319, 10068, 900)
-    radius = 1400
-    intensity = 50
+    position = (7319, 10068, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 pointLight ICS_MOBoxLight02 {
-    position = (8160, 11044, 900)
-    radius = 1400
-    intensity = 50
+    position = (8160, 11044, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 pointLight ICS_MOBoxLight03 {
-    position = (9001, 12020, 900)
-    radius = 1400
-    intensity = 50
+    position = (9001, 12020, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 pointLight ICS_MOBoxLight04 {
-    position = (9379, 13392, 900)
-    radius = 1400
-    intensity = 50
+    position = (9379, 13392, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false

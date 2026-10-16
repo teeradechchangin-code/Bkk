@@ -72,7 +72,8 @@ ROWS = [
     (place(Z2_RIVER, "ICS_Z2Light", 1500, 150), 3500, 1200, 35),
     (place(Z3_RIVER, "ICS_Z3Light", 1500, 150), 4050, 1200, 35),
     (crown_ring("ICS_CrownLight", 6, 150), CROWN_TOP - 650, 1500, 60),
-    (place(MO_BOX, "ICS_MOBoxLight", 1100, 300), 900, 1400, 50),
+    (crown_ring("ICS_CrownRimWash", 8, 700), CROWN_TOP - 300, 1200, 60),   # QC r3: wash the outer gold band from the river side
+    (place(MO_BOX, "ICS_MOBoxLight", 1100, 300), 1400, 1500, 80),          # QC r3: higher and brighter so the gold box glows
 ]
 
 lines = ["// ===== Engine lights (Management, client directive D9) =====",

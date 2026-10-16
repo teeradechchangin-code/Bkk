@@ -8,26 +8,34 @@ object grid {
 section "Water"
 knob SetWaterEnabled = 1
 knob SetWaterSeaLevelCm = -200
-knob SetWaterAmplitudeCm = 3.75
+// QC r3 (QC-A/ENG): calm long-exposure river, darker than the blue-hour sky (Photo A water/sky luma ~0.7)
+knob SetWaterAmplitudeCm = 1.2
+knob SetWaterSteepness = 0.1
+knob SetWaterWavelengthCm = 2500
+knob SetWaterReflectionDistortion = 0.2
 knob SetWaterShallowColor = #3b3640
 knob SetWaterDeepColor = #1d2230
 knob SetWaterMurkDensity = 1.6
 knob SetWaterTransparency = 0.15
-knob SetWaterReflectionStrength = 1.1
+knob SetWaterReflectionStrength = 0.5
 section "Dusk (match reference photos)"
 // Sun just set behind the complex: azimuth is measured from +X toward +Y, so 165 = compass bearing ~285 (W/WNW).
 // River-facing E/SE/S faces get no direct sun; the warm glow sits at the screen-left horizon in Photo A.
-knob SetSunRotation = 165
+// QC r3 (QC-A): sun a little further south (bearing ~255) so it grazes the white south face with warm dusk light
+knob SetSunRotation = 195
 knob SetSunTilt = 3
 knob SetSunIntensity = 1
 knob SetSunColor = #ffc690
 knob SetSkyLightIntensity = 2.6
-knob SetSkyLightColor = #a8bce0
+knob SetSkyLightColor = #b6bccc
 knob SetBloomIntensity = 0.6
 // Scene QC r2 (QC-A/QC-B): Photo A is blue hour, not night. Brighter sky dome (bright blue zenith, lilac mid sky),
 // thin wisps of cloud only, no sun disc (the sun still lights the scene and keeps the warm left-horizon glow).
-knob SetSkyboxExposure = 0.8
-knob SetSkyboxHaze = 1.2
+knob SetSkyboxExposure = 1.1
+knob SetSkyboxSaturation = 1.2
+// QC r3 (QC-B): whole frame 25-45% darker than Photo B
+knob SetExposure = 0.25
+knob SetSkyboxHaze = 0.6
 knob SetSkyboxCloudCoverage = 0.2
 knob SetSkyboxSunVisible = 0
 // Bangkok dusk: city glow hides the stars (stage r2 capture: the starfield read like snow).
@@ -126,8 +134,8 @@ material ICS_Concrete { base = "LibConcrete" }
 material ICS_Paving { base = "LibPlazaTile" tileM = 2.4 tint = "#B0C0E0" }
 // interior_window_pbr: tint = mullion/spandrel frame colour; glassTint tints the rooms and is the far (>220-480 m) flat glass colour.
 // D13: towers are a matched dark navy pair (Photo A) with dark frames; mall/shop glass is warm so lit rooms read amber.
-material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#4A5058" glassTint = "#1E2833" roomH = 4.0 bayW = 1.5 }
-material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#4A5058" glassTint = "#1E2833" roomH = 4.3 roomOffsetZ = 2.5 bayW = 1.5 }
+material ICS_TowerGlass { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#4A5058" glassTint = "#2A3848" roomH = 4.0 bayW = 1.5 }
+material ICS_TowerGlass2 { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#4A5058" glassTint = "#2A3848" roomH = 4.3 roomOffsetZ = 2.5 bayW = 1.5 }
 material ICS_MallGlass { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#C9AE7C" glassTint = "#4E4A3E" roomH = 6.0 bayW = 2.0 }
 material ICS_SolidGlass { base = "Glass" tint = "#8FA2B0" }
 material ICS_Balustrade { base = "GlassTransparent" tint = "#6F8E8C" }
@@ -6119,48 +6127,112 @@ pointLight ICS_CrownLight05 {
     light_specular_scale = 0.4
     cast_shadow = false
 }
+pointLight ICS_CrownRimWash00 {
+    position = (906, -5042, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash01 {
+    position = (2761, -4430, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash02 {
+    position = (4131, -3517, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash03 {
+    position = (4827, -2429, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash04 {
+    position = (4751, -1316, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash05 {
+    position = (3914, -332, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash06 {
+    position = (2433, 386, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
+pointLight ICS_CrownRimWash07 {
+    position = (512, 741, 7400)
+    radius = 1200
+    intensity = 60
+    color = #ffc98a
+    light_specular_scale = 0.4
+    cast_shadow = false
+}
 pointLight ICS_MOBoxLight00 {
-    position = (6478, 9092, 900)
-    radius = 1400
-    intensity = 50
+    position = (6478, 9092, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 pointLight ICS_MOBoxLight01 {
-    position = (7319, 10068, 900)
-    radius = 1400
-    intensity = 50
+    position = (7319, 10068, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 pointLight ICS_MOBoxLight02 {
-    position = (8160, 11044, 900)
-    radius = 1400
-    intensity = 50
+    position = (8160, 11044, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 pointLight ICS_MOBoxLight03 {
-    position = (9001, 12020, 900)
-    radius = 1400
-    intensity = 50
+    position = (9001, 12020, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 pointLight ICS_MOBoxLight04 {
-    position = (9379, 13392, 900)
-    radius = 1400
-    intensity = 50
+    position = (9379, 13392, 1400)
+    radius = 1500
+    intensity = 80
     color = #ffc98a
     light_specular_scale = 0.4
     cast_shadow = false
 }
 
-// ===== Context land beyond the ICS_Site box (Management D14) =====
+// ===== Context land beyond the ICS_Site box (Management D14, QC r3 refinements) =====
 // Plain west-bank ground outside ICS_Site's +/-240 m sim_box, so the complex no longer reads as an island (D11).
 // Engine limit: a static-collidable object is clamped to 500 m per axis, so the apron is tiled into axis-aligned cubes
 // of at most 500 m. Tops sit at z = -3 (just under grade, never coplanar with the site slab), bottoms at the river bed.
@@ -6180,13 +6252,19 @@ object ICS_Ctx_W2 {
 object ICS_Ctx_S1 {
     model = "cube"
     bounds_min = (-24000, -27300, -600)
-    bounds_max = (15500, -24000, -3)
+    bounds_max = (15550, -24000, -3)
     material = "ICS_Foliage"
 }
 object ICS_Ctx_S2 {
     model = "cube"
-    bounds_min = (-24000, -32000, -600)
+    bounds_min = (-24000, -30300, -600)
     bounds_max = (14500, -27300, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_S2b {
+    model = "cube"
+    bounds_min = (-24000, -32000, -600)
+    bounds_max = (14200, -30300, -3)
     material = "ICS_Foliage"
 }
 object ICS_Ctx_S3 {
@@ -6198,13 +6276,37 @@ object ICS_Ctx_S3 {
 object ICS_Ctx_N1 {
     model = "cube"
     bounds_min = (-24000, 24000, -600)
-    bounds_max = (11800, 31000, -3)
+    bounds_max = (12030, 24740, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_N1b {
+    model = "cube"
+    bounds_min = (-24000, 24740, -600)
+    bounds_max = (11800, 25620, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_N1c {
+    model = "cube"
+    bounds_min = (-24000, 25620, -600)
+    bounds_max = (11100, 28300, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_N1d {
+    model = "cube"
+    bounds_min = (-24000, 28300, -600)
+    bounds_max = (10350, 31000, -3)
     material = "ICS_Foliage"
 }
 object ICS_Ctx_N2 {
     model = "cube"
     bounds_min = (-24000, 31000, -600)
-    bounds_max = (10100, 39000, -3)
+    bounds_max = (10100, 34140, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_N2b {
+    model = "cube"
+    bounds_min = (-24000, 34140, -600)
+    bounds_max = (9250, 39000, -3)
     material = "ICS_Foliage"
 }
 object ICS_Ctx_N3 {
@@ -6212,4 +6314,29 @@ object ICS_Ctx_N3 {
     bounds_min = (-24000, 39000, -600)
     bounds_max = (8500, 50000, -3)
     material = "ICS_Foliage"
+}
+// Charoen Nakhon Rd continued beyond the Site box (QC r3 SiteOps): 26 m strips centred on the OSM road axis, top z = 2.
+object ICS_Ctx_RoadS {
+    model = "cube"
+    bounds_min = (-14740, -50000, -50)
+    bounds_max = (-12140, -24000, 2)
+    material = "ICS_Asphalt"
+}
+object ICS_Ctx_RoadN0 {
+    model = "cube"
+    bounds_min = (-18745, 24000, -50)
+    bounds_max = (-16145, 32667, 2)
+    material = "ICS_Asphalt"
+}
+object ICS_Ctx_RoadN1 {
+    model = "cube"
+    bounds_min = (-19582, 32667, -50)
+    bounds_max = (-16982, 41333, 2)
+    material = "ICS_Asphalt"
+}
+object ICS_Ctx_RoadN2 {
+    model = "cube"
+    bounds_min = (-20419, 41333, -50)
+    bounds_max = (-17819, 50000, 2)
+    material = "ICS_Asphalt"
 }

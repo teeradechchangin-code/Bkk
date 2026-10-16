@@ -1,4 +1,4 @@
-// ===== Context land beyond the ICS_Site box (Management D14) =====
+// ===== Context land beyond the ICS_Site box (Management D14, QC r3 refinements) =====
 // Plain west-bank ground outside ICS_Site's +/-240 m sim_box, so the complex no longer reads as an island (D11).
 // Engine limit: a static-collidable object is clamped to 500 m per axis, so the apron is tiled into axis-aligned cubes
 // of at most 500 m. Tops sit at z = -3 (just under grade, never coplanar with the site slab), bottoms at the river bed.
@@ -18,13 +18,19 @@ object ICS_Ctx_W2 {
 object ICS_Ctx_S1 {
     model = "cube"
     bounds_min = (-24000, -27300, -600)
-    bounds_max = (15500, -24000, -3)
+    bounds_max = (15550, -24000, -3)
     material = "ICS_Foliage"
 }
 object ICS_Ctx_S2 {
     model = "cube"
-    bounds_min = (-24000, -32000, -600)
+    bounds_min = (-24000, -30300, -600)
     bounds_max = (14500, -27300, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_S2b {
+    model = "cube"
+    bounds_min = (-24000, -32000, -600)
+    bounds_max = (14200, -30300, -3)
     material = "ICS_Foliage"
 }
 object ICS_Ctx_S3 {
@@ -36,13 +42,37 @@ object ICS_Ctx_S3 {
 object ICS_Ctx_N1 {
     model = "cube"
     bounds_min = (-24000, 24000, -600)
-    bounds_max = (11800, 31000, -3)
+    bounds_max = (12030, 24740, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_N1b {
+    model = "cube"
+    bounds_min = (-24000, 24740, -600)
+    bounds_max = (11800, 25620, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_N1c {
+    model = "cube"
+    bounds_min = (-24000, 25620, -600)
+    bounds_max = (11100, 28300, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_N1d {
+    model = "cube"
+    bounds_min = (-24000, 28300, -600)
+    bounds_max = (10350, 31000, -3)
     material = "ICS_Foliage"
 }
 object ICS_Ctx_N2 {
     model = "cube"
     bounds_min = (-24000, 31000, -600)
-    bounds_max = (10100, 39000, -3)
+    bounds_max = (10100, 34140, -3)
+    material = "ICS_Foliage"
+}
+object ICS_Ctx_N2b {
+    model = "cube"
+    bounds_min = (-24000, 34140, -600)
+    bounds_max = (9250, 39000, -3)
     material = "ICS_Foliage"
 }
 object ICS_Ctx_N3 {
@@ -50,4 +80,29 @@ object ICS_Ctx_N3 {
     bounds_min = (-24000, 39000, -600)
     bounds_max = (8500, 50000, -3)
     material = "ICS_Foliage"
+}
+// Charoen Nakhon Rd continued beyond the Site box (QC r3 SiteOps): 26 m strips centred on the OSM road axis, top z = 2.
+object ICS_Ctx_RoadS {
+    model = "cube"
+    bounds_min = (-14740, -50000, -50)
+    bounds_max = (-12140, -24000, 2)
+    material = "ICS_Asphalt"
+}
+object ICS_Ctx_RoadN0 {
+    model = "cube"
+    bounds_min = (-18745, 24000, -50)
+    bounds_max = (-16145, 32667, 2)
+    material = "ICS_Asphalt"
+}
+object ICS_Ctx_RoadN1 {
+    model = "cube"
+    bounds_min = (-19582, 32667, -50)
+    bounds_max = (-16982, 41333, 2)
+    material = "ICS_Asphalt"
+}
+object ICS_Ctx_RoadN2 {
+    model = "cube"
+    bounds_min = (-20419, 41333, -50)
+    bounds_max = (-17819, 50000, 2)
+    material = "ICS_Asphalt"
 }
