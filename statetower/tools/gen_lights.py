@@ -65,10 +65,11 @@ def main():
                 out.append(point("L_Violet%d" % k, p, 2200, 260, "#8a74ff"))
                 k += 1
     # (c) Pediments: soft white light on the three west-facing gables.
-    out.append("// Wing pediments: soft white wash")
+    # D1: the gables face NORTH (+WEST_DIR); light them from 14 m in front of their north faces (a 7 m west light glared).
+    out.append("// Wing pediments (north-facing, D1): soft white wash from the north-west")
     for i, (u, z) in enumerate(PEDIMENTS):
-        p = (WEST_SW[0] + WEST_DIR[0] * u + WEST_OUT[0] * 700, WEST_SW[1] + WEST_DIR[1] * u + WEST_OUT[1] * 700, z)
-        out.append(point("L_Pediment%d" % i, p, 1600, 18, "#e8e4ff"))
+        p = (WEST_SW[0] + WEST_DIR[0] * (u + 1400) + WEST_OUT[0] * 600, WEST_SW[1] + WEST_DIR[1] * (u + 1400) + WEST_OUT[1] * 600, z)
+        out.append(point("L_Pediment%d" % i, p, 2200, 10, "#e8e4ff"))
     path = os.path.join(ROOT, "world", "10_lights.weave")
     with open(path, "w") as f:
         f.write("\n".join(out) + "\n")

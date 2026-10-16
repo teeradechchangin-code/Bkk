@@ -23,7 +23,7 @@ pointLight L_Violet8 { position = (2694, 392, 18800) radius = 2200 intensity = 2
 pointLight L_Violet9 { position = (2694, 392, 20400) radius = 2200 intensity = 260 color = #8a74ff cast_shadow = false }
 pointLight L_Violet10 { position = (2039, 667, 18800) radius = 2200 intensity = 260 color = #8a74ff cast_shadow = false }
 pointLight L_Violet11 { position = (2039, 667, 20400) radius = 2200 intensity = 260 color = #8a74ff cast_shadow = false }
-// Wing pediments: soft white wash
-pointLight L_Pediment0 { position = (-2383, 2191, 17600) radius = 1600 intensity = 18 color = #e8e4ff cast_shadow = false }
-pointLight L_Pediment1 { position = (-2100, 2853, 16600) radius = 1600 intensity = 18 color = #e8e4ff cast_shadow = false }
-pointLight L_Pediment2 { position = (-1701, 3791, 15600) radius = 1600 intensity = 18 color = #e8e4ff cast_shadow = false }
+// Wing pediments (north-facing, D1): soft white wash from the north-west
+pointLight L_Pediment0 { position = (-1742, 3439, 17600) radius = 2200 intensity = 10 color = #e8e4ff cast_shadow = false }
+pointLight L_Pediment1 { position = (-1460, 4102, 16600) radius = 2200 intensity = 10 color = #e8e4ff cast_shadow = false }
+pointLight L_Pediment2 { position = (-1060, 5040, 15600) radius = 2200 intensity = 10 color = #e8e4ff cast_shadow = false }
