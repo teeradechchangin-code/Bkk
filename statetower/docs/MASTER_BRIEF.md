@@ -139,3 +139,22 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
 - Photo 4 shows the Sky Bar platform about as wide as the 8.7 m upper slot it sits above. Photo 1's rim is 7.3–8 m.
 - Applied to `src/ST_defs.weave` and the staged world. Crews re-derive from the defs; no local overrides.
 - ST_TowerMain's roof balustrade follows SKYBAR_R automatically.
+
+**ST_TowerMain: ACCEPTED in round 2.**
+
+| Variant | Verts |
+|---|---|
+| LOD0 | 110,408 |
+| LOD1 | 3,728 |
+| Collider | 188 |
+
+**D3: #meshdefs rev C and rulings on the main crew's requests.**
+- **Upper slot (accepted).** The main crew counted 8 bay columns between the SW strip and the upper slot in photos 1 and 2. The slot now runs from u 3617 to 4447 and from 177.9 m up. A white cap band sits at the strip-roof floor line, with a dark top storey and a white post above it. The white pilaster is at u 4032.
+  - Constants: UPPER_SLOT_U0 3617, UPPER_SLOT_U1 4447, UPPER_SLOT_Z0 17790.
+- **Sky Bar re-centred.** Photos 1 and 4 show the Sky Bar rim capping the slot pilaster, with the platform as wide as the slot. SKYBAR_C moves to **(-2391, 642)**: u 4032, 1 m proud of the west face. The R 460 disc then spans the 8.3 m slot.
+  - ST_TowerMain's roof balustrade cut-out and ST_Crown's Sky Bar both re-derive from SKYBAR_C.
+- **NE strip-corner dark glass (accepted).** Photo 1 shows the band dark from 50 to 210 m directly under the strip ring. Dossier section 4 is amended.
+- **Embeds (accepted).**
+  - Kit datums and glazing at 4982–4994 sit inside ST_Podium's solid plinth.
+  - The main crew's w_wb tail is 11 cm inside WING170_FP, behind the junction fins.
+  - Neither is visible.

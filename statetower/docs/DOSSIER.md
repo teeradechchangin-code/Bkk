@@ -113,7 +113,8 @@ Positions are given as metres along the west face from the SW corner, through th
 
 - **Balcony bays:** every face carries curved (bowed) balcony bays. Each balcony has a white solid parapet band per floor, a dark recessed window behind, and thin white vertical dividers between bays. P2 counts 15.7 bays over 66 m, so a bay is ~4.2 m. One row per floor, 3.3–3.5 m pitch.
 - **SW corner:** a dark glass strip ~3 m wide, full height 50–216 m. It is the right edge of P1 and P2.
-- **Upper dark slot:** ~40–48.5 m along, the junction of the main block and the north strip, from ~178 m to the top. A slim white pilaster runs up its middle (P1, P4).
+- **Upper dark slot (rev C):** u 36.2–44.5 m along (8 bay columns north of the SW strip), from 177.9 m to a white cap band at the north-strip roof line (~209 m), then a dark top storey split by a white post up to the main cornice. A slim white pilaster runs up its middle at u 40.3 m (P1, P2, P4). The round Sky Bar sits above it, capping the pilaster (P1, P4).
+- **NE corner of the north strip:** dark glass band from 50 to 210 m (P1, rev C).
 - **Lower dark slot:** ~68–75 m along, inside wing 150, from the podium (50 m) to ~148 m (P1, P2).
 - **North faces above the steps:** seen obliquely in P1 and P2 as the "upper-left" section. In P1 it is floodlit blue/violet.
 - **Wing pediments:** the three steps carry neoclassical pediments. Each has a triangular gable over an attic storey with 3–4 tall round-arched windows between pilasters and a cornice. The top pediment's tympanum holds a lit **blue circular emblem** (P1).

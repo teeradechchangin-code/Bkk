@@ -1,5 +1,5 @@
 #meshdefs
-// ===== State Tower (lebua) shared constants rev B - Management / Document Control (rev B = ruling D2: dome + Sky Bar) =====
+// ===== State Tower (lebua) shared constants rev C - Management / Document Control (rev B = D2 dome + Sky Bar size; rev C = D3 slot + Sky Bar centre) =====
 // World centimetres, Z up, +X east, +Y TRUE north. Origin (0,0,0) = Google Maps pin 13.7214837 N, 100.5168931 E
 // (the user's link; the user asked for the model at 0 0 0). Grade z = 0 (Silom Rd / Charoen Krung Rd, flat).
 // Footprints: OpenStreetMap building + building:part outlines (ODbL, via Overture Maps 2026-09-23.1),
@@ -55,14 +55,14 @@ let DOME_C = (-348, -2104, 0);     // OSM dome centre
 let DOME_OSM_R = 1735;             // OSM dome outline radius (outer edge of the drum terrace ring)
 let DRUM_R = 1600;                 // INFERRED (photo 1): colonnade outer radius ~16 m
 let DOME_R = 1420;                 // INFERRED (photo 1, State Room 28.8 m inside): gold dome base radius
-let SKYBAR_C = (-2232, 1012, 0);   // rev B (D2, photo 4): round Sky Bar embedded in the NW roof corner over the upper slot
+let SKYBAR_C = (-2391, 642, 0);    // rev C (D3, photos 1/4): Sky Bar centred over the slot pilaster (u 4032), 1 m proud of the west face
 let SKYBAR_R = 460;                // rev B (D2): 9.2 m platform (photo 4 = slot width, photo 1 rim 7.3-8 m); do not exceed
 // West-face features, as distance u (cm) along WEST_DIR from WEST_SW (photos 1/2 through the fitted cameras)
 let WEST_LEN = 8090;               // straight west face SW -> wing 150 north end
 let MAIN_WEST_U1 = 4420;           // main block NW corner (north strip occupies u 4420..4870, wing 170 4870..6040, wing 160 6040..6310, wing 150 6310..8090)
-let UPPER_SLOT_U0 = 4000;          // upper dark slot (white pilaster in its middle), z UPPER_SLOT_Z0 -> top
-let UPPER_SLOT_U1 = 4870;
-let UPPER_SLOT_Z0 = 17800;
+let UPPER_SLOT_U0 = 3617;          // rev C (D3, photo bay count: 8 bays north of the SW strip); white pilaster at u 4032
+let UPPER_SLOT_U1 = 4447;
+let UPPER_SLOT_Z0 = 17790;
 let LOWER_SLOT_U0 = 6800;          // lower dark slot in wing 150, z PODIUM_TOP -> LOWER_SLOT_Z1
 let LOWER_SLOT_U1 = 7500;
 let LOWER_SLOT_Z1 = 14800;
