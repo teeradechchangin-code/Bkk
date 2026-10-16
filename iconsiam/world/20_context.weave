@@ -81,16 +81,17 @@ object ICS_Ctx_N3 {
     bounds_max = (8500, 50000, -3)
     material = "ICS_Foliage"
 }
-// Charoen Nakhon Rd continued beyond the Site box (QC r3 SiteOps): 26 m strips centred on the OSM road axis, top z = 2.
+// Charoen Nakhon Rd continued beyond the Site box (QC r3 SiteOps): 26 m strips centred on the OSM road axis, top z = 2;
+// ends held 5 cm inside the foliage tile faces so no side faces are coplanar (lint: z-fight).
 object ICS_Ctx_RoadS {
     model = "cube"
-    bounds_min = (-14740, -50000, -50)
-    bounds_max = (-12140, -24000, 2)
+    bounds_min = (-14740, -49995, -50)
+    bounds_max = (-12140, -24005, 2)
     material = "ICS_Asphalt"
 }
 object ICS_Ctx_RoadN0 {
     model = "cube"
-    bounds_min = (-18745, 24000, -50)
+    bounds_min = (-18745, 24005, -50)
     bounds_max = (-16145, 32667, 2)
     material = "ICS_Asphalt"
 }
@@ -103,6 +104,6 @@ object ICS_Ctx_RoadN1 {
 object ICS_Ctx_RoadN2 {
     model = "cube"
     bounds_min = (-20419, 41333, -50)
-    bounds_max = (-17819, 50000, 2)
+    bounds_max = (-17819, 49995, 2)
     material = "ICS_Asphalt"
 }
