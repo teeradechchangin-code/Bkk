@@ -19,7 +19,8 @@
 //        back from it.
 // LOD chain (D5): every display level is built from the same parts, frame, radii and heights as LOD0. New `lvl` params
 //        (default 0 = LOD0, unchanged) only lower segment / sample counts or drop small pieces:
-//        LOD1 (lvl 1, ~60 %) keeps every LOD0 feature; LOD2 (lvl 2, ~30 %) keeps the silhouette and colour pattern;
+//        LOD1 (lvl 1, ~57 %) keeps every LOD0 feature (small repeated pieces as flat boxes, so it also stays well
+//        under the default 90k-index LOD cap); LOD2 (lvl 2, ~28 %) keeps the silhouette and colour pattern;
 //        LOD3 (detail 0 / mode 0, ~4 %) is the far massing.
 // Round 4 (D4): entablature fixed at 270 cm (D4 a; columns gain the rest), rc = DRUM_R - 110 (D4 b); stair head made
 //        robust for any SKYBAR_C within 3 m (D4 c): guarded axis search (opposite-side edges, foot >= 80 cm from the bar
@@ -973,12 +974,14 @@ out.geo = merge(terrace, skybar, stair_all, drum, led_band, dome_all, lantern);
 #end
 
 #mesh ST_Crown lod: 1
-// near display (~60 % of LOD0): every LOD0 feature from the same parts, frame, radii and heights (lvl 1):
-// terrace storey with piers; balustrade with 4-sided vase balusters at ~45 cm, posts and warm lamp heads; simplified
-// Sirocco tables; Sky Bar platform / rim / blue bar ring / rail (half the posts) / simplified stools; stair, landing,
-// cheek walls; 24 columns (12-sided, torus base, no astragal), uplights, glazing + mullions + trims, entablature with
-// 96 modillions, floodlight fixtures; LED band with its full bay grid; gored dome (4 points per gore, 20 rings), lip,
-// hem, ledge railing (32 posts); lantern / spire / orb / lamp / spike with fewer sides.
+// near display (~57 % of LOD0 verts, ~38 % of its indices): every LOD0 feature from the same parts, frame, radii and
+// heights (lvl 1). Terrace storey with piers; balustrade with all 447 balusters as square shafts, posts, warm lamp
+// blocks; simplified Sirocco tables; Sky Bar platform / rim curb / all rail posts (square) + 24-sided rails / blue bar
+// ring + counter + back bar (32 / 16 sides) / simplified stools; stair, landing, cheek walls; 24 columns (10-sided shaft
+// + echinus, plinth, abacus), uplights, glazing + mullions + trims, 40-sided entablature with 96 modillions, floodlight
+// fixtures; LED band (40 sides) with its full bay grid; gored dome (4 points per gore, 16 rings), lip, hem, ledge
+// railing (64 square posts); lantern / spire / orb / lamp / spike with fewer sides.
+budget(verts: 60000, indices: 150000);
 let terrace = part(CROWN_TerraceShell, detail: 1);
 let skybar_all = part(CROWN_SkyBarLink, mode: 2, piece: "all", lvl: 1);
 let upper = part(CROWN_Upper, detail: 1, piece: "all", lvl: 1);
@@ -986,11 +989,13 @@ out.geo = merge(terrace, skybar_all, upper);
 #end
 
 #mesh ST_Crown lod: 2
-// mid display (~30 % of LOD0): LOD0 silhouette and colour pattern from the same parts, frame, radii and heights
-// (lvl 2): terrace storey with piers; balustrade as solid panels between the posts (no lamps); no tables / stools;
-// Sky Bar disc, rim curb, solid dark rail band, blue bar ring + counter + back bar; stair, landing, cheek walls;
+// mid display (~28 % of LOD0): LOD0 silhouette and colour pattern from the same parts, frame, radii and heights
+// (lvl 2). Terrace storey with piers; balustrade as solid panels between the posts (no lamps); no tables / stools;
+// Sky Bar disc, rim curb, one solid dark rail band, blue bar ring + counter + back bar; stair, landing, cheek walls;
 // 24 columns as 8-sided prisms (plinth, shaft, echinus, abacus), uplights, glazing + mullions + trims, entablature;
-// LED band with piers + mullions; gored dome (4 points per gore, 14 rings), lip, hem; lantern / spire.
+// LED band (32 sides) with piers, mullions and X frames; gored dome (4 points per gore, 14 rings), lip, hem; lantern /
+// spire / orb / tip with fewer sides.
+budget(verts: 30000, indices: 90000);
 let terrace = part(CROWN_TerraceShell, detail: 1);
 let skybar_all = part(CROWN_SkyBarLink, mode: 2, piece: "all", lvl: 2);
 let upper = part(CROWN_Upper, detail: 1, piece: "all", lvl: 2);
