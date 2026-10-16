@@ -158,3 +158,24 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
   - Kit datums and glazing at 4982–4994 sit inside ST_Podium's solid plinth.
   - The main crew's w_wb tail is 11 cm inside WING170_FP, behind the junction fins.
   - Neither is visible.
+
+**ST_Crown: ESCALATED after 3 rounds (round 3: QC/QA, Engineering and Site Operation all rejected, 4/10).** Management's own D3 re-centring of the Sky Bar made the crew's stair-head derivation degenerate. The stair axis became nearly parallel to the terrace edge v17→v16 (wp ≈ −0.13). Under rev C the collider polygon self-intersects (compile blocker), and stray cheek and landing geometry appears.
+
+**D4: Crown rulings, then continued rework (rounds 4–5).**
+- **(a) Colonnade height (QC r3 major).**
+  - DRUM_BASE stays 22000: the OSM dome part starts at 220 m on the 216–220 m terrace storey (sourced).
+  - The entablature becomes a **fixed ~270 cm** (photo 1: 11 px). It is decoupled from the drum height, so the columns gain ~30 cm.
+  - The remaining ~1 m by which photo 1's colonnade reads taller is a **logged deviation**. Photo 1's "foot" reading includes the terrace balustrade band below the column bases.
+- **(b) Crown accepted deviations.** rc = DRUM_R − 110 is accepted. ent_h becomes the fixed value in (a).
+- **(c) Robustness requirement.** The Sky Bar stays centred on the slot pilaster (D3). ST_Crown must bake cleanly and look right for any SKYBAR_C within 3 m of the defs value:
+  - Guard terrace edges near-parallel to the stair axis (|w| < 0.35).
+  - Clamp gaps, cheek starts and landing apexes to their edges.
+  - Build the collider edge barrier from per-run boxes, never from one concatenated polygon.
+  - Never extrapolate past the adjacent ROOFDECK_FP vertices.
+- **(d) Interface rules.**
+  - ST_TowerMain builds nothing above MAIN_ROOF:
+    - inside ROOFDECK_FP;
+    - within SKYBAR_R + 10 of SKYBAR_C;
+    - inside the Crown's stair corridor (a ≤ 4 m band from the nearest ROOFDECK_FP vertex to the Sky Bar circle, over the main roof slab).
+  - The Sky Bar soffit exists only outside offset(MAIN_FP, −60), plus under the cantilever and inside the main cornice-ring band.
+  - ST_TowerMain's slot post and top storey are capped by its own ring and slab, independent of the Crown.
