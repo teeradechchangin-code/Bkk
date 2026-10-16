@@ -209,7 +209,7 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
 
 ## 7. FINAL DELIVERY (D5 time-box)
 
-Frozen 17:00 ICT; submitted to the client's editor at 17:10 ICT (Load completed). `world/STATETOWER_world.weave` (216 KB) holds:
+Frozen 17:00 ICT; submitted to the client's editor at 17:03 ICT (Load completed). `world/STATETOWER_world.weave` (216 KB) holds:
 - base shell and palette
 - #meshdefs rev C and the facade kit
 - the 4 components, placed at (0,0,0)
