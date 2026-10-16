@@ -975,7 +975,7 @@ out.geo = merge(terrace, skybar, stair_all, drum, led_band, dome_all, lantern);
 
 #mesh ST_Crown lod: 1
 // near display (~57 % of LOD0 verts, ~38 % of its indices): every LOD0 feature from the same parts, frame, radii and
-// heights (lvl 1). Terrace storey with piers; balustrade with all 447 balusters as square shafts, posts, warm lamp
+// heights (lvl 1). Terrace storey with piers; balustrade with every LOD0 baluster as a square shaft, posts, warm lamp
 // blocks; simplified Sirocco tables; Sky Bar platform / rim curb / all rail posts (square) + 24-sided rails / blue bar
 // ring + counter + back bar (32 / 16 sides) / simplified stools; stair, landing, cheek walls; 24 columns (10-sided shaft
 // + echinus, plinth, abacus), uplights, glazing + mullions + trims, 40-sided entablature with 96 modillions, floodlight

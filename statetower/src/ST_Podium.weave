@@ -1164,6 +1164,7 @@ out.geo = merge(faceS, faceSE, faceE, faceNE, faceNW, finNW, faceW, cornerP8, co
 // LOD2 (mid-far, ~30 % of LOD0): same parts at lod 2 - silhouette, bay / arch / column rhythm, cornice, portal arch,
 // medallion and pediment; the cornice keeps its three main projections (sub-10 cm steps merged).
 #mesh ST_Podium lod: 2
+budget(verts: 40000, indices: 80000);
 let P0 = at(PODIUM_FP, 0);
 let P1 = at(PODIUM_FP, 1);
 let P2 = at(PODIUM_FP, 2);
