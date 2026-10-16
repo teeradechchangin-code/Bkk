@@ -16,8 +16,9 @@
 // Declared deviations from the work order (photos win; Management to amend the order / log in MASTER_BRIEF s.6):
 //   D1 west colonnade columns r 100 (2.0 m dia), 0 -> 23.01 m, 9 bays of 9.6 m (8 columns) - P2 through the fitted
 //      camera: bay boundaries every 20-21 px (9.6 m projects to 20.8 px), colonnade top 21-23 m, columns ~5 px (~2.3 m).
-//   D2 portal arch 9.6 m wide, crown 21.6 m (order: 9-10 x 20-24 m; rev 2 had 10.5 x 18.25 m) - QC round 2 option b
-//      (P3 H/W ~2.1, P1 arch head 21-22 m under 22.4 m capitals).
+//   D2 portal arch: rev 2 had 10.5 m x 18.25 m (P2: north-face crown y 700 px vs ground ~742 / cornice ~628 px at
+//      2.28 px/m = ~18.4 m); QC round 2 option b (P3 H/W ~2.1, P1 arch head 21-22 m under ~22.4 m capitals) makes it
+//      9.6 m x 21.6 m crown under 22.0 m capitals - back inside the order's 9-10 x 20-24 m (SiteOps item b superseded).
 //   D3 portal medallion on the north (street-corner) face only; west and east faces carry fins + slits
 //      (P2 x 321-358 px shows fins only; P1/P3 show one medallion on the street face).
 //   D4 interface at 50 m: roof deck 49.0 m behind a 50.0 m parapet; tower footprints carry ST_FacadeShade podium
@@ -115,8 +116,10 @@ param epa = 1;
 param epb = 1;
 param ncol = 0;
 param pier_off = 110;
-// upper = 0 skips the balcony storey + arched-bay tiers (NW stretch: POD_FinScreen builds them)
+// upper = 0 skips the balcony storey + arched-bay tiers (NW stretch: POD_FinScreen builds them);
+// lower = 0 skips the non-colonnade lower storeys (only used to lint a face's tiers separately)
 param upper = 1;
+param lower = 1;
 let dx = bx - ax;
 let dy = by - ay;
 let L = sqrt(dx * dx + dy * dy);
@@ -280,7 +283,7 @@ if colonnade > 0 {
         g = merge(g, box_bounds(min: (c - 70, 660, 0), max: (c + 70, 691, zL1 + 1), material: "ST_FacadeShade"));
         g = merge(g, part(POD_Column, x: c, y: 125, z0: 0, z1: zL1 + 1, r: 100, ped: 250, ped_h: 170, segs: 20));
     }
-} else {
+} else if lower > 0.5 {
     // lower storeys: wall with two tiers of tall round-arched windows per bay between pilasters
     let hw = 160;
     var lholes = [];
@@ -619,7 +622,8 @@ for k in 0..4 {
 g = merge(g, box_bounds(min: (Lf - fw, 0, zL1 - 8), max: (Lf, jamb_d, zU1 + 1), material: "ST_Stone"));
 if lod < 0.5 {
     let zw0 = zB0 - 2;
-    let hw = zU1 + 1 - zw0;
+    // wall top 6 cm above the fin tops (all inside the cornice): no flush caps where the wall enters the end fin
+    let hw = zU1 + 7 - zw0;
     var holes = [];
     for k in 0..4 {
         let cx = x00 + k * p + fw + (p - fw) * 0.5;
@@ -630,7 +634,7 @@ if lod < 0.5 {
     }
     let wall = extrude_shape(outer: [(x00, 0), (Lf - 40, 0), (Lf - 40, hw), (x00, hw)], holes: holes, height: 30, material: "ST_Facade");
     g = merge(g, translate(rotate_x(wall, degrees: 90, pivot: (0, 0, 0)), (0, 64, zw0)));
-    g = merge(g, box_bounds(min: (x00, 74, zw0), max: (Lf - 50, 84, zU1), material: "ST_PodiumRooms"));
+    g = merge(g, box_bounds(min: (x00, 74, zw0), max: (Lf - 50, 84, zU1 + 2), material: "ST_PodiumRooms"));
 } else {
     for k in 0..4 {
         let cx = x00 + k * p + fw + (p - fw) * 0.5;
