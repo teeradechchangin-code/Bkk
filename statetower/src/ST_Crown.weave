@@ -175,7 +175,8 @@ out.geo = g;
 // in ~8 m bays of ~3 lit sub-panels with light diagonal frames, separated by dark gaps): nbay bays, one centred on az
 // (the photo-1 sightline; the bay joints then sit over the drum's column pairs). Each joint is a 70 cm dark pier 3 cm
 // proud of the panels; nsub sub-panels per bay split by 20 cm white mullions; two thin white diagonal bars (an X, the
-// second 2 cm further out) per sub-panel. az is always passed by CROWN_Upper.
+// second 2 cm further out) per sub-panel. az is always passed by CROWN_Upper. (The bake's W_NEAR_PARALLEL notes pair the
+// same diagonal in neighbouring sub-panels, 9 deg apart round the band: intended, each X lies in its own panel plane.)
 #meshpart CROWN_LedBand
 param detail = 1;
 param az = 0;
