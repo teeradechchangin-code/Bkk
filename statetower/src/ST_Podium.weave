@@ -140,17 +140,17 @@ param pier_off = 110;
 param upper = 1;
 param lower = 1;
 // display LOD (default 0 = LOD0 unchanged). lod 1 (near-mid): 8-segment engaged columns, 5 / 8-segment sub / head
-// arches, the column bases merged into the balcony pedestal, solid arched-bay screens with one ST_PodiumRooms decal
+// arches, each pair's two column bases merged into one block, solid arched-bay screens with one ST_PodiumRooms decal
 // per window (same 7-row grid; the hidden glazing behind them dropped), balcony colonnettes at ~90 cm (30 wide, same
 // stone / void ratio), 4-segment lower window heads, 10-segment colonnade.
-// lod 2 (mid-far): 6-sided engaged columns under one capital block per pair, 2 / 3-segment polyline arches without
+// lod 2 (mid-far): 6-sided engaged columns under one capital block per pair, 3-segment polyline arches without
 // their short legs, colonnette decals, lower windows as arched ST_PodiumRooms panels on a solid wall, plain 8-sided
 // colonnade shafts, no shopfront mullions.
 param lod = 0;
 let cseg = pick(lod, 16, 8, 6);
-let sseg = pick(lod, 8, 5, 2);
+let sseg = pick(lod, 8, 5, 3);
 let oseg = pick(lod, 12, 8, 3);
-let wseg = pick(lod, 8, 4, 2);
+let wseg = pick(lod, 8, 4, 3);
 let bsp = pick(lod, 45, 90, 90);
 let bhw = pick(lod, 8, 15, 15);
 let kseg = pick(lod, 20, 10, 8);
@@ -226,11 +226,14 @@ for i in 0..(nb + 1) {
                 g = merge(g, box_bounds(min: (px - 50, -35, zB1 - 1), max: (px + 50, 60, zU0 + 60), material: "ST_Stone"));
             }
         }
+        if lod > 0.5 {
+            // lod >= 1: the pair's two column-base blocks merged into one (pair width, LOD0 heights)
+            g = merge(g, box_bounds(min: (xc - 105, -35, zB1 - 1), max: (xc + 105, 60, zU0 + 60), material: "ST_Stone"));
+        }
         if lod > 1.5 {
             g = merge(g, box_bounds(min: (xc - 105, -35, zU1 - 75), max: (xc + 105, 60, zU1 + 1), material: "ST_Stone"));
         }
-        // (lod >= 1: the pedestal rises to the column-base tops, standing in for the two base blocks)
-        g = merge(g, box_bounds(min: (xc - 118, -40, zB0 - 1), max: (xc + 118, 76, select(zB1 + 1, zU0 + 60, lod > 0.5)), material: "ST_Stone"));
+        g = merge(g, box_bounds(min: (xc - 118, -40, zB0 - 1), max: (xc + 118, 76, zB1 + 1), material: "ST_Stone"));
     }
 }
 
@@ -417,11 +420,11 @@ out.geo = translate(rotate_z(g, degrees: ang, pivot: (0, 0, 0)), (ax, ay, 0));
 #end
 
 // ---------------------------------------------------------------------------------------------
-// Lower mass shared by LOD0 / LOD1 / collider so all three agree on the loggias (floor at grade).
+// Lower mass shared by LOD0 / LOD3 / collider so all three agree on the loggias (floor at grade).
 // LOWX = podium outline with the three loggias (west, north-west, north-east; 7 m deep) cut out and the
 // end piers kept; the P8 corner niche (recessed pier, paired giant columns) and the colonnade columns are
 // added separately (same layout as POD_CornerP8: pier_a / rec_d / cut_b).
-//   mode 0: LOD0 kerb course on LOWX (+25 cm, 0 -> 130)    mode 1: LOD1 lower mass    mode 2: collider lower mass
+//   mode 0: LOD0 kerb course on LOWX (+25 cm, 0 -> 130)    mode 1: LOD3 lower mass    mode 2: collider lower mass
 #meshpart POD_LowBlock
 param mode = 1;
 param d = 700;
@@ -492,8 +495,8 @@ if mode < 0.5 {
     pts = append(pts, (P3.x + ndx * (lne + 180) * 0.5 + inx * 125, P3.y + ndy * (lne + 180) * 0.5 + iny * 125, 0));
     if mode < 1.5 {
         g = merge(g, copy_to_points(cylinder_at(radius: 100, height: zL1 + 1, bottom_center: (0, 0, 0), segments: 8, material: "ST_Stone"), points: pts));
-        // niche: paired giant columns to the cornice soffit + right jamb (LOD0 jamb is pier_a - 2 .. pier_a + 34; the LOD1
-        // one runs to pier_a + 90 so it also closes the inset LOD1 bands' notch faces)
+        // niche: paired giant columns to the cornice soffit + right jamb (LOD0 jamb is pier_a - 2 .. pier_a + 34; the LOD3
+        // one runs to pier_a + 90 so it also closes the inset LOD3 bands' notch faces)
         g = merge(g, copy_to_points(cylinder_at(radius: 90, height: zU1, bottom_center: (0, 0, 0), segments: 8, material: "ST_Stone"), points: cpa));
         let jy = (rec_d + 8) * 0.5;
         let jz = (zL1 + zU1 - 7) * 0.5;
@@ -518,8 +521,8 @@ out.geo = g;
 #end
 
 // ---------------------------------------------------------------------------------------------
-// LOD1 bay rhythm: one stone pilaster block per bay boundary of a facade run (same layout as POD_Face) and
-// one ST_PodiumRooms window panel per bay (~0.35 bay wide, z 3110-4380), 12 cm proud of the cream LOD1 band
+// LOD3 bay rhythm: one stone pilaster block per bay boundary of a facade run (same layout as POD_Face) and
+// one ST_PodiumRooms window panel per bay (~0.35 bay wide, z 3110-4380), 12 cm proud of the cream LOD3 band
 // (band face at local y +40; a panel behind it would be buried in the band solid). panes = 0: pilasters only.
 #meshpart POD_FaceLod
 param ax = 0;
@@ -598,13 +601,13 @@ out.geo = translate(rotate_z(g, degrees: ang, pivot: (0, 0, 0)), (ax, ay, 0));
 #end
 
 // ---------------------------------------------------------------------------------------------
-// Ring-mitred courses / LOD1 bands on RN = podium outline (portal neck excluded, P4/P7 on the north line) with the
+// Ring-mitred courses / LOD3 bands on RN = podium outline (portal neck excluded, P4/P7 on the north line) with the
 // P8 corner niche notched out. The niche walls (left = NW end-fin plane cut_b before P8 perpendicular to the north
 // line, back = rec_d behind the west face, right = pier_a along it) are pushed s cm into the solid, so a course with
 // outer offset o shows its niche-side face at (s - o) cm inside the niche wall: the courses stop at the niche
 // (the giant columns stand free between 23 and 44.6 m) and only their end returns show in front of the jambs.
-//   kind 0: LOD0 courseLow   1: LOD0 string course   2: LOD1 mid course   3: LOD1 balcony glass band
-//   kind 4: LOD1 string course   5: LOD1 cream arched-tier band   6: LOD1 balustrade rail band (rev 4)
+//   kind 0: LOD0 courseLow   1: LOD0 string course   2: LOD3 mid course   3: LOD3 balcony glass band
+//   kind 4: LOD3 string course   5: LOD3 cream arched-tier band   6: LOD3 balustrade rail band (rev 4)
 #meshpart POD_NotchRing
 param kind = 0;
 param s = 51;
@@ -651,7 +654,7 @@ if kind < 0.5 {
 } else if kind < 5.5 {
     g = translate(extrude(points: offset_polygon(points: RN, delta: -40), height: zU1 - zU0 + 9, material: "ST_Facade"), (0, 0, zU0 - 4));
 } else {
-    // kind 6: LOD1 white balustrade rail band zB0 -> zB0 + 70 (10 cm proud, on top of the mid course)
+    // kind 6: LOD3 white balustrade rail band zB0 -> zB0 + 70 (10 cm proud, on top of the mid course)
     g = extrude_profile(points: RN, profile: [(zB0 - 6, 10), (zB0 + 70, 10)], material: "ST_Stone");
 }
 out.geo = g;
@@ -1004,7 +1007,7 @@ out.geo = translate(rotate_z(g, degrees: ang, pivot: (0, 0, 0)), (ox, oy, 0));
 #end
 
 // ---------------------------------------------------------------------------------------------
-// Coarse portal mass: piers, upper block, gable. LOD1 (detail = 1) adds arch lintels, lobby glazing, the
+// Coarse portal mass: piers, upper block, gable. LOD3 (detail = 1) adds arch lintels, lobby glazing, the
 // column shafts and the medallion disc; the collider (detail = 0) adds one box per column pair and the
 // lobby glazing (walk-through north / west / east arches).
 #meshpart POD_PortalMass
@@ -1032,7 +1035,7 @@ let PD = D * 0.5 - AR;
 let ZLT = ZS + AR * 0.67;
 var g = box_bounds(min: (0, 0, ZP1), max: (W, D, ZC), material: "ST_Stone");
 if detail > 0 {
-    // rev 4: LOD1 piers recessed 140 cm on the north / west / east faces (as LOD0) so the 8-segment shafts stand
+    // rev 4: LOD3 piers recessed 140 cm on the north / west / east faces (as LOD0) so the 8-segment shafts stand
     // free; south piers keep the 60 cm full-width return against the podium face
     let REC = 140;
     let RT = 60;
