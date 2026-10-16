@@ -1,0 +1,82 @@
+#doc_version 3
+// State Tower (lebua) - Management world shell rev A: night look of client photo 1. Building meshes come from the crews (src/).
+#adjuster
+section "Night (client photo 1)"
+knob SetSunRotation = 200
+knob SetSunTilt = 6
+knob SetSunIntensity = 0.12
+knob SetSunColor = #7088c0
+knob SetSkyLightIntensity = 0.5
+knob SetSkyLightColor = #2c4a7a
+knob SetSkyboxSunVisible = 0
+knob SetSkyboxStarIntensity = 0
+knob SetSkyboxCloudCoverage = 0
+knob SetSkyboxExposure = -1.5
+knob SetBloomIntensity = 0.7
+#end
+
+object Ground { model = "cube" bounds_min = (-24000, -24000, -20) bounds_max = (24000, 24000, 0) material = "Asphalt" }
+// ===== State Tower palette rev A (library textures only: derived tints of imported library #textures + engine built-ins) =====
+material ST_Facade { base = "LibFacadePlaster" tint = "#EDE5D3" roughness = 0.7 }
+material ST_FacadeShade { base = "LibFacadePlaster" tint = "#B9B1A0" roughness = 0.8 }
+material ST_Stone { base = "LibFacadePlaster" tint = "#E6DECB" roughness = 0.5 }
+material ST_Gold { base = "LibBrushedMetal" tint = "#E7B44C" metallic = 0.95 roughness = 0.28 }
+material ST_DarkGlass { base = "Glass" tint = "#1A242E" }
+material ST_Rooms { base = "InteriorRooms" shader = "interior_window_pbr" tint = "#B8B0A0" glassTint = "#2E3640" roomH = 3.4 bayW = 1.6 }
+material ST_DrumGlass { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#E6DECB" glassTint = "#5E5240" roomH = 6.0 bayW = 2.0 }
+material ST_PodiumRooms { base = "InteriorOffice" shader = "interior_window_pbr" tint = "#E6DECB" glassTint = "#3A3A36" roomH = 4.5 bayW = 2.0 }
+material ST_DarkMetal { base = "LibDarkMetal" metallic = 0.5 roughness = 0.45 }
+material ST_Concrete { base = "LibConcrete" }
+material ST_BlueLED { base = "MetalDetail" tint = "#3D6DFF" emission = 2.0 }
+material ST_WarmLight { base = "MetalDetail" tint = "#FFD08A" emission = 1.2 }
+
+// imported_material_asset {"asset_id":"material_fb592569381239b0b44c41329f4d9e76ca6cdc6713afc3ce3eff3e981ae9767c","source_digest":"fb592569381239b0b44c41329f4d9e76ca6cdc6713afc3ce3eff3e981ae9767c","catalog_key":null,"local_root":"LibFacadePlaster","local_digest":"6fbe019a2367296f1eabe71b2abe373879ff8d1315650e0c21d8936685d1c32d"}
+#texture LibFacadePlaster
+size = 1024;
+tile_m = 1.6;
+mapping = triplanar_world;
+let trowel = noise.fbm(uv*7+noise.vec2(uv*3,seed:97,period:3)*0.36,octaves:4,seed:153,period:7);
+let grit = noise.gaussian(uv*230,seed:239,period:230);
+let pores = smoothstep(0.72,0.89,noise.gaussian(uv*185,seed:312,period:185));
+let sand = noise.fbm(uv*73,octaves:2,seed:573,period:73);
+let skim = smoothstep(0.37,0.65,trowel);
+let scuff = noise.ridged(uv*31,octaves:3,seed:462,period:31);
+let h = 0.50+trowel*0.25+skim*0.075+sand*0.085+grit*0.040-pores*0.14+scuff*0.035;
+out.color = vec3(0.914+trowel*0.050+sand*0.026+grit*0.016-pores*0.017);
+out.normal = normal_from_height(h,height_m:0.009,tile_m:1.6,strength:1.0);
+out.orm = orm(occlusion:1-pores*0.07,roughness:0.777+(sand-0.5)*0.012+pores*0.014,metallic:0);
+#end
+
+// imported_material_asset {"asset_id":"material_5dadcd66b9fe0fce92f34c9beaad4ac76956b1d733dfc67dc9cf17f9d1c72b3e","source_digest":"5dadcd66b9fe0fce92f34c9beaad4ac76956b1d733dfc67dc9cf17f9d1c72b3e","catalog_key":null,"local_root":"LibBrushedMetal","local_digest":"aae43d756b9587e6e87bdbfd44ffff77a83be9074f8d6e373a8a033e84954a50"}
+#texture LibBrushedMetal
+size = 512;
+tile_m = 0.24;
+let brush = noise.fbm(uv * vec2(170, 4), octaves: 2, period: vec2(170, 4));
+let micro = noise.fbm(uv * 100, octaves: 2, period: 100);
+out.color = vec3(0.98, 0.98, 0.98) * (0.99 + brush * 0.02);
+out.normal = normal_from_height((brush - 0.5) * 0.002 + (micro - 0.5) * 0.001, strength: 0.3);
+out.orm = orm(occlusion: 1, roughness: 0.22 + brush * 0.08, metallic: 0.94);
+#end
+
+// imported_material_asset {"asset_id":"material_06ee19182e43cf59d494cbf0b6ccec0cbe25b6dac670655e42c7212a423074da","source_digest":"06ee19182e43cf59d494cbf0b6ccec0cbe25b6dac670655e42c7212a423074da","catalog_key":null,"local_root":"LibDarkMetal","local_digest":"b0df824a91cc6a86e437b94a092e275e8a228f572eba9255cc18be25c1f9c031"}
+#texture LibDarkMetal
+size = 256;
+tile_m = 0.48;
+let n = noise.value(uv*150,seed: 39,period: 150);
+out.color = mix(color("#141A1D"),color("#292F31"),n*0.44);
+out.normal = normal_from_height(n*0.009,strength: 0.18);
+out.orm = orm(occlusion: 1,roughness: 0.56+n*0.18,metallic: 0);
+#end
+
+// imported_material_asset {"asset_id":"material_6712447fde12b38b73462bd641009d1b3e15638c301c0c595f5e1ba35a253284","source_digest":"6712447fde12b38b73462bd641009d1b3e15638c301c0c595f5e1ba35a253284","catalog_key":null,"local_root":"LibConcrete","local_digest":"6caffe06d73f56def660ce8e733ec85d1a7946ff4317dfc2ed277217513edcc3"}
+#texture LibConcrete
+size=1024;tile_m=2.7;mapping=triplanar_world;parallax_cm=0.65;
+let a=noise.fbm(uv*9,octaves:4,seed:661,period:9);
+let f=noise.fbm(uv*280,octaves:3,seed:352,period:280);
+let aggregate=pattern.voronoi(uv*135,seed:911,period:135);
+let pore=smoothstep(0.83,0.96,rand(aggregate.id))*smoothstep(0.16,0.3,aggregate.edge);
+let h=a*0.13+f*0.15-pore*0.16+0.48;
+out.color=mix(color("#535654"),color("#92918A"),a*0.6+f*0.15)-pore*0.06;
+out.normal=normal_from_height(h,height_m:0.009,tile_m:2.7,strength:1);
+out.orm=orm(occlusion:1-pore*0.14,roughness:0.83+f*0.15,metallic:0);out.height=h;
+#end

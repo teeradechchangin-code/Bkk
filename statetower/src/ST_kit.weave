@@ -1,0 +1,66 @@
+// ===== State Tower shared facade kit rev A (Management). Crews call these parts; they never copy or edit them. =====
+// All parts author in WORLD centimetres (pass world coordinates), Z up. Params are numbers only.
+
+// One straight facade run of the curved-balcony bay system, from A=(ax,ay) to B=(bx,by) at plan level.
+// Walk A->B in the footprint's CCW order: the OUTSIDE is on the right-hand side of A->B.
+// The A->B line is the outermost face line (balcony bow apex). Builds, for `floors` storeys from z0 at pitch fh:
+//  - one white scalloped balcony band per floor (slab edge + solid parapet, band_h tall, bowed front per bay),
+//  - full-height white fins on every bay boundary (fins = 1),
+//  - the recessed window wall (ST_Rooms interior-room glass) balc_d behind the face line (wall = 1).
+// Cost ~ (5*bays+3)*4 verts per floor + 24 per fin + 24 for the wall.
+#meshpart ST_KIT_BalconyFace
+param ax = 0;
+param ay = 0;
+param bx = 2000;
+param by = 0;
+param z0 = 5000;
+param floors = 10;
+param fh = 345.83;
+param bay_w = 420;
+param balc_d = 150;
+param bow_d = 45;
+param band_h = 135;
+param fin_t = 22;
+param fins = 1;
+param wall = 1;
+let dx = bx - ax;
+let dy = by - ay;
+let L = sqrt(dx * dx + dy * dy);
+let ux = dx / L;
+let uy = dy / L;
+let ox = uy;
+let oy = 0 - ux;
+let nb = max(1, round(L / bay_w));
+let bw = L / nb;
+let H = floors * fh;
+var pts = [];
+pts = append(pts, (ax - ox * balc_d, ay - oy * balc_d));
+for i in 0..nb {
+    for k in 0..5 {
+        let t = k / 5;
+        let u = (i + t) * bw;
+        let v = 0 - bow_d + bow_d * sin(180 * t);
+        pts = append(pts, (ax + ux * u + ox * v, ay + uy * u + oy * v));
+    }
+}
+pts = append(pts, (bx - ox * bow_d, by - oy * bow_d));
+pts = append(pts, (bx - ox * balc_d, by - oy * balc_d));
+let band = translate(extrude(points: pts, height: band_h, material: "ST_Facade"), (0, 0, z0));
+var g = array(band, count: floors, offset: (0, 0, fh));
+if fins > 0 {
+    let zc = z0 + H * 0.5;
+    var fl = empty();
+    for i in 0..(nb + 1) {
+        let u = i * bw;
+        let fin = beam_between(start: (ax + ux * u - ox * (balc_d - 2), ay + uy * u - oy * (balc_d - 2), zc), end: (ax + ux * u - ox * bow_d, ay + uy * u - oy * bow_d, zc), cross_width: fin_t, cross_height: H, height_direction: (0, 0, 1), material: "ST_Facade");
+        fl = merge(fl, fin);
+    }
+    g = merge(g, fl);
+}
+if wall > 0 {
+    let zc2 = z0 + H * 0.5;
+    let w = beam_between(start: (ax - ox * (balc_d + 15), ay - oy * (balc_d + 15), zc2), end: (bx - ox * (balc_d + 15), by - oy * (balc_d + 15), zc2), cross_width: 30, cross_height: H, height_direction: (0, 0, 1), material: "ST_Rooms");
+    g = merge(g, w);
+}
+out.geo = g;
+#end

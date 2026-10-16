@@ -1,0 +1,70 @@
+#meshdefs
+// ===== State Tower (lebua) shared constants rev A - Management / Document Control =====
+// World centimetres, Z up, +X east, +Y TRUE north. Origin (0,0,0) = Google Maps pin 13.7214837 N, 100.5168931 E
+// (the user's link; the user asked for the model at 0 0 0). Grade z = 0 (Silom Rd / Charoen Krung Rd, flat).
+// Footprints: OpenStreetMap building + building:part outlines (ODbL, via Overture Maps 2026-09-23.1),
+// equirectangular about the origin, rounded to 1 cm, CCW, first vertex not repeated. See docs/DOSSIER.md.
+
+// ---- Heights (cm). OSM building:part heights; CTBUH architectural height 247.2 m; photo-calibrated items marked INFERRED.
+let GRADE = 0;
+let PODIUM_TOP = 5000;        // OSM w443580771 height 50 m (podium roof, base of every tower part)
+let MAIN_ROOF = 21600;        // OSM w376802720 main block 50 -> 216 m
+let STRIP210_TOP = 21000;     // OSM w376802719 north strip 50 -> 210 m (terrace 6 m below the main roof)
+let WING170_TOP = 17000;      // OSM w376802721
+let WING160_TOP = 16000;      // OSM w376802722
+let WING150_TOP = 15000;      // OSM w376802714
+let PED_H = 1200;             // INFERRED (photos 1+2): pediment apex ~12 m above each wing roof -> apexes ~162/172/182 m
+let ROOFDECK_TOP = 22000;     // OSM w376802718 dome terrace 216 -> 220 m (Sirocco / Sky Bar level, floor 63)
+let DOME_TIP = 24720;         // OSM w376802715 / CTBUH 247.2 m (finial tip) - never exceed
+let DRUM_BASE = 22000;        // colonnaded drum stands on the dome terrace
+let DRUM_TOP = 23050;         // INFERRED (photo 1): colonnade + entablature ~10.5 m
+let LED_BAND_TOP = 23250;     // INFERRED: blue LED ring / attic band at the dome springing
+let DOME_TOP = 24450;         // INFERRED: crown of the gold dome (finial above, to DOME_TIP)
+
+// ---- Floors
+let PODIUM_FLOORS = 11;                              // INFERRED (photo 2: arcade + ~9 storeys of arched windows)
+let TOWER_FLOORS = 48;                               // 50 -> 216 m; floor 63 (Sirocco) = 216-220 m terrace
+let TOWER_FH = (MAIN_ROOF - PODIUM_TOP) / 48;        // 345.83 cm floor-to-floor (photo 2 rows: 3.3-3.5 m)
+
+// ---- Facade kit (photos 1/2/4): curved (bowed) balcony bays on every face of the tower
+let BAY_W = 420;              // photo 2: 15.7 bays over the 66 m west run -> 4.2 m
+let BALC_D = 150;             // balcony depth: bay chord on the face line, bow bulges BOW_D further out
+let BOW_D = 45;               // bow of each balcony front beyond the face line
+let PARAPET_H = 110;          // solid white parapet above the slab
+let SLAB_T = 25;              // slab edge band under the parapet
+let FIN_T = 22;               // thin vertical divider between bays (full height, white)
+let STRIP_W = 300;            // dark recessed glass strip width (corners / slots)
+
+// ---- Footprints (cm), OSM
+let PODIUM_FP = [(-4272, -3265), (3593, -6569), (4356, -4824), (2662, 6025), (1793, 5696), (1027, 7757), (-793, 7089), (-18, 5009), (-888, 4684)];
+// main block: NW, SW, SE, E chamfer, NE. West face NW->SW 44.2 m faces the river (photos 1/2 look at it from the NW).
+let MAIN_FP = [(-2146, 964), (-3879, -3107), (3436, -6180), (4046, -4785), (3520, -1416)];
+let STRIP210_FP = [(3439, -897), (1253, 21), (-1970, 1376), (-2146, 964), (3520, -1416)];
+let WING170_FP = [(1753, 1194), (1554, 1674), (-893, 2702), (-1510, 2457), (-1970, 1376), (1253, 21)];
+let WING160_FP = [(1753, 1194), (1878, 1489), (1372, 2775), (-57, 3376), (-1405, 2705), (-1510, 2457), (-893, 2702), (1554, 1674)];
+let WING150_FP = [(1878, 1489), (2515, 2984), (1981, 3209), (1726, 3910), (709, 4337), (-104, 4085), (-708, 4339), (-1405, 2705), (-57, 3376), (1372, 2775)];
+let ROOFDECK_FP = [(1838, -3224), (2023, -3263), (2209, -3228), (2367, -3125), (2473, -2969), (2512, -2785), (2476, -2601), (2373, -2444), (2216, -2339), (2350, -2024), (1776, -1782), (1956, -1358), (1157, -1023), (973, -756), (354, -357), (-373, -223), (-621, -275), (-1425, 62), (-2764, -3082), (617, -4503), (1044, -3502), (1618, -3744)];
+
+// ---- Key points (cm)
+let WEST_SW = (-3879, -3107, 0);   // SW corner of the main block (dark corner strip, right edge of photos 1/2)
+let WEST_N = (-708, 4339, 0);      // north end of the straight 80.9 m west face (wing 150)
+let WEST_DIR = (0.3920, 0.9200, 0);   // unit vector along the west face, SW -> N (bearing 23.1 deg)
+let WEST_OUT = (-0.9200, 0.3920, 0);  // outward normal of the west face (bearing 293.1 deg, toward the river)
+let MAIN_NW = (-2146, 964, 0);     // NW corner of the main block (dark strip with a white pilaster, photo 1/4)
+let DOME_C = (-348, -2104, 0);     // OSM dome centre
+let DOME_OSM_R = 1735;             // OSM dome outline radius (outer edge of the drum terrace ring)
+let DRUM_R = 1600;                 // INFERRED (photo 1): colonnade outer radius ~16 m
+let DOME_R = 1420;                 // INFERRED (photo 1, State Room 28.8 m inside): gold dome base radius
+let SKYBAR_C = (-2350, 1150, 0);   // INFERRED: round Sky Bar platform cantilevered off the NW corner (photo 4)
+let SKYBAR_R = 750;                // INFERRED
+// West-face features, as distance u (cm) along WEST_DIR from WEST_SW (photos 1/2 through the fitted cameras)
+let WEST_LEN = 8090;               // straight west face SW -> wing 150 north end
+let MAIN_WEST_U1 = 4420;           // main block NW corner (north strip occupies u 4420..4870, wing 170 4870..6040, wing 160 6040..6310, wing 150 6310..8090)
+let UPPER_SLOT_U0 = 4000;          // upper dark slot (white pilaster in its middle), z UPPER_SLOT_Z0 -> top
+let UPPER_SLOT_U1 = 4870;
+let UPPER_SLOT_Z0 = 17800;
+let LOWER_SLOT_U0 = 6800;          // lower dark slot in wing 150, z PODIUM_TOP -> LOWER_SLOT_Z1
+let LOWER_SLOT_U1 = 7500;
+let LOWER_SLOT_Z1 = 14800;
+let PORTAL_TOP = 5600;             // INFERRED (photo 3): portal pediment apex above the podium cornice
+#end
