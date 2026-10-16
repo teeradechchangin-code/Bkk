@@ -190,3 +190,19 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
 - The full four-component build was submitted to the client's editor and loaded: podium, main block, wing and crown, all at (0,0,0), with the night lighting.
 - It is an integration copy, so its meshes are named `IT_*`.
 - At the time of submission, Podium (round 3) and Crown (round 4) each had two accepts and QC/QA still pending.
+
+**ST_Crown: ACCEPTED in round 4** (after the D4 rulings).
+- Budget:
+
+  | Variant | Verts |
+  |---|---|
+  | LOD0 | 69,404 |
+  | LOD1 | 3,087 |
+  | Collider | 853 |
+
+- The stair head is robust: it bakes at SKYBAR_C ±3 m (four engine checks plus a 113-offset replica).
+- The entablature is a fixed 270 cm. The LED band is grouped into photo 1's 12 bays of 3 panels.
+- **Stair keep-out corridor** (D4 d), for ST_TowerMain:
+  - Band of |lateral| ≤ 175 cm about the 150.0° axis from ROOFDECK vertex 17 (-1425, 62).
+  - Extent: x -2160..-1234, y -150..587, z 21598..22120.
+- Logged deviation: per D4 (a), photo 1's colonnade reads about 1 m taller than the model.
