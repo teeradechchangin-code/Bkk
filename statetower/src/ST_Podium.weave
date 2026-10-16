@@ -157,7 +157,8 @@ for i in 0..(nb + 1) {
     }
 }
 
-// arched bays: recessed white screen with a 3-column x 7-row window grid; bold two-arch tracery at mid height
+// arched bays: recessed shaded screen (ST_FacadeShade, so the light stone tracery reads against it) with a
+// 3-column x 7-row window grid; bold two-arch tracery at mid height
 // and a round-headed outer arch holding two sub-arches at the head (photo 1)
 for i in 0..nb {
     let x0 = clamp(i * bw, xlo, xhi) + 116;

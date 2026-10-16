@@ -125,3 +125,17 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
   - The top attic of wing 170 has balcony-bay sides up to a 180 m cornice.
 - The crew declared its photo constants locally in `WING_Pavilions`.
 - The north strip's north facade between 167.5 m and 180 m is hidden behind the top attic. This is accepted as an interface: no overlap, so no change is required of the main crew.
+
+**D2: #meshdefs rev B (Crown QC/QA round 2, findings routed to Management).** QC/QA measured photos 1 and 2 using the drum cornice as the scale. The dome is 9.4 m tall (H/W 0.33), not 12 m. The LED band is ~2.5 m. The lantern + finial is ~5 m.
+
+| Constant | Old | New |
+|---|---|---|
+| LED_BAND_TOP | 23250 | **23300** |
+| DOME_TOP | 24450 | **24240** |
+| SKYBAR_C | (-2350,1150) | **(-2232,1012)** |
+| SKYBAR_R | 750 | **460** |
+
+- The tip stays at 247.2 m.
+- Photo 4 shows the Sky Bar platform about as wide as the 8.7 m upper slot it sits above. Photo 1's rim is 7.3–8 m.
+- Applied to `src/ST_defs.weave` and the staged world. Crews re-derive from the defs; no local overrides.
+- ST_TowerMain's roof balustrade follows SKYBAR_R automatically.

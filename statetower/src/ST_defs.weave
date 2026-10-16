@@ -1,5 +1,5 @@
 #meshdefs
-// ===== State Tower (lebua) shared constants rev A - Management / Document Control =====
+// ===== State Tower (lebua) shared constants rev B - Management / Document Control (rev B = ruling D2: dome + Sky Bar) =====
 // World centimetres, Z up, +X east, +Y TRUE north. Origin (0,0,0) = Google Maps pin 13.7214837 N, 100.5168931 E
 // (the user's link; the user asked for the model at 0 0 0). Grade z = 0 (Silom Rd / Charoen Krung Rd, flat).
 // Footprints: OpenStreetMap building + building:part outlines (ODbL, via Overture Maps 2026-09-23.1),
@@ -18,8 +18,8 @@ let ROOFDECK_TOP = 22000;     // OSM w376802718 dome terrace 216 -> 220 m (Siroc
 let DOME_TIP = 24720;         // OSM w376802715 / CTBUH 247.2 m (finial tip) - never exceed
 let DRUM_BASE = 22000;        // colonnaded drum stands on the dome terrace
 let DRUM_TOP = 23050;         // INFERRED (photo 1): colonnade + entablature ~10.5 m
-let LED_BAND_TOP = 23250;     // INFERRED: blue LED ring / attic band at the dome springing
-let DOME_TOP = 24450;         // INFERRED: crown of the gold dome (finial above, to DOME_TIP)
+let LED_BAND_TOP = 23300;     // rev B (D2, QC photo 1/2 measurement): LED band 230.5 -> 233.0 m
+let DOME_TOP = 24240;         // rev B (D2): flattened ribbed cap, H/W 0.33 (9.4 m); lantern + finial ~4.8 m to DOME_TIP
 
 // ---- Floors
 let PODIUM_FLOORS = 11;                              // INFERRED (photo 2: arcade + ~9 storeys of arched windows)
@@ -55,8 +55,8 @@ let DOME_C = (-348, -2104, 0);     // OSM dome centre
 let DOME_OSM_R = 1735;             // OSM dome outline radius (outer edge of the drum terrace ring)
 let DRUM_R = 1600;                 // INFERRED (photo 1): colonnade outer radius ~16 m
 let DOME_R = 1420;                 // INFERRED (photo 1, State Room 28.8 m inside): gold dome base radius
-let SKYBAR_C = (-2350, 1150, 0);   // INFERRED: round Sky Bar platform cantilevered off the NW corner (photo 4)
-let SKYBAR_R = 750;                // INFERRED
+let SKYBAR_C = (-2232, 1012, 0);   // rev B (D2, photo 4): round Sky Bar embedded in the NW roof corner over the upper slot
+let SKYBAR_R = 460;                // rev B (D2): 9.2 m platform (photo 4 = slot width, photo 1 rim 7.3-8 m); do not exceed
 // West-face features, as distance u (cm) along WEST_DIR from WEST_SW (photos 1/2 through the fitted cameras)
 let WEST_LEN = 8090;               // straight west face SW -> wing 150 north end
 let MAIN_WEST_U1 = 4420;           // main block NW corner (north strip occupies u 4420..4870, wing 170 4870..6040, wing 160 6040..6310, wing 150 6310..8090)
