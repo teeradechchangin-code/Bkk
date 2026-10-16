@@ -206,3 +206,38 @@ Slots resolve in the world (`world/00_base.weave`). The base textures were impor
   - Band of |lateral| ≤ 175 cm about the 150.0° axis from ROOFDECK vertex 17 (-1425, 62).
   - Extent: x -2160..-1234, y -150..587, z 21598..22120.
 - Logged deviation: per D4 (a), photo 1's colonnade reads about 1 m taller than the model.
+
+## 7. FINAL DELIVERY (D5 time-box)
+
+Frozen 17:00 ICT; submitted to the client's editor at 17:10 ICT (Load completed). `world/STATETOWER_world.weave` (216 KB) holds:
+- base shell and palette
+- #meshdefs rev C and the facade kit
+- the 4 components, placed at (0,0,0)
+- 25 engine lights
+
+| Component | Status | LOD0 / LOD1 / collider verts |
+|---|---|---|
+| ST_Podium | **Escalated after round 3**: Engineering 8.5 accept, Site Operation 8.5 accept, QC/QA 6.5 reject. Management then ran a time-boxed rework that fixed QC's two majors (free-standing paired portal columns; west bay grid after the P8 niche) and the LOD1 lit-band minor. The fixes are verified in the engine; the fix was not re-reviewed by QC/QA. | 97,499 / 5,688 / ~826 |
+| ST_TowerMain | Accepted, round 2 | 110,408 / 3,728 / 188 |
+| ST_TowerWing | Accepted, round 1 | 59,262 / 4,570 / 294 |
+| ST_Crown | Accepted, round 4 (after D4) | 69,404 / 3,087 / 853 |
+
+**Scene QC against photo 1 (CAM_NIGHT):**
+
+| Element | Model | Photo 1 |
+|---|---|---|
+| Facade | #5b514a | #5a5046 |
+| Violet north-face wash | #877e93 | #88798f |
+| SW dark strip | #08121c | #091724 |
+
+The gold dome glows from engine floods, and the blue LED ring and the blue pediment emblem are present.
+
+**Open items (logged, not done):**
+- Podium:
+  - QC/QA's minor that the LOD1 south, south-east and east faces are blank from 0 to 23 m (not visible from the photo cameras).
+  - No final QC/QA re-review of the time-boxed fix.
+- Crown: the colonnade reads about 1 m shorter than in photo 1 (D4a deviation).
+- Lighting:
+  - The sky has no lighter band toward the horizon (photo 1 is lighter near the horizon).
+  - The lit-window fraction is higher than in photo 1.
+- Delivery world: the city around the tower is intentionally absent (building only). A dark ground plane is the only context.
