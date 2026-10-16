@@ -2,20 +2,38 @@
 // State Tower (lebua) - Management world shell rev A: night look of client photo 1. Building meshes come from the crews (src/).
 #adjuster
 section "Night (client photo 1)"
-knob SetSunRotation = 200
-knob SetSunTilt = 6
-knob SetSunIntensity = 0.12
-knob SetSunColor = #7088c0
-knob SetSkyLightIntensity = 0.5
-knob SetSkyLightColor = #2c4a7a
+// Night sky model (ST_NightSky below) graded to photo 1's deep teal-blue (#02335b top .. #53698c horizon).
+// The day sky model at low sun gave an orange sunset band that photo 1 does not have.
+knob SetSunRotation = 135
+knob SetSunTilt = 2
+knob SetSunIntensity = 0.05
+knob SetSunColor = #5070b0
+knob SetSkyLightIntensity = 0.8
+knob SetSkyLightColor = #3a5a86
 knob SetSkyboxSunVisible = 0
 knob SetSkyboxStarIntensity = 0
 knob SetSkyboxCloudCoverage = 0
-knob SetSkyboxExposure = -1.5
+knob SetSkyboxExposure = 4
+knob SetSkyboxTint = #3f7cc8
+knob SetSkyboxSaturation = 1.2
+knob SetSkyboxHaze = 0.4
+knob SetSkyboxGroundColor = #141a26
+knob SetDistanceFogEnabled = 1
+knob SetFogColor = #1d2c40
+knob SetFogStartDistance = 900
+knob SetFogEndDistance = 1600
+knob SetFogSkyboxAffect = 0
 knob SetBloomIntensity = 0.7
 #end
 
-object Ground { model = "cube" bounds_min = (-24000, -24000, -20) bounds_max = (24000, 24000, 0) material = "Asphalt" }
+object Ground { model = "cube" bounds_min = (-24000, -24000, -20) bounds_max = (24000, 24000, 0) material = "ST_Ground" }
+material ST_Ground { base = "Asphalt" tint = "#3a3c44" tileM = 3.0 }
+#class ST_NightSky
+event OnSpawned {
+    SetSkyboxIsNight(true)
+}
+#end
+display ST_SkyControl : ST_NightSky { model = "cube" position = (0, 0, -400) size = (10, 10, 10) }
 // ===== State Tower palette rev A (library textures only: derived tints of imported library #textures + engine built-ins) =====
 material ST_Facade { base = "LibFacadePlaster" tint = "#EDE5D3" roughness = 0.7 }
 material ST_FacadeShade { base = "LibFacadePlaster" tint = "#B9B1A0" roughness = 0.8 }
