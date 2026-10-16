@@ -8,6 +8,8 @@
 //  - full-height white fins on every bay boundary (fins = 1),
 //  - the recessed window wall (ST_Rooms interior-room glass) balc_d behind the face line (wall = 1).
 // Cost ~ (5*bays+3)*4 verts per floor + 24 per fin + 24 for the wall.
+// LOD params (kit rev B, defaults = LOD0 unchanged): arc_n = samples per bay bow (5 = LOD0, 2 = chevron bow, 1 = flat band);
+// fin_every = build a fin on every n-th bay boundary (both run ends always keep their fin).
 #meshpart ST_KIT_BalconyFace
 param ax = 0;
 param ay = 0;
@@ -23,6 +25,8 @@ param band_h = 135;
 param fin_t = 22;
 param fins = 1;
 param wall = 1;
+param arc_n = 5;
+param fin_every = 1;
 let dx = bx - ax;
 let dy = by - ay;
 let L = sqrt(dx * dx + dy * dy);
@@ -36,8 +40,8 @@ let H = floors * fh;
 var pts = [];
 pts = append(pts, (ax - ox * balc_d, ay - oy * balc_d));
 for i in 0..nb {
-    for k in 0..5 {
-        let t = k / 5;
+    for k in 0..arc_n {
+        let t = k / arc_n;
         let u = (i + t) * bw;
         let v = 0 - bow_d + bow_d * sin(180 * t);
         pts = append(pts, (ax + ux * u + ox * v, ay + uy * u + oy * v));
@@ -51,9 +55,11 @@ if fins > 0 {
     let zc = z0 + H * 0.5;
     var fl = empty();
     for i in 0..(nb + 1) {
+        if (mod(i, fin_every) == 0) + (i == nb) > 0 {
         let u = i * bw;
         let fin = beam_between(start: (ax + ux * u - ox * (balc_d - 2), ay + uy * u - oy * (balc_d - 2), zc), end: (ax + ux * u - ox * bow_d, ay + uy * u - oy * bow_d, zc), cross_width: fin_t, cross_height: H, height_direction: (0, 0, 1), material: "ST_Facade");
         fl = merge(fl, fin);
+        }
     }
     g = merge(g, fl);
 }
