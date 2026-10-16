@@ -60,9 +60,9 @@ def main():
         L = math.hypot(dx, dy)
         nx, ny = dy / L, -dx / L  # outward (right-hand side)
         for t in (0.2, 0.5, 0.8):
-            for z in (WING170_TOP + 1800, STRIP210_TOP - 600):
-                p = (a[0] + dx * t + nx * 900, a[1] + dy * t + ny * 900, z)
-                out.append(point("L_Violet%d" % k, p, 2200, 260, "#8a74ff"))
+            for z in (19500, STRIP210_TOP - 300):  # above the 187 m top pediment apex (D1) - an 188 m light glared on it
+                p = (a[0] + dx * t + nx * 1300, a[1] + dy * t + ny * 1300, z)
+                out.append(point("L_Violet%d" % k, p, 3000, 580, "#8a74ff"))
                 k += 1
     # (c) Pediments: soft white light on the three west-facing gables.
     # D1: the gables face NORTH (+WEST_DIR); light them from 14 m in front of their north faces (a 7 m west light glared).
